@@ -9877,7 +9877,7 @@ export class Synth {
     private static readonly chipFunctionCache: Function[] = [];
     private static readonly pulseFunctionCache: Function[] = [];
     private static readonly harmonicsFunctionCache: Function[] = [];
-    private static readonly loopableChipFunctionCache: Function[][] = Array(Config.unisonVoicesMax + 1).fill([]); //For loopable chips, we have a matrix where the rows represent voices and the columns represent loop types
+    private static readonly loopableChipFunctionCache: Function[] = Array(Config.unisonVoicesMax + 1).fill(undefined); //For loopable chips, we have a matrix where the rows represent voices and the columns represent loop types
 
     public readonly channels: ChannelState[] = [];
     private readonly tonePool: Deque<Tone> = new Deque<Tone>();
@@ -12579,15 +12579,22 @@ export class Synth {
                 tone.phaseDeltas[0] = startFreq * sampleTime * unisonStartA;
                 tone.phaseDeltaScales[0] = basePhaseDeltaScale * Math.pow(unisonEndA / unisonStartA, 1.0 / roundedSamplesPerTick);
                 const divisor = (unisonVoices == 1) ? 1 : (unisonVoices - 1);
-                for (let i: number = 1; i < unisonVoices; i++) {
+                for (let i: number = 1; i <= unisonVoices; i++) {
                     const unisonStart: number = Math.pow(2.0, (unisonOffset + unisonSpread - (2 * i * unisonSpread / divisor)) * unisonEnvelopeStart / 12.0) * (specialIntervalMult);
                     const unisonEnd: number = Math.pow(2.0, (unisonOffset + unisonSpread - (2 * i * unisonSpread / divisor)) * unisonEnvelopeEnd / 12.0) * (specialIntervalMult);
                     tone.phaseDeltas[i] = startFreq * sampleTime * unisonStart;
                     tone.phaseDeltaScales[i] = basePhaseDeltaScale * Math.pow(unisonEnd / unisonStart, 1.0 / roundedSamplesPerTick);
                 }
-                for (let i: number = unisonVoices; i < Config.unisonVoicesMax; i++) {
-                    tone.phaseDeltas[i] = tone.phaseDeltas[0];
-                    tone.phaseDeltaScales[i] = tone.phaseDeltaScales[0];
+                for (let i: number = unisonVoices+1; i < Config.unisonVoicesMax; i++) {
+                    if (i == 2) {
+                        const unisonBStart: number = Math.pow(2.0, (unisonOffset - unisonSpread) * unisonEnvelopeStart / 12.0) * specialIntervalMult;
+                        const unisonBEnd: number = Math.pow(2.0, (unisonOffset - unisonSpread) * unisonEnvelopeEnd / 12.0) * specialIntervalMult;
+                        tone.phaseDeltas[i] = startFreq * sampleTime * unisonBStart;
+                        tone.phaseDeltaScales[i] = basePhaseDeltaScale * Math.pow(unisonBEnd / unisonBStart, 1.0 / roundedSamplesPerTick);
+                    } else {
+                        tone.phaseDeltas[i] = tone.phaseDeltas[0];
+                        tone.phaseDeltaScales[i] = tone.phaseDeltaScales[0];
+                    }
                 }
                 
             } else {
@@ -12989,293 +12996,344 @@ export class Synth {
         //   samples are expected to vary too much), this is left up to the
         //   user.
         const voiceCount: number = Math.max(2, instrumentState.unisonVoices);
-        const chipWaveLoopMode: number = instrumentState.chipWaveLoopMode;
-        let chipFunction: Function = Synth.loopableChipFunctionCache[instrumentState.unisonVoices][chipWaveLoopMode];
+        let chipFunction: Function = Synth.loopableChipFunctionCache[instrumentState.unisonVoices];
         if (chipFunction == undefined) {
             let chipSource: string = "return (synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState) => {";
 
 
             chipSource += `
-        const aliases = (effectsIncludeDistortion(instrumentState.effects) && instrumentState.aliases);
-        const chipWaveLoopMode = instrumentState.chipWaveLoopMode;
-        // const aliases = false;
-        const data = synth.tempMonoInstrumentSampleBuffer;
-        const wave = instrumentState.wave;
-        const volumeScale = instrumentState.volumeScale;
-        const waveLength = (aliases && instrumentState.type == 8) ? wave.length : wave.length - 1;
-        let chipWaveLoopEnd = Math.max(0, Math.min(waveLength, instrumentState.chipWaveLoopEnd));
-        let chipWaveLoopStart = Math.max(0, Math.min(chipWaveLoopEnd - 1, instrumentState.chipWaveLoopStart));
-        // @TODO: This is where to set things up for the release loop mode.
-        // const ticksSinceReleased = tone.ticksSinceReleased;
-        // if (ticksSinceReleased > 0) {
-        //     chipWaveLoopStart = 0;
-        //     chipWaveLoopEnd = waveLength - 1;
-        // }
-        let chipWaveLoopLength = chipWaveLoopEnd - chipWaveLoopStart;
-        if (chipWaveLoopLength < 2) {
-            chipWaveLoopStart = 0;
-            chipWaveLoopEnd = waveLength;
-            chipWaveLoopLength = waveLength;
-        }
-        const chipWavePlayBackwards = instrumentState.chipWavePlayBackwards;
-        const unisonSign = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
-        `
-        for (let i: number = 0; i < voiceCount; i++) {
-            chipSource += `
-            let phaseDelta# = tone.phaseDeltas[#] * waveLength;
-            let direction# = tone.directions[#];
-            let chipWaveCompletion# = tone.chipWaveCompletions[#];
-            let phaseDeltaScale# = +tone.phaseDeltaScales[#];
-            let lastWave# = tone.chipWaveCompletionsLastWave[#];
-            let prevWave# = tone.chipWavePrevWaves[#];
+            const aliases = (effectsIncludeDistortion(instrumentState.effects) && instrumentState.aliases);
+            // const aliases = false;
+            const data = synth.tempMonoInstrumentSampleBuffer;
+            const wave = instrumentState.wave;
+            const volumeScale = instrumentState.volumeScale;
+            const waveLength = (aliases && instrumentState.type == 8) ? wave.length : wave.length - 1;
 
-            if (instrumentState.unisonVoices <= # && instrumentState.unisonSpread == 0 && !instrumentState.chord.customInterval) tone.phases[#] = tone.phases[# - 1];
-            `.replaceAll("#", i + "");
-        }
-        
-        for (let i: number = 0; i < voiceCount; i++) {
+            let chipWaveLoopEnd = Math.max(0, Math.min(waveLength, instrumentState.chipWaveLoopEnd));
+            let chipWaveLoopStart = Math.max(0, Math.min(chipWaveLoopEnd - 1, instrumentState.chipWaveLoopStart));
+            `
+            // @TODO: This is where to set things up for the release loop mode.
+            // const ticksSinceReleased = tone.ticksSinceReleased;
+            // if (ticksSinceReleased > 0) {
+            //     chipWaveLoopStart = 0;
+            //     chipWaveLoopEnd = waveLength - 1;
+            // }
             chipSource += `
-            let phase# = Synth.wrap(tone.phases[#], 1) * waveLength;
-            let prevWaveIntegral# = 0.0;
-            `.replaceAll("#", i + "");
-        }
-        if (chipWaveLoopMode === 3 || chipWaveLoopMode === 2 || chipWaveLoopMode === 0) {
-            // If playing once or looping, we force the correct direction,
-            // since it shouldn't really change. This is mostly so that if
-            // the mode is changed midway through playback, it won't get
-            // stuck on the wrong direction.
-            for (let i: number = 0; i < voiceCount; i++) {
-                chipSource += `
-            if (!chipWavePlayBackwards) {
-                direction# = 1;
-            } else {
-                direction# = -1;
+            let chipWaveLoopLength = chipWaveLoopEnd - chipWaveLoopStart;
+            if (chipWaveLoopLength < 2) {
+                chipWaveLoopStart = 0;
+                chipWaveLoopEnd = waveLength;
+                chipWaveLoopLength = waveLength;
             }
-                `.replaceAll("#", i + "");
-            }
-        }
-        if (chipWaveLoopMode === 0 || chipWaveLoopMode === 1) {
-            // If looping or ping-ponging, we clear the completion status,
-            // as it's not relevant anymore. This is mostly so that if the
-            // mode is changed midway through playback, it won't get stuck
-            // on zero volume.
-            for (let i: number = 0; i < voiceCount; i++) {
+            const chipWaveLoopMode = instrumentState.chipWaveLoopMode;
+            const chipWavePlayBackwards = instrumentState.chipWavePlayBackwards;
+            const unisonSign = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
+            if(instrumentState.unisonSpread == 0 && !instrumentState.chord.customInterval) {
+            `
+            for (let i: number = 1; i < voiceCount; i++) {
                 chipSource += `
-        chipWaveCompletion# = 0;
-        `.replaceAll("#", i + "");
-            }
-        }
-        chipSource += `let expression = +tone.expression;
-        const expressionDelta = +tone.expressionDelta;
-        const chipWaveCompletionFadeLength = 1000;
-        if (!aliases) {`
-            for (let i: number = 0; i < voiceCount; i++) {
-                chipSource += `
-                const phase#Int = Math.floor(phase#);
-                const index# = Synth.wrap(phase#Int, waveLength);
-                prevWaveIntegral# = +wave[index#]
-                const phaseRatio# = phase# - phase#Int;
-                prevWaveIntegral# += (wave[Synth.wrap(index# + 1, waveLength)] - prevWaveIntegral#) * phaseRatio#;
+                if (instrumentState.unisonVoices <= #)
+                    tone.phases[#] = tone.phases[#-1];
                 `.replaceAll("#", i + "");
             }
             chipSource += `
-        } 
-            
-        const filters = tone.noteFilters;
-        const filterCount = tone.noteFilterCount | 0;
-        let initialFilterInput1 = +tone.initialNoteFilterInput1;
-        let initialFilterInput2 = +tone.initialNoteFilterInput2;
-        const applyFilters = Synth.applyFilters;
-        const stopIndex = bufferIndex + roundedSamplesPerTick;
-        
-        for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
-            
-            let wrapped = 0;`
+            }`
             for (let i: number = 0; i < voiceCount; i++) {
                 chipSource += `
-                if (chipWaveCompletion# > 0 && chipWaveCompletion# < chipWaveCompletionFadeLength) {
-                    chipWaveCompletion#++;
-                }
-                phase# += phaseDelta# * direction#;
+                let phaseDelta# = tone.phaseDeltas[#] * waveLength;
+                let direction# = tone.directions[#];
+                let chipWaveCompletion# = tone.chipWaveCompletions[#];
+
                 `.replaceAll("#", i + "");
             }
-            if (chipWaveLoopMode === 2) {
-                // once
-                for (let i: number = 0; i < voiceCount; i++) {
-                    chipSource += `
-                if (direction# === 1) {
-                    if (phase# > waveLength) {
-                        if (chipWaveCompletion# <= 0) {
-                            lastWave# = prevWave#;
-                            chipWaveCompletion#++;
-                        }
-                        wrapped = 1;
-                    }
-                } else if (direction# === -1) {
-                    if (phase# < 0) {
-                        if (chipWaveCompletion# <= 0) {
-                            lastWave# = prevWave#;
-                            chipWaveCompletion#++;
-                        }
-                        wrapped = 1;
-                    }
-                }
-                `.replaceAll("#", i + "");
-                }
-            } else if (chipWaveLoopMode === 3) {
-                // loop once
-                for (let i: number = 0; i < voiceCount; i++) {
-                    chipSource += `
-                if (direction# === 1) {
-                    if (phase# > chipWaveLoopEnd) {
-                        if (chipWaveCompletion# <= 0) {
-                            lastWave# = prevWave#;
-                            chipWaveCompletion#++;
-                        }
-                        wrapped = 1;
-                    }
-                } else if (direction# === -1) {
-                    if (phase# < chipWaveLoopStart) {
-                        if (chipWaveCompletion# <= 0) {
-                            lastWave# = prevWave#;
-                            chipWaveCompletion#++;
-                        }
-                        wrapped = 1;
-                    }
-                }
-                `.replaceAll("#", i + "");
-                }
-            } else if (chipWaveLoopMode === 0) {
-                // loop
-                for (let i: number = 0; i < voiceCount; i++) {
-                    chipSource += `
-                if (direction# === 1) {
-                    if (phase# > chipWaveLoopEnd) {
-                        phase# = chipWaveLoopStart + Synth.wrap(phase# - chipWaveLoopEnd, chipWaveLoopLength);
-                        // phase# = chipWaveLoopStart;
-                        wrapped = 1;
-                    }
-                } else if (direction# === -1) {
-                    if (phase# < chipWaveLoopStart) {
-                        phase# = chipWaveLoopEnd - Synth.wrap(chipWaveLoopStart - phase#, chipWaveLoopLength);
-                        // phase# = chipWaveLoopEnd;
-                        wrapped = 1;
-                    }
-                }
-                `.replaceAll("#", i + "");
-                }
-            } else if (chipWaveLoopMode === 1) {
-                // ping-pong
-                for (let i: number = 0; i < voiceCount; i++) {
-                    chipSource += `
-                if (direction# === 1) {
-                    if (phase# > chipWaveLoopEnd) {
-                        phase# = chipWaveLoopEnd - Synth.wrap(phase# - chipWaveLoopEnd, chipWaveLoopLength);
-                        // phase# = chipWaveLoopEnd;
-                        direction# = -1;
-                        wrapped = 1;
-                    }
-                } else if (direction# === -1) {
-                    if (phase# < chipWaveLoopStart) {
-                        phase# = chipWaveLoopStart + Synth.wrap(chipWaveLoopStart - phase#, chipWaveLoopLength);
-                        // phase# = chipWaveLoopStart;
+           
+            chipSource += `
+            if (chipWaveLoopMode === 3 || chipWaveLoopMode === 2 || chipWaveLoopMode === 0) {
+                // If playing once or looping, we force the correct direction,
+                // since it shouldn't really change. This is mostly so that if
+                // the mode is changed midway through playback, it won't get
+                // stuck on the wrong direction.
+                if (!chipWavePlayBackwards) {`
+                    for (let i: number = 0; i < voiceCount; i++) {
+                        chipSource += `
                         direction# = 1;
-                        wrapped = 1;
+                        `.replaceAll("#", i + "");
                     }
-                }
-                `.replaceAll("#", i + "");
-                }
-            }
-            for (let i: number = 0; i < voiceCount; i++) {
-                chipSource += `
-                let wave# = 0;
-                `.replaceAll("#", i + "");
-            }
+            chipSource += `} else {`
+                    for (let i: number = 0; i < voiceCount; i++) {
+                        chipSource += `
+                        direction# = -1;
+                        `.replaceAll("#", i + "");
+                    }
             chipSource += `
-            let inputSample = 0;
-            if (aliases) {
-            `
-            for (let i: number = 0; i < voiceCount; i++) {
-                chipSource += `
-                wave# = wave[Synth.wrap(Math.floor(phase#), waveLength)];
-                prevWave# = wave#;
-                const completionFade# = chipWaveCompletion# > 0 ? ((chipWaveCompletionFadeLength - Math.min(chipWaveCompletion#, chipWaveCompletionFadeLength)) / chipWaveCompletionFadeLength) : 1;
-                inputSample = 0;
-                if (chipWaveCompletion# > 0) {
-                    inputSample += lastWave# * completionFade#;
-                } else {
-                    inputSample += wave#;
                 }
-                `.replaceAll("#", i + "");
             }
-            chipSource += `} else {
+            if (chipWaveLoopMode === 0 || chipWaveLoopMode === 1) {`
+                // If looping or ping-ponging, we clear the completion status,
+                // as it's not relevant anymore. This is mostly so that if the
+                // mode is changed midway through playback, it won't get stuck
+                // on zero volume.
+                for (let i: number = 0; i < voiceCount; i++) {
+                    chipSource += `
+                    chipWaveCompletion# = 0;
+                    `.replaceAll("#", i + "");
+                }
+            chipSource += `    
+            }
+            
+            const chipWaveCompletionFadeLength = 1000;
+            let expression = +tone.expression;
+            const expressionDelta = +tone.expressionDelta;
             `
             for (let i: number = 0; i < voiceCount; i++) {
                 chipSource += `
-                const phase#Int = Math.floor(phase#);
-                const index# = Synth.wrap(phase#Int, waveLength);
-                let nextWaveIntegral# = wave[index#];
-                const phaseRatio# = phase# - phase#Int;
-                nextWaveIntegral# += (wave[Synth.wrap(index# + 1, waveLength)] - nextWaveIntegral#) * phaseRatio#;
+                let lastWave# = tone.chipWaveCompletionsLastWave[#];
+                const phaseDeltaScale# = +tone.phaseDeltaScales[#];
+                let phase# = Synth.wrap(tone.phases[#], 1) * waveLength;
+                let prevWaveIntegral# = 0;
 
                 `.replaceAll("#", i + "");
             }
-                chipSource += `if (!(chipWaveLoopMode === 0 && chipWaveLoopStart === 0 && chipWaveLoopEnd === waveLength) && wrapped !== 0) {
-                    `
+            chipSource += `
+            if (!aliases) {
+            `
                 for (let i: number = 0; i < voiceCount; i++) {
                     chipSource += `
-                    let pwi# = 0;
-                    const phase#_ = Math.max(0, phase# - phaseDelta# * direction#);
-                    const phase#Int_ = Math.floor(phase#_);
-                    const index#_ = Synth.wrap(phase#Int_, waveLength);
-                    pwi# = wave[index#];
-                    pwi# += (wave[Synth.wrap(index#_ + 1, waveLength)] - pwi#) * (phase#_ - phase#Int_) * direction#;
-                    prevWaveIntegral# = pwi#;
-                `.replaceAll("#", i + "");
-                }
-                chipSource += "}";
-            if (chipWaveLoopMode === 1) {
-                chipSource += `if (wrapped !== 0) {`
-                for (let i: number = 0; i < voiceCount; i++) {
-                    chipSource += `wave# = prevWave#;
+                    const phase#Int = Math.floor(phase#);
+                    const index# = Synth.wrap(phase#Int, waveLength);
+                    const phaseRatio# = phase# - phase#Int;
+                    prevWaveIntegral# = +wave[index#];
+                    prevWaveIntegral# += (wave[Synth.wrap(index# + 1, waveLength)] - prevWaveIntegral#) * phaseRatio#;
                     `.replaceAll("#", i + "");
                 }
-                chipSource += "} else {";
-                for (let i: number = 0; i < voiceCount; i++) {
-                    chipSource += `wave# = (nextWaveIntegral# - prevWaveIntegral#) / (phaseDelta# * direction#);
-                    `.replaceAll("#", i + "");
-                }
-                chipSource += "}"
-            } else {
-                for (let i: number = 0; i < voiceCount; i++) {
-                    chipSource += `wave# = (nextWaveIntegral# - prevWaveIntegral#) / (phaseDelta# * direction#);
-                    `.replaceAll("#", i + "");
-                }
+            chipSource += `
             }
+            const filters = tone.noteFilters;
+            const filterCount = tone.noteFilterCount | 0;
+            let initialFilterInput1 = +tone.initialNoteFilterInput1;
+            let initialFilterInput2 = +tone.initialNoteFilterInput2;
+            const applyFilters = Synth.applyFilters;
+            const stopIndex = bufferIndex + roundedSamplesPerTick;
+            `
             for (let i: number = 0; i < voiceCount; i++) {
                 chipSource += `
-                prevWave# = wave#;
-                prevWaveIntegral# = nextWaveIntegral#;
-                const completionFade# = chipWaveCompletion# > 0 ? ((chipWaveCompletionFadeLength - Math.min(chipWaveCompletion#, chipWaveCompletionFadeLength)) / chipWaveCompletionFadeLength) : 1;
-                if (chipWaveCompletion# > 0) {
-                    inputSample += lastWave# * completionFade#;
-                } else {
-                    inputSample += wave#;
-                }
+                let prevWave# = tone.chipWavePrevWaves[#];
+
                 `.replaceAll("#", i + "");
             }
-            chipSource += `}
-            const sample = applyFilters(inputSample * volumeScale, initialFilterInput1, initialFilterInput2, filterCount, filters);
-            initialFilterInput2 = initialFilterInput1;
-            initialFilterInput1 = inputSample * volumeScale;
-            const output = sample * expression;
-            expression += expressionDelta;
-            data[sampleIndex] += output;`
-            for (let i: number = 0; i < voiceCount; i++) {
-                chipSource += ` phaseDelta# *= phaseDeltaScale#;
+            chipSource += `
+            for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
+                let wrapped = 0;
+            `
+                for (let i: number = 0; i < voiceCount; i++) {
+                    chipSource += `
+                    if (chipWaveCompletion# > 0 && chipWaveCompletion# < chipWaveCompletionFadeLength) {
+                        chipWaveCompletion#++;
+                    }
+                    phase# += phaseDelta# * direction#;
+
                     `.replaceAll("#", i + "");
+                }
+                chipSource += `
+                if (chipWaveLoopMode === 2) {
+                `
+                    // once
+                    for (let i: number = 0; i < voiceCount; i++) {
+                        chipSource += `
+                        if (direction# === 1) {
+                            if (phase# > waveLength) {
+                                if (chipWaveCompletion# <= 0) {
+                                    lastWave# = prevWave#;
+                                    chipWaveCompletion#++;
+                                }
+                                wrapped = #;
+                            }
+                        } else if (direction# === -1) {
+                            if (phase# < 0) {
+                                if (chipWaveCompletion# <= 0) {
+                                    lastWave# = prevWave#;
+                                    chipWaveCompletion#++;
+                                }
+                                wrapped = 1;
+                            }
+                        }
+
+                        `.replaceAll("#", i + "");
+                    }
+                chipSource += `
+                } else if (chipWaveLoopMode === 3) {
+                `
+                    // loop once
+                    for (let i: number = 0; i < voiceCount; i++) {
+                        chipSource += `
+                        if (direction# === 1) {
+                            if (phase# > chipWaveLoopEnd) {
+                                if (chipWaveCompletion# <= 0) {
+                                    lastWave# = prevWave#;
+                                    chipWaveCompletion#++;
+                                }
+                                wrapped = 1;
+                            }
+                        } else if (direction# === -1) {
+                            if (phase# < chipWaveLoopStart) {
+                                if (chipWaveCompletion# <= 0) {
+                                    lastWave# = prevWave#;
+                                    chipWaveCompletion#++;
+                                }
+                                wrapped = 1;
+                            }
+                        }
+
+                        `.replaceAll("#", i + "");
+                    }
+                chipSource += `
+                } else if (chipWaveLoopMode === 0) {
+                `
+                    // loop
+                    for (let i: number = 0; i < voiceCount; i++) {
+                        chipSource += `
+                        if (direction# === 1) {
+                            if (phase# > chipWaveLoopEnd) {
+                                phase# = chipWaveLoopStart + Synth.wrap(phase# - chipWaveLoopEnd, chipWaveLoopLength);
+                                // phase# = chipWaveLoopStart;
+                                wrapped = 1;
+                            }
+                        } else if (direction# === -1) {
+                            if (phase# < chipWaveLoopStart) {
+                                phase# = chipWaveLoopEnd - Synth.wrap(chipWaveLoopStart - phase#, chipWaveLoopLength);
+                                // phase# = chipWaveLoopEnd;
+                                wrapped = 1;
+                            }
+                        }
+
+                        `.replaceAll("#", i + "");
+                    }
+                chipSource += `    
+                } else if (chipWaveLoopMode === 1) {
+                `
+                    // ping-pong
+                    for (let i: number = 0; i < voiceCount; i++) {
+                        chipSource += `
+                        if (direction# === 1) {
+                            if (phase# > chipWaveLoopEnd) {
+                                phase# = chipWaveLoopEnd - Synth.wrap(phase# - chipWaveLoopEnd, chipWaveLoopLength);
+                                // phase# = chipWaveLoopEnd;
+                                direction# = -1;
+                                wrapped = 1;
+                            }
+                        } else if (direction# === -1) {
+                            if (phase# < chipWaveLoopStart) {
+                                phase# = chipWaveLoopStart + Synth.wrap(chipWaveLoopStart - phase#, chipWaveLoopLength);
+                                // phase# = chipWaveLoopStart;
+                                direction# = 1;
+                                wrapped = 1;
+                            }
+                        }
+
+                        `.replaceAll("#", i + "");
+                    }
+                chipSource += `    
+                }
+                `
+                for (let i: number = 0; i < voiceCount; i++) {
+                    chipSource += `
+                    let wave# = 0;
+                    `.replaceAll("#", i + "");
+                }
+                chipSource += `    
+                let inputSample = 0;
+                if (aliases) {
+                    inputSample = 0;
+                `
+                    for (let i: number = 0; i < voiceCount; i++) {
+                        chipSource += `
+                        wave# = wave[Synth.wrap(Math.floor(phase#), waveLength)];
+                        prevWave# = wave#;
+                        const completionFade# = chipWaveCompletion# > 0 ? ((chipWaveCompletionFadeLength - Math.min(chipWaveCompletion#, chipWaveCompletionFadeLength)) / chipWaveCompletionFadeLength) : 1;
+                        
+                        if (chipWaveCompletion# > 0) {
+                            inputSample += lastWave# * completionFade#;
+                        } else {
+                            inputSample += wave#;
+                        }
+                        `.replaceAll("#", i + "");
+                    }
+                chipSource += `   
+                } else {
+                `
+                    for (let i: number = 0; i < voiceCount; i++) {
+                        chipSource += `
+                        const phase#Int = Math.floor(phase#);
+                        const index# = Synth.wrap(phase#Int, waveLength);
+                        let nextWaveIntegral# = wave[index#];
+                        const phaseRatio# = phase# - phase#Int;
+                        nextWaveIntegral# += (wave[Synth.wrap(index# + 1, waveLength)] - nextWaveIntegral#) * phaseRatio#;
+                        `.replaceAll("#", i + "");
+                    }
+                    
+                    chipSource += `
+                    if (!(chipWaveLoopMode === 0 && chipWaveLoopStart === 0 && chipWaveLoopEnd === waveLength) && wrapped !== 0) {
+                    `
+                        for (let i: number = 0; i < voiceCount; i++) {
+                            chipSource += `
+                            let pwi# = 0;
+                            const phase#_ = Math.max(0, phase# - phaseDelta# * direction#);
+                            const phase#Int = Math.floor(phase#_);
+                            const index# = Synth.wrap(phase#Int, waveLength);
+                            pwi# = wave[index#];
+                            pwi# += (wave[Synth.wrap(index# + 1, waveLength)] - pwi#) * (phase#_ - phase#Int) * direction#;
+                            prevWaveIntegral# = pwi#;
+                            `.replaceAll("#", i + "");
+                        }
+                    chipSource += `    
+                    }
+                    if (chipWaveLoopMode === 1 && wrapped !== 0) {
+                    `
+                        for (let i: number = 0; i < voiceCount; i++) {
+                            chipSource += `
+                            wave# = prevWave#;
+                            `.replaceAll("#", i + "");
+                        }
+                    chipSource += `
+                    } else {
+                    `
+                        for (let i: number = 0; i < voiceCount; i++) {
+                            chipSource += `
+                            wave# = (nextWaveIntegral# - prevWaveIntegral#) / (phaseDelta# * direction#);
+                            `.replaceAll("#", i + "");
+                        }
+                    chipSource += `
+                    }
+                    `
+                    for (let i: number = 0; i < voiceCount; i++) {
+                        chipSource += `
+                        prevWave# = wave#;
+                        prevWaveIntegral# = nextWaveIntegral#;
+                        const completionFade# = chipWaveCompletion# > 0 ? ((chipWaveCompletionFadeLength - Math.min(chipWaveCompletion#, chipWaveCompletionFadeLength)) / chipWaveCompletionFadeLength) : 1;
+                        if (chipWaveCompletion# > 0) {
+                            inputSample += lastWave# * completionFade#;
+                        } else {
+                            inputSample += wave#;
+                        }
+                        `.replaceAll("#", i + "");
+                    }
+                chipSource += `
+                }
+                const sample = applyFilters(inputSample * volumeScale, initialFilterInput1, initialFilterInput2, filterCount, filters);
+                initialFilterInput2 = initialFilterInput1;
+                initialFilterInput1 = inputSample * volumeScale;
+                const output = sample * expression;
+                expression += expressionDelta;
+                data[sampleIndex] += output;
+                `
+                for (let i: number = 0; i < voiceCount; i++) {
+                    chipSource += `
+                    phaseDelta# *= phaseDeltaScale#;
+                    `.replaceAll("#", i + "");
+                }
+            chipSource += `
             }
-            chipSource += "}"
+            `
             for (let i: number = 0; i < voiceCount; i++) {
                 chipSource += `
                 tone.phases[#] = phase# / waveLength;
@@ -13284,22 +13342,22 @@ export class Synth {
                 tone.chipWaveCompletions[#] = chipWaveCompletion#;
                 tone.chipWavePrevWaves[#] = prevWave#;
                 tone.chipWaveCompletionsLastWave[#] = lastWave#;
-
-                    `.replaceAll("#", i + "");
+                
+                `.replaceAll("#", i + "");
             }
-            chipSource += `
+            
+        chipSource += `
             tone.expression = expression;
             synth.sanitizeFilters(filters);
             tone.initialNoteFilterInput1 = initialFilterInput1;
             tone.initialNoteFilterInput2 = initialFilterInput2;
         }`
-         
             chipFunction = new Function("Config", "Synth", "effectsIncludeDistortion", chipSource)(Config, Synth, effectsIncludeDistortion);
-            Synth.loopableChipFunctionCache[instrumentState.unisonVoices][chipWaveLoopMode] = chipFunction;
+            Synth.loopableChipFunctionCache[instrumentState.unisonVoices] = chipFunction;
         }
         chipFunction(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState);
     }
-    // advloop addition
+    
     private static chipSynth(synth: Synth, bufferIndex: number, roundedSamplesPerTick: number, tone: Tone, instrumentState: InstrumentState): void {
         const voiceCount: number = Math.max(2, instrumentState.unisonVoices);
         let chipFunction: Function = Synth.chipFunctionCache[instrumentState.unisonVoices];
@@ -13371,7 +13429,7 @@ export class Synth {
             chipSource += "inputSample = " + sampleListA.join(" + ") + ";";
             chipSource += `} else {
                     `;
-                for (let i: number = 0; i < instrumentState.unisonVoices; i++) {
+                for (let i: number = 0; i < voiceCount; i++) {
                     chipSource += `phase# += phaseDelta#;
 
                      
@@ -13385,10 +13443,6 @@ export class Synth {
                         let inputSample# = wave#;
                         `.replaceAll("#", i + "");
                 }
-            if (instrumentState.unisonVoices == 1) {
-                chipSource += `const inputSample1 = inputSample0;
-                `;
-            }
             const sampleListB: string[] = [];
             for (let voice: number = 0; voice < voiceCount; voice++) {
                 sampleListB.push("inputSample" + voice + (voice != 0 ? " * unisonSign" : ""));
@@ -13482,7 +13536,7 @@ export class Synth {
             harmonicsSource += `const stopIndex = bufferIndex + roundedSamplesPerTick;
         for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
         `
-            for (let i: number = 0; i < instrumentState.unisonVoices; i++) {
+            for (let i: number = 0; i < voiceCount; i++) {
                 harmonicsSource += `
                         phase# += phaseDelta#;
                         const phase#Int = phase# | 0;
@@ -13494,10 +13548,6 @@ export class Synth {
                         prevWaveIntegral# = nextWaveIntegral#;
                         let inputSample# = wave#;
                         `.replaceAll("#", i + "");
-            }
-            if (instrumentState.unisonVoices == 1) {
-                harmonicsSource += `const inputSample1 = inputSample0;
-                `;
             }
             const sampleList: string[] = [];
             for (let voice: number = 0; voice < voiceCount; voice++) {

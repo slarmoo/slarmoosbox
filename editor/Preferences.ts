@@ -44,6 +44,8 @@ export class Preferences {
 	public showInstrumentScrollbars: boolean;
 	public closePromptByClickoff: boolean;
 	public frostedGlassBackground: boolean;
+
+	public userPresets: Map<string, Object>; //We parse the object as an instrument later
 	
 	constructor() {
 		this.reload();
@@ -98,6 +100,12 @@ export class Preferences {
 			if (window.localStorage.getItem("fullScreen") == "true") this.layout = "long";
 			window.localStorage.removeItem("fullScreen");
 		}
+
+		this.userPresets = new Map<string, Object>();
+		const presets = JSON.parse(window.localStorage.getItem("userPresets") || "{}");
+		for (const key in presets) {
+			this.userPresets.set(key, presets[key]);
+		}
 		
 	}
 	
@@ -140,6 +148,7 @@ export class Preferences {
 		window.localStorage.setItem("customTheme2", this.customTheme2!);
 		window.localStorage.setItem("volume", String(this.volume));
 		window.localStorage.setItem("visibleOctaves", String(this.visibleOctaves));
+		window.localStorage.setItem("userPresets", JSON.stringify(this.userPresets));
 		
 	}
 }

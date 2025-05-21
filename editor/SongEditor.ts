@@ -37,6 +37,7 @@ import { KeyboardLayout } from "./KeyboardLayout";
 import { PatternEditor } from "./PatternEditor";
 import { Piano } from "./Piano";
 import { Prompt } from "./Prompt";
+import { SetUserPresetPrompt } from "./SetUserPresetPrompt";
 import { SongDocument } from "./SongDocument";
 import { SongDurationPrompt } from "./SongDurationPrompt";
 import { SustainPrompt } from "./SustainPrompt";
@@ -76,7 +77,7 @@ function buildHeaderedOptions(header: string, menu: HTMLSelectElement, items: Re
     return menu;
 }
 
-function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement {
+function buildPresetOptions(isNoise: boolean, idSet: string, userPresets: Map<string, Object>): HTMLSelectElement {
     const menu: HTMLSelectElement = select({ id: idSet, class: "presetSelect"});
 
 
@@ -160,6 +161,21 @@ function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement 
         const parent: HTMLSelectElement = <HTMLSelectElement>customSampleCategoryGroup.parentNode;
         parent.removeChild(customSampleCategoryGroup);
         parent.insertBefore(customSampleCategoryGroup, firstCategoryGroup);
+    }
+
+    //add user presets
+    if (userPresets.size > 0) {
+        const group: HTMLElement = optgroup({ label: "User Presets" + " ▾" });
+        let count = 0;
+        for (const presetName in userPresets) {
+            const presetSettings: any = userPresets.get(presetName)!;
+            const preset: Preset = { name: presetName, isNoise: presetSettings["isDrum"].toLowerCase() === "true", settings: presetSettings } as Preset;
+            if ((preset.isNoise == true) == isNoise) {
+                group.appendChild(option({ value: (EditorConfig.presetCategories.length << 6) + count }, preset.name));
+            }
+            count++;
+        }
+        menu.appendChild(group);
     }
 
     return menu;
@@ -885,8 +901,8 @@ export class SongEditor {
     private readonly _echoDelaySlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.echoDelayRange - 1, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeEchoDelay(this._doc, oldValue, newValue), false);
     private readonly _echoDelayRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("echoDelay") }, "Echo Delay:"), this._echoDelaySlider.container);
     private readonly _rhythmSelect: HTMLSelectElement = buildOptions(select(), Config.rhythms.map(rhythm => rhythm.name));
-    private readonly _pitchedPresetSelect: HTMLSelectElement = buildPresetOptions(false, "pitchPresetSelect");
-    private readonly _drumPresetSelect: HTMLSelectElement = buildPresetOptions(true, "drumPresetSelect");
+    private readonly _pitchedPresetSelect: HTMLSelectElement = buildPresetOptions(false, "pitchPresetSelect", this._doc.prefs.userPresets);
+    private readonly _drumPresetSelect: HTMLSelectElement = buildPresetOptions(true, "drumPresetSelect", this._doc.prefs.userPresets);
     private readonly _algorithmSelect: HTMLSelectElement = buildOptions(select(), Config.algorithms.map(algorithm => algorithm.name));
     private readonly _algorithmSelectRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("algorithm") }, "Algorithm: "), div({ class: "selectContainer" }, this._algorithmSelect));
     private readonly _instrumentButtons: HTMLButtonElement[] = [];
@@ -1137,6 +1153,11 @@ export class SongEditor {
             SVG.path({ d: "M200-120v-40h560v40H200Zm185.384-150.769v-271.539H254.615L480-840l224.616 297.692h-130.77v271.539H385.384Zm40.001-40h108.461v-272.308h88.308L480-774.615 337.077-583.077h88.308v272.308ZM480-583.077Z", fill: "currentColor" }),
         ]),
     ]);
+    private readonly _instrumentSavePresetButton: HTMLButtonElement = button({ style: "max-width:86px;", class: "savePresetInstrumentButton" },
+        "Save Preset",
+        //Save icon:
+        "+"
+    );
 
     public readonly _globalOscscope: oscilloscopeCanvas = new oscilloscopeCanvas(canvas({ width: 144, height: 32, style: `border: 2px solid ${ColorConfig.uiWidgetBackground}; position: static;`, id: "oscilloscopeAll" }), 1);
     private readonly _globalOscscopeContainer: HTMLDivElement = div({ style: "height: 38px; margin-left: auto; margin-right: auto;" },
@@ -1248,6 +1269,7 @@ export class SongEditor {
         div({ class: "selectRow" },
             this._instrumentExportButton,
             this._instrumentImportButton,
+            this._instrumentSavePresetButton,
         ),
     );
     private readonly _instrumentSettingsTextRow: HTMLDivElement = div({ id: "instrumentSettingsText", style: `padding: 3px 0; max-width: 15em; text-align: center; color: ${ColorConfig.secondaryText};` },
@@ -1743,6 +1765,7 @@ export class SongEditor {
         this._instrumentPasteButton.addEventListener("click", this._pasteInstrument.bind(this));
         this._instrumentExportButton.addEventListener("click", this._exportInstruments.bind(this));
         this._instrumentImportButton.addEventListener("click", this._importInstruments.bind(this));
+        this._instrumentSavePresetButton.addEventListener("click", this._saveInstrumentPresent.bind(this))
 
         sampleLoadEvents.addEventListener("sampleloaded", this._updateSampleLoadingBar.bind(this));
 
@@ -2230,6 +2253,10 @@ export class SongEditor {
                     break;
                 case "importInstrument":
                     this.prompt = new InstrumentImportPrompt(this._doc);//, this);
+                    break;
+                case "setUserPreset":
+                    console.log(this._doc);
+                    this.prompt = new SetUserPresetPrompt(this._doc);
                     break;
                 case "stringSustain":
                     this.prompt = new SustainPrompt(this._doc);
@@ -5029,6 +5056,11 @@ export class SongEditor {
     private _importInstruments = (): void => {
         this._openPrompt("importInstrument");
     };
+
+    private _saveInstrumentPresent = (): void => {
+        this._openPrompt("setUserPreset");
+        
+    }
 
     private _switchEQFilterType(toSimple: boolean) {
         const channel: Channel = this._doc.song.channels[this._doc.channel];
