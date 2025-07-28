@@ -1,4 +1,4 @@
-# Slarmoo's Box Testing
+# Slarmoo's Box
 
 Slarmoo's Box is an online tool for sketching and sharing instrumental music.
 You can find it [here](https://github.com/slarmoo/slarmoosbox/).
