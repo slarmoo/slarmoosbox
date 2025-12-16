@@ -1595,14 +1595,12 @@ export class Instrument {
     public type: InstrumentType = InstrumentType.chip;
     public preset: number = 0;
     public chipWave: number = 2;
-    // advloop addition
     public isUsingAdvancedLoopControls: boolean = false;
     public chipWaveLoopStart: number = 0;
     public chipWaveLoopEnd = Config.rawRawChipWaves[this.chipWave].samples.length - 1;
     public chipWaveLoopMode: number = 0; // 0: loop, 1: ping-pong, 2: once, 3: play loop once
     public chipWavePlayBackwards: boolean = false;
     public chipWaveStartOffset: number = 0;
-    // advloop addition
     public chipNoise: number = 1;
     public eqFilter: FilterSettings = new FilterSettings();
     public eqFilterType: boolean = false;
@@ -1818,14 +1816,12 @@ export class Instrument {
                 this.chipWave = 2;
                 // TODO: enable the chord effect? //slarmoo - My decision is no, others can if they would like though
                 this.chord = Config.chords.dictionary["arpeggio"].index;
-                // advloop addition
                 this.isUsingAdvancedLoopControls = false;
                 this.chipWaveLoopStart = 0;
                 this.chipWaveLoopEnd = Config.rawRawChipWaves[this.chipWave].samples.length - 1;
                 this.chipWaveLoopMode = 0;
                 this.chipWavePlayBackwards = false;
                 this.chipWaveStartOffset = 0;
-                // advloop addition
                 break;
             case InstrumentType.customChipWave:
                 this.chipWave = 2;
@@ -2190,14 +2186,12 @@ export class Instrument {
         } else if (this.type == InstrumentType.chip) {
             instrumentObject["wave"] = Config.chipWaves[this.chipWave].name;
 
-            // advloop addition
             instrumentObject["isUsingAdvancedLoopControls"] = this.isUsingAdvancedLoopControls;
             instrumentObject["chipWaveLoopStart"] = this.chipWaveLoopStart;
             instrumentObject["chipWaveLoopEnd"] = this.chipWaveLoopEnd;
             instrumentObject["chipWaveLoopMode"] = this.chipWaveLoopMode;
             instrumentObject["chipWavePlayBackwards"] = this.chipWavePlayBackwards;
             instrumentObject["chipWaveStartOffset"] = this.chipWaveStartOffset;
-            // advloop addition
         } else if (this.type == InstrumentType.pwm) {
             instrumentObject["pulseWidth"] = this.pulseWidth;
             instrumentObject["decimalOffset"] = this.decimalOffset;
@@ -3008,7 +3002,6 @@ export class Instrument {
                 }
             }
         }
-        // advloop addition
         if (type === 0) {
             if (instrumentObject["isUsingAdvancedLoopControls"] != undefined) {
                 this.isUsingAdvancedLoopControls = instrumentObject["isUsingAdvancedLoopControls"];
@@ -3027,7 +3020,6 @@ export class Instrument {
             }
         }
     }
-    // advloop addition
 
     public getLargestControlPointCount(forNoteFilter: boolean) {
         let largest: number;
@@ -8363,12 +8355,10 @@ class Tone {
     public readonly phases: number[] = [];
     public readonly operatorWaves: OperatorWave[] = [];
     public readonly phaseDeltas: number[] = [];
-    // advloop addition
     public directions: number[] = [];
     public chipWaveCompletions: number[] = [];
     public chipWavePrevWaves: number[] = [];
     public chipWaveCompletionsLastWave: number[] = [];
-    // advloop addition
     public readonly phaseDeltaScales: number[] = [];
     public expression: number = 0.0;
     public expressionDelta: number = 0.0;
@@ -8427,12 +8417,10 @@ class Tone {
         }
         for (let i: number = 0; i < Config.maxPitchOrOperatorCount * Config.unisonVoicesMax; i++) {
             this.phases[i] = 0.0;
-            // advloop addition
             this.directions[i] = 1;
             this.chipWaveCompletions[i] = 0;
             this.chipWavePrevWaves[i] = 0;
             this.chipWaveCompletionsLastWave[i] = 0;
-            // advloop addition
             this.operatorWaves[i] = Config.operatorWaves[0];
             this.feedbackOutputs[i] = 0.0;
             this.prevPitchExpressions[i] = null;
@@ -8472,14 +8460,12 @@ class InstrumentState {
     public type: InstrumentType = InstrumentType.chip;
     public synthesizer: Function | null = null;
     public wave: Float32Array | null = null;
-    // advloop addition
     public isUsingAdvancedLoopControls = false;
     public chipWaveLoopStart = 0;
     public chipWaveLoopEnd = 0;
     public chipWaveLoopMode = 0;
     public chipWavePlayBackwards = false;
     public chipWaveStartOffset = 0;
-    // advloop addition
     public noisePitchFilterMult: number = 1.0;
     public unison: Unison | null = null;
     public unisonVoices: number = 1;
@@ -9804,6 +9790,7 @@ export class Synth {
     private tempDrumSetControlPoint: FilterControlPoint = new FilterControlPoint();
     public tempFrequencyResponse: FrequencyResponse = new FrequencyResponse();
     public loopBarStart: number = -1;
+    /** An *inclusive* bound. */
     public loopBarEnd: number = -1;
 
     private static readonly fmSynthFunctionCache: Dictionary<Function> = {};
@@ -11909,7 +11896,6 @@ export class Synth {
         if ((tone.atNoteStart && !transition.isSeamless && !tone.forceContinueAtStart) || tone.freshlyAllocated) {
             tone.reset();
             instrumentState.envelopeComputer.reset();
-            // advloop addition
             if (instrument.type == InstrumentType.chip && instrument.isUsingAdvancedLoopControls) {
                 const chipWaveLength = Config.rawRawChipWaves[instrument.chipWave].samples.length - 1;
                 const firstOffset = instrument.chipWaveStartOffset / chipWaveLength;
@@ -11926,7 +11912,6 @@ export class Synth {
                     tone.chipWaveCompletionsLastWave[i] = 0;
                 }
             }
-            // advloop addition
         }
         tone.freshlyAllocated = false;
 
@@ -13004,7 +12989,6 @@ export class Synth {
             throw new Error("Unrecognized instrument type: " + instrument.type);
         }
     }
-    // advloop addition
     static wrap(x: number, b: number): number {
         return (x % b + b) % b;
     }
