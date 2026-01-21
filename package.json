@@ -25,7 +25,7 @@
 		"build-offline-html": "bash ./scripts/compile_beepbox_offline_html.sh",
 		"deploy-files": "bash ./scripts/deploy_files.sh",
 		"start": "electron ./to_deploy",
-		"package": "electron-packager ./to_deploy --platform=darwin,linux,win32 --arch=ia32,x64 --asar --overwrite && npm run build-offline-html",
+		"package": "electron-packager ./to_deploy --platform=darwin,linux,win32 --arch=ia32,x64,arm64 --asar --overwrite && npm run build-offline-html",
 		"package-host": "electron-packager ./to_deploy slarmoosbox --asar --overwrite && npm run build-offline-html",
 		"live_editor": "bash ./scripts/live_editor.sh",
 		"live_editor_typeless": "bash ./scripts/live_editor_typeless.sh",

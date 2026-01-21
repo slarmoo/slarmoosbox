@@ -42,6 +42,9 @@ jobs:
       - name: Bundle and compress darwin-x64 build
         run: |
           7z a -t7z -m0=lzma2 -mx=9 UltraBox-darwin-x64.7z ./UltraBox-darwin-x64/*
+      - name: Bundle and compress darwin-arm64 build
+        run: |
+          7z a -t7z -m0=lzma2 -mx=9 UltraBox-darwin-arm64.7z ./UltraBox-darwin-arm64/*
       - name: Bundle and compress linux-x64 build
         run: |
           7z a -t7z -m0=lzma2 -mx=9 UltraBox-linux-x64.7z ./UltraBox-linux-x64/*
@@ -62,6 +65,12 @@ jobs:
         with:
           name: UltraBox-darwin-x64
           path: ./UltraBox-darwin-x64.7z
+          compression-level: 0
+      - name: Make artifact for darwin-arm64 build
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraBox-darwin-arm64
+          path: ./UltraBox-darwin-arm64.7z
           compression-level: 0
       - name: Make artifact for linux-x64 build
         uses: actions/upload-artifact@v4
