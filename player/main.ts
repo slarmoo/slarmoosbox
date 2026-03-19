@@ -150,7 +150,8 @@ document.head.appendChild(HTML.style({type: "text/css"}, `
 	}
 `));
 const colorTheme: string | null = getLocalStorage("colorTheme");
-ColorConfig.setTheme(colorTheme === null ? ColorConfig.defaultTheme : colorTheme);
+if (colorTheme == "slarmoosbox") ColorConfig.setTheme("abyssbox classic");
+else ColorConfig.setTheme(colorTheme === null ? ColorConfig.defaultTheme : colorTheme);
 
 let prevHash: string | null = null;
 let id: string = ((Math.random() * 0xffffffff) >>> 0).toString(16);

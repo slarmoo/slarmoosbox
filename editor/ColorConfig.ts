@@ -4899,16 +4899,7 @@ export class ColorConfig {
 				--zoom-in-symbol: url("theme_resources/icon-zoomIn.png");
 				--zoom-out-symbol: url("theme_resources/icon-zoomOut.png");
 				--export-symbol: url("theme_resources/icon-export.png");
-					}
-			* {
-			cursor: url("theme_resources/abyssbox_cursor.png"), auto;
-			}
-			
-				@font-face {
-			   font-family: "AbyssType";
-			   src:
-				url("theme_resources/abysstype.otf") format("opentype") tech(color-COLRv1),
-				}
+					}			
 	
 				/* sets background image */
 				body {
@@ -4974,7 +4965,6 @@ export class ColorConfig {
 						image-rendering: pixelated !important;                 /* Future browsers */
 						image-rendering: optimizeSpeed !important;             /* IE */
 	
-						cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
 					}
 	
 				div.selectRow button:not(.copyButton,.pasteButton,.exportInstrumentButton,.importInstrumentButton) {
@@ -4985,91 +4975,6 @@ export class ColorConfig {
 					select.trackSelectBox {
 						border-image: none !important;
 					}
-					
-				@font-face {
-			   font-family: "AbyssType_small";
-			   src:
-				url("theme_resources/abysstype_small.otf") format("opentype") tech(color-COLRv1),
-				}
-	
-				html {
-					font-family: 'AbyssType';
-				}
-	
-				div.channelBoxLabel {
-					font-family: 'AbyssType_small' !important;
-				}
-	
-				.beepboxEditor input[type="range"]::-webkit-slider-thumb
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="range"]::-webkit-slider-runnable-track
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="range"]:focus::-webkit-slider-runnable-track
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="range"]::-ms-thumb
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="range"]::-ms-track
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="range"]:focus::-ms-track
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="range"]::-moz-range-thumb
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="range"]::-moz-range-track
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="range"]:focus::-moz-range-track
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="text"],
-				.beepboxEditor input[type="number"]
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="checkbox"]
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="checkbox"]:checked
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-				 
-				.beepboxEditor input[type="checkbox"]:checked:after
-				{
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-	
-				div.selectRow span {
-					cursor: url("theme_resources/abyssbox_cursor_hand.png"), pointer !important;
-				}
-	
 				`,
 		"abyssbox light": `
 			:root { 		
