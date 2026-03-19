@@ -64,8 +64,8 @@ export class SongDocument {
 
     constructor() {
         this.notifier.watch(this._validateDocState);
-
-        ColorConfig.setTheme(this.prefs.colorTheme);
+        if (this.prefs.colorTheme == "slarmoosbox") ColorConfig.setTheme("abyssbox classic");
+        else ColorConfig.setTheme(this.prefs.colorTheme);
         Layout.setLayout(this.prefs.layout);
 
         if (window.sessionStorage.getItem("currentUndoIndex") == null) {

@@ -48,7 +48,7 @@ export class AddSamplesPrompt {
     private readonly _instructionsLink: HTMLAnchorElement = a({ href: "#", style:"color:var(--loop-accent, red); font-weight:bold;"}, "> Click Here for instructions on adding samples <");
     private readonly _description: HTMLDivElement = div(
         div({ style: "margin-bottom: 0.5em; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text;" },
-            "In order to use the old Slarmoo's Box samples, you should add ",
+            "In order to use the old AbyssBox samples, you should add ",
             code("legacySamples"),
             " for the PaandorasBox Samples.",
             p({}),
@@ -70,7 +70,7 @@ export class AddSamplesPrompt {
         { style: "display: none; margin-top: 0; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text; overflow-y: auto;" },
         h2("Add Samples"),
         div({ style: "margin-top: 0.5em; margin-bottom: 0.5em;" },
-            "In Slarmoo's Box, custom samples are loaded from arbitrary URLs.",
+            "In AbyssBox, custom samples are loaded from arbitrary URLs.",
         ),
         div({ style: `margin-top: 0.5em; margin-bottom: 0.5em; color: ${ColorConfig.secondaryText};` },
             "(Technically, the web server behind the URL needs to support ",

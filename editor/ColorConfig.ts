@@ -14,7 +14,7 @@ export interface ChannelColors extends BeepBoxOption {
 export class ColorConfig {
     public static colorLookup: Map<number, ChannelColors> = new Map<number, ChannelColors>();
 	public static usesColorFormula: boolean = false;
-	public static readonly defaultTheme: string = "slarmoosbox";
+	public static readonly defaultTheme: string = "abyssbox classic";
     public static readonly themes: { [name: string]: string } = {
 	"dark classic": ``,
         "dark competition": `

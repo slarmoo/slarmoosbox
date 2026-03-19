@@ -27,7 +27,7 @@ export class ImportPrompt implements Prompt {
         // Currently this option is unnecessary (UB is handled the same as JB) but we're keeping it in case there's any future conflicts
         // There's also the situation where someone will see the "GoldBox" or "PaandorasBox" options and think they have to use one of those two
         option({ value: "UltraBox" }, "UltraBox"),
-        option({ value: "slarmoosbox"}, "Slarmoo's Box")
+        option({ value: "slarmoosbox"}, "AbyssBox")
     );
 
     public readonly container: HTMLDivElement = div({ class: "prompt noSelection", style: "width: 300px;" },
