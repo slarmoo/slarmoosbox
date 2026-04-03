@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel='shortcut icon' type='image/x-icon' href='https://slarmoo.github.io/slarmoosbox/website/favicon.ico' />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slarmoo's Box Snakes</title>
+    <meta name="application-name" content="Slarmoo's Box" />
+    <meta name="apple-mobile-web-app-title" content="Slarmoo's Box">
+    <meta name="description" content="Snakes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#247d1d" />
+    <meta name="msapplication-TileColor" content="#247d1d" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta property="og:image" content="https://slarmoo.github.io/slarmoosbox/website/icon_shadow_192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://slarmoo.github.io/slarmoosbox/website/icon_32.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="https://slarmoo.github.io/slarmoosbox/website/icon_32.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link href="https://fonts.googleapis.com/css?family=B612" rel="stylesheet" media="none"
+        onload="if (this.media != 'all') this.media='all';" /> <!-- this is a trick to load CSS asynchronously. -->
+    <style type="text/css">
+        html {
+            background: var(--page-margin, black);
+            overflow-x: hidden;
+            font-size: large;
+            font-family: 'B612', sans-serif;
+            line-height: 1.3;
+            color: var(--primary-text, white);
+        }
+
+        body {
+            margin: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            align-content: center;
+        }
+
+        h1 {
+            font-size: 1.7rem;
+            text-align: center;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+        }
+
+        a {
+            color: var(--link-accent, #98f);
+        }
+
+        p {
+            margin-left: 20px;
+            margin-right: 20px;
+            text-align: center;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="title">Snake</h1>
+    <p onclick="snake()" id="snake">🐍</p>
+</body>
+<script>
+    let snakes = 1;
+    let snakeMakers = 0;
+    let previousCheckpoint = 0;
+
+    setInterval(increaseSnakes, 1000);
+    document.body.addEventListener("keydown", function (event) {
+        if (event.key == "s") {
+            snakeMakers++;
+        }
+    });
+
+    function snake() {
+        const snake = document.getElementById("snake");
+        snake.innerHTML = snake.innerHTML + "🐍";
+        snakes++;
+        checkForMessage();
+    }
+
+    function increaseSnakes() {
+        const snake = document.getElementById("snake");
+        for(let i = 0; i < snakeMakers; i++) { //very slow at higher numbers, but idc enough to figure out a faster option for a silly easter egg lol
+            snake.innerHTML = snake.innerHTML + "🐍";
+        }
+        snakes+= snakeMakers;
+        checkForMessage();
+        window.scrollTo({ left: 0, top: document.body.scrollHeight });
+
+    }
+
+    function checkForMessage() {
+        let checkpoint = 0;
+        const checkpoints = [2, 100, 1000, 1125, 1250, 1400, 10000, 100000];
+        for(let i = 0; i < checkpoints.length; i++) {
+            const point = checkpoints[i]
+            if(snakes >= point) checkpoint++
+        }
+
+        if(previousCheckpoint != checkpoint) {
+            previousCheckpoint = checkpoint;
+            switch(checkpoint) {
+                case 1: {
+                    const title = document.getElementById("title");
+                    title.innerHTML = "Snakes";
+                    break;
+                }
+                case 2: {
+                    const message = document.createElement("h6");
+                    message.innerHTML = "You must really like snakes";
+                    message.id = "message";
+                    document.body.appendChild(message);
+                    break;
+                }
+                case 3: {
+                    const message = document.getElementById("message");
+                    message.innerHTML = "...and clicking";
+                    break;
+                }
+                case 4: {
+                    const message = document.getElementById("message");
+                    message.innerHTML = "here have a bonus snake for doing such a good job 🐍";
+                    break;
+                }
+                case 5: {
+                    const message = document.getElementById("message");
+                    message.innerHTML = "I wonder what happens if you press S...";
+                    break;
+                }
+                case 6: {
+                    const message = document.getElementById("message");
+                    message.innerHTML = "this is the last message (for now)";
+                    break;
+                } 
+                case 7: {
+                    const message = document.getElementById("message");
+                    message.innerHTML = "or is it? ;3";
+                    break;
+                }
+                case 8: {
+                    const message = document.getElementById("message");
+                    message.innerHTML = "okay this is for real the last one. Now go do something productive and make music";
+                    break;
+                }
+            }
+        }
+    }
+</script>

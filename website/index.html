@@ -497,11 +497,12 @@
             // Go ahead and load js beepbox editor interface:
             var fileref = document.createElement("script");
             fileref.setAttribute("type", "text/javascript");
-            if ((date.getDate() == 1) && date.getMonth() == 3) {
-                fileref.setAttribute("src", "foolish_editor.min.js");
-            } else {
+            // Re-enable close to April Fools
+            // if ((date.getDate() == 1) && date.getMonth() == 3) {
+            //     fileref.setAttribute("src", "foolish_editor.min.js");
+            // } else {
                 fileref.setAttribute("src", "beepbox_editor.min.js");
-            }
+            // }
             document.head.appendChild(fileref);
         } else {
             document.getElementById("beepboxEditorContainer").innerHTML = "Sorry, Slarmoo's Box doesn't support your browser. Try a recent version of Chrome, Firefox, Edge, Safari, or Opera.";

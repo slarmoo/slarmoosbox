@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slarmoo's Box FAQ</title>
+    <meta name="application-name" content="Slarmoo's Box" />
+    <meta name="apple-mobile-web-app-title" content="Slarmoo's Box">
+    <meta name="description"
+        content="Slarmoo's Box is a mod of Ultrabox that aims to advance Beepbox's capabilities." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#247d1d" />
+    <meta name="msapplication-TileColor" content="#247d1d" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta property="og:image" content="https://slarmoo.github.io/slarmoosbox/website/icon_shadow_192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./icon_32.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link href="https://fonts.googleapis.com/css?family=B612" rel="stylesheet" media="none"
+        onload="if (this.media != 'all') this.media='all';" /> <!-- this is a trick to load CSS asynchronously. -->
+    <style type="text/css">
+        html {
+            background: var(--page-margin, black);
+            overflow-x: hidden;
+            font-size: large;
+            font-family: 'B612', sans-serif;
+            line-height: 1.3;
+            color: var(--primary-text, white);
+            
+        }
+
+        li, details {
+            margin-left: 3vw;
+            margin-right: 3vw;
+            margin-bottom: 0;
+        }
+
+       h1 {
+            font-size: 1.7rem;
+            text-align: center;
+			align-items: center;
+            align-content: center;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+        }
+
+        h2, summary {
+            font-size: 1.5rem;
+			font-weight: bold;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+        }
+		
+
+        h3 {
+            font-size: 1.2rem;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+        }
+
+        a {
+            color: var(--link-accent, #98f);
+        }
+
+        table {
+            border-collapse: collapse;
+            margin: 20px;
+            align-self: center;
+            justify-content: center;
+        }
+
+        tr, tbody, thead {
+            margin: 0;
+            padding: 0
+        }
+
+        th {
+            border-width:2px; 
+            border-style: solid;
+            margin: 0;
+            padding: 10px;
+        }
+
+        /* wide screen */
+        @media (min-width: 711px) {
+            html {
+                width: 100%;
+            }
+
+            body {
+                width: 100%;
+            }
+        }
+
+        /* narrow screen */
+        @media (max-width: 710px) {
+            body {
+                width: 100%;
+            }
+
+            p {
+                margin: 1em 0.5em;
+            }
+        }
+    </style>
+<body>
+    <h1>
+        <font color="#247d1d"> Frequently Asked Questions </font>
+    </h1>
+    <details>
+        <summary> What does Slarmoo's Box add? </summary>
+        <p> Slarmoo's Box is a mod of Ultrabox, and has all of the same features that Ultrabox has. </p>
+        <p> Slarmoo's Box also adds a lot of new features. A non-exhaustive list is below: </p>
+        <ul>
+            <li>
+                Two new effects:
+            </li>
+            <ul>
+                <li>
+                    Ring Modulation (borrowed from Abyssbox): multiplies the instrument by a waveform to produce a buzzing sound
+                </li>
+                <li>
+                    Granular Synthesis: splices and shuffles the outputted waveform to create "sonic clouds"
+                </li>
+            </ul>
+            <li>
+                New envelopeable effects: reverb, echo, chorus, bitcrush, frequency crush, panning, distortion, and arpeggio speed (+ granular and ring mod)
+            </li>
+            <li>
+                Four new envelope types:
+            </li>
+            <ul>
+                <li>
+                    Pitch: Tracks what your notes do based on the pitch (an equivalent to keytracking in other daws). This envelope has an adjustable pitch range setting
+                </li>
+                <li>
+                    Fall: Similar to twang, except instead of decreasing quickly to slowly, fall decreases slowly to quickly
+                </li>
+                <li>
+                    Random: Produces a random value based on either the time, pitch, or note. This envelope has adjustable seed and steps for time settings depending on which type you select
+                </li>
+                <li>
+                    LFO: Modulates a value based on the selected waveform. This envelope type replaced the old tremolo envelope
+                </li>
+            </ul>
+            <li>
+                Individual envelope speeds, bounds, inversions, and discrete
+            </li>
+            <li> 
+                Increased max envelope count to 16 (from ultrabox's 12) and increased filter point count to 12 (from ultrabox's 8)
+            </li>
+            <li>
+                New Song EQ filter, along with modulation support
+            </li>
+            <li>
+                Nine voice unisons + drumset unisons
+            </li>
+            <li>
+                A new monophonic chord type
+            </li>
+            <li>
+                The ×128, ×250, and ×256 fm frequencies
+            </li>
+            <li>
+                Several new keybinds:
+                <ul>
+                    <li>
+                        In the Song player (shorten link, toggle loop, toggle zoom, and copy link)
+                    </li>
+                    <li>
+                        Opening and closing several dropdowns at once (envelopes and fm dropdowns)
+                    </li>
+                    <li>
+                        Random instrument generation with the current instrument type
+                    </li>
+                </ul>
+            </li>
+            <li>
+                And probably several other things that I'm forgetting
+            </li>
+        </ul>
+    </details>
+
+    <details>
+        <summary> Is Slarmoo's Box compatible with Ultrabox? </summary>
+        <span> Yes, Slarmoo's Box will properly import all songs from Ultrabox. </span>
+        <span> Both changing the domain of the link and importing an Ultrabox json will work </span>
+        <span> If you ever encounter any bugs with this please contact the developers at the links below </span>
+    </details>
+
+    <details>
+        <summary>How do I add custom samples?</summary>
+        Since Slarmoo's Box doesn't have a web server of its own, you'll have to first upload your sample to a CORS-friendly
+        website.
+        <ul>
+            <li>The easiest to use is <a href="https://filegarden.com/">File Garden</a>.</li>
+        </ul>
+    
+        Next, you have to copy the URL of the sound itself. The URL should end with the filetype, such as <code>.wav</code>
+        or <code>.mp3</code>.
+        <br><br>
+    
+        To import it into Slarmoo's Box, open the Edit tab, scroll to the bottom, and click on "Add Custom Samples..." or press "shift + Q"
+        <br><br>
+    
+        Paste your url and press "Okay." If everything goes smoothly, Slarmoo's Box will reload and your sample will be available
+        in the preset list.
+    </details>
+
+    <details>
+        <summary> What happened to the Envelopes? </summary>
+        <span> Slarmoo's Box 1.2 added individual envelope speeds.</span>
+        <span> This caused a lot of envelope types to be redundant, and as such they were removed. </span>
+        <span> Below is a table showing the conversion if you need it </span>
+        <table>
+            <thead>
+                <tr>
+                    <th>Old Name</th>
+                    <th colspan="2">New Name + Speed</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>none</th>
+                    <th>none</th>
+                    <th>NA</th>
+                </tr>
+                <tr>
+                    <th>note size</th>
+                    <th>note size</th>
+                    <th>NA</th>
+                </tr>
+                <tr>
+                    <th>pitch</th>
+                    <th>pitch</th>
+                    <th>NA</th>
+                </tr>
+                <tr>
+                    <th>punch</th>
+                    <th>punch</th>
+                    <th>NA</th>
+                </tr>
+                <tr>
+                    <th>flare -1</th>
+                    <th>flare</th>
+                    <th>128</th>
+                </tr>
+                <tr>
+                    <th>flare 1</th>
+                    <th>flare</th>
+                    <th>32</th>
+                </tr>
+                <tr>
+                    <th>flare 2</th>
+                    <th>flare</th>
+                    <th>8</th>
+                </tr>
+                <tr>
+                    <th>flare 3</th>
+                    <th>flare</th>
+                    <th>2</th>
+                </tr>
+                <tr>
+                    <th>twang -1</th>
+                    <th>twang</th>
+                    <th>128</th>
+                </tr>
+                <tr>
+                    <th>twang 1</th>
+                    <th>twang</th>
+                    <th>32</th>
+                </tr>
+                <tr>
+                    <th>twang 2</th>
+                    <th>twang</th>
+                    <th>8</th>
+                </tr>
+                <tr>
+                    <th>twang 3</th>
+                    <th>twang</th>
+                    <th>2</th>
+                </tr>
+                <tr>
+                    <th>swell -1</th>
+                    <th>swell</th>
+                    <th>128</th>
+                </tr>
+                <tr>
+                    <th>swell 1</th>
+                    <th>swell</th>
+                    <th>32</th>
+                </tr>
+                <tr>
+                    <th>swell 2</th>
+                    <th>swell</th>
+                    <th>8</th>
+                </tr>
+                <tr>
+                    <th>swell 3</th>
+                    <th>swell</th>
+                    <th>2</th>
+                </tr>
+                <tr>
+                    <th>tremolo0</th>
+                    <th>sine LFO</th>
+                    <th>8</th>
+                </tr>
+                <tr>
+                    <th>tremolo1</th>
+                    <th>sine LFO</th>
+                    <th>4</th>
+                </tr>
+                <tr>
+                    <th>tremolo2</th>
+                    <th>sine LFO</th>
+                    <th>2</th>
+                </tr>
+                <tr>
+                    <th>tremolo3</th>
+                    <th>sine LFO</th>
+                    <th>1</th>
+                </tr>
+                <tr>
+                    <th>tremolo4</th>
+                    <th>sine LFO*</th>
+                    <th>4</th>
+                </tr>
+                <tr>
+                    <th>tremolo5</th>
+                    <th>sine LFO*</th>
+                    <th>2</th>
+                </tr>
+                <tr>
+                    <th>tremolo6</th>
+                    <th>sine LFO*</th>
+                    <th>1</th>
+                </tr>
+                <tr>
+                    <th>decay -1</th>
+                    <th>decay</th>
+                    <th>40</th>
+                </tr>
+                <tr>
+                    <th>decay 1</th>
+                    <th>decay</th>
+                    <th>10</th>
+                </tr>
+                <tr>
+                    <th>decay 2</th>
+                    <th>decay</th>
+                    <th>7</th>
+                </tr>
+                <tr>
+                    <th>decay 3</th>
+                    <th>decay</th>
+                    <th>4</th>
+                </tr>
+                <tr>
+                    <th>wibble -1</th>
+                    <th>wibble</th>
+                    <th>96</th>
+                </tr>
+                <tr>
+                    <th>wibble 1</th>
+                    <th>wibble</th>
+                    <th>24</th>
+                </tr>
+                <tr>
+                    <th>wibble 2</th>
+                    <th>wibble</th>
+                    <th>12</th>
+                </tr>
+                <tr>
+                    <th>wibble 3</th>
+                    <th>wibble</th>
+                    <th>4</th>
+                </tr>
+                <tr>
+                    <th>linear -2</th>
+                    <th>linear</th>
+                    <th>256</th>
+                </tr>
+                <tr>
+                    <th>linear -1</th>
+                    <th>linear</th>
+                    <th>128</th>
+                </tr>
+                <tr>
+                    <th>linear 1</th>
+                    <th>linear</th>
+                    <th>32</th>
+                </tr>
+                <tr>
+                    <th>linear 2</th>
+                    <th>linear</th>
+                    <th>8</th>
+                </tr>
+                <tr>
+                    <th>linear 3</th>
+                    <th>linear</th>
+                    <th>2</th>
+                </tr>
+                <tr>
+                    <th>rise -2</th>
+                    <th>rise</th>
+                    <th>256</th>
+                </tr>
+                <tr>
+                    <th>rise -1</th>
+                    <th>rise</th>
+                    <th>128</th>
+                </tr>
+                <tr>
+                    <th>rise 1</th>
+                    <th>rise</th>
+                    <th>32</th>
+                </tr>
+                <tr>
+                    <th>rise 2</th>
+                    <th>rise</th>
+                    <th>8</th>
+                </tr>
+                <tr>
+                    <th>rise 3</th>
+                    <th>rise</th>
+                    <th>2</th>
+                </tr>
+                <tr>
+                    <th>flute 1</th>
+                    <th>wibble</th>
+                    <th>16</th>
+                </tr>
+                <tr>
+                    <th>flute 2</th>
+                    <th>wibble</th>
+                    <th>8</th>
+                </tr>
+                <tr>
+                    <th>flute 3</th>
+                    <th>wibble</th>
+                    <th>4</th>
+                </tr>
+                <tr>
+                    <th>tripolo1</th>
+                    <th>sine LFO</th>
+                    <th>9</th>
+                </tr>
+                <tr>
+                    <th>tripolo2</th>
+                    <th>sine LFO</th>
+                    <th>6</th>
+                </tr>
+                <tr>
+                    <th>tripolo3</th>
+                    <th>sine LFO</th>
+                    <th>3</th>
+                </tr>
+                <tr>
+                    <th>tripolo4</th>
+                    <th>sine LFO*</th>
+                    <th>9</th>
+                </tr>
+                <tr>
+                    <th>tripolo5</th>
+                    <th>sine LFO*</th>
+                    <th>6</th>
+                </tr>
+                <tr>
+                    <th>tripolo6</th>
+                    <th>sine LFO*</th>
+                    <th>3</th>
+                </tr>
+                <tr>
+                    <th>pentolo1</th>
+                    <th>sine LFO</th>
+                    <th>10</th>
+                </tr>
+                <tr>
+                    <th>pentolo2</th>
+                    <th>sine LFO</th>
+                    <th>5</th>
+                </tr>
+                <tr>
+                    <th>pentolo3</th>
+                    <th>sine LFO</th>
+                    <th>2.5</th>
+                </tr>
+                <tr>
+                    <th>pentolo4</th>
+                    <th>sine LFO*</th>
+                    <th>10</th>
+                </tr>
+                <tr>
+                    <th>pentolo5</th>
+                    <th>sine LFO*</th>
+                    <th>5</th>
+                </tr>
+                <tr>
+                    <th>pentolo6</th>
+                    <th>sine LFO*</th>
+                    <th>2.5</th>
+                </tr>
+                <tr>
+                    <th>flutter 1</th>
+                    <th>sine LFO</th>
+                    <th>14</th>
+                </tr>
+                <tr>
+                    <th>flutter 2</th>
+                    <th>sine LFO*</th>
+                    <th>11</th>
+                </tr>
+                <tr>
+                    <th>water-y flutter</th>
+                    <th>sine LFO</th>
+                    <th>9</th>
+                </tr>
+                <tr>
+                    <th>blip 1</th>
+                    <th>blip</th>
+                    <th>6</th>
+                </tr>
+                <tr>
+                    <th>blip 2</th>
+                    <th>blip</th>
+                    <th>16</th>
+                </tr>
+                <tr>
+                    <th>blip 3</th>
+                    <th>blip</th>
+                    <th>32</th>
+                </tr>
+                <tr>
+                    <th>fall 1</th>
+                    <th>fall</th>
+                    <th>8</th>
+                </tr>
+                <tr>
+                    <th>fall 2</th>
+                    <th>fall</th>
+                    <th>4</th>
+                </tr>
+                <tr>
+                    <th>fall 3</th>
+                    <th>fall</th>
+                    <th>2</th>
+                </tr>
+            </tbody>
+        </table>
+        <p>* lower bound should be set to 0.5 for these envelopes</p>
+    </details>
+
+    <details>
+        <summary> What can I do with Pitch Envelopes? </summary>
+        <span> Slarmoo's Box's pitch envelopes have a variety of unique uses. </span>
+        <span> You can: </span>
+        <ul>
+            <li>Set it to target pitch shift or detune (or custom unisons) to get anything from subtle pitch stretching to microtonality </li>
+            <li>Target note volume to have upper notes map quieter than lower notes or vice versa for help mixing</li>
+            <li>Target note volume to fade from one instrument to another (or suddenly change, which may be useful for multisampling)</li>
+            <li>Target pulse width, fm volume sliders, or other effects to have dynamic arpeggios</li>
+            <li>Target panning to have different notes be panned different directions</li>
+            <li>Have different pitches of a drumset or other instrument have different effect amounts</li>
+            <li>And many more techniques that you can discover on your own!</li>
+        </ul>
+    </details>
+
+    <details>
+        <summary>Does Slarmoo's Box have an offline version?</summary>
+        Yes. You can access it <a href="https://github.com/slarmoo/slarmoosbox/releases">here</a>.<br>
+        You can either download an OS-specific version that has custom sampling support, or the generic HTML version that
+        lacks custom sampling support.<br>
+        The offline version tends to update for every other online update
+    </details>
+    
+    <details>
+        <summary>Does Slarmoo's Box claim ownership over songs created with it?</summary>
+        Slarmoo's Box does not claim ownership over songs created with it, so original songs belong to their authors.<br><br>
+        Neither Slarmoo's Box nor its creators assume responsibility for any copyrighted material played on Slarmoo's Box. No songs
+        are ever received, recorded, or distributed by Slarmoo's Box's servers. All song data is contained in the URL after the
+        hash (#) mark, and Slarmoo's Box running inside your browser converts that data into sound waves.
+    </details>
+
+    <details>
+        <summary>When will <code>x</code> feature be added?</summary>
+        Features can be requested at the links below, but after that it's up to Slarmoo to work on features if/when they can. 
+        <br>
+        Note that Slarmoo very rarely chooses to add requested features and prefers to work on the features that they enjoy making instead. 
+        Contributions are welcome though, and can be made at the links below. 
+        <br>
+        Please be patient; Slarmoo works on Slarmoo's Box in their free time. They can't guarantee that anything will be out
+        in a timely manner, or at all.
+    </details>
+    
+    <details>
+        <summary>Where can I contact the developers?</summary>
+        You can contact the developers via the <a href="https://discord.gg/Tc997TstJb">BeepBox Modding Discord</a>.<br>
+        You can also contact us on the <a href="https://github.com/slarmoo/slarmoosbox/issues">issues page</a> if
+        you have ideas/suggestions or have encountered any bugs.
+    </details>
+</body>
+
+</html>
+<script>
+    document.body.addEventListener("keydown", function (event) {
+        if (event.key == "s" ) {
+            event.preventDefault();
+            if(!document.getElementById("snake")) {
+                const link = document.createElement("a");
+                link.href = "./snake.html"
+                link.id = "snake"
+                link.innerHTML = "🐍";
+                document.body.appendChild(link);
+            }
+        }
+    });
+</script>

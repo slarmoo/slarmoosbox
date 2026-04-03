@@ -69,11 +69,12 @@
 			var fileref = document.createElement("script");
 			fileref.setAttribute("type", "text/javascript");
 			const date = new Date();
-			if ((date.getDate() == 1) && date.getMonth() == 3) {
-				fileref.setAttribute("src", "foolish_player.min.js");
-			} else {
+			// Re-enable close to April Fools
+			// if ((date.getDate() == 1) && date.getMonth() == 3) {
+			// 	fileref.setAttribute("src", "foolish_player.min.js");
+			// } else {
 				fileref.setAttribute("src", "beepbox_player.min.js");
-			}
+			// }
 			document.head.appendChild(fileref);
 		} else {
 			document.body.innerHTML = "Sorry, BeepBox doesn't support your browser. Try a recent version of Chrome, Firefox, Edge, Safari, or Opera.";

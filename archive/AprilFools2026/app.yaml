@@ -1,0 +1,74 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+
+default_expiration: "1h"
+
+handlers:
+
+- url: /favicon\.ico
+  static_files: favicon.ico
+  upload: favicon\.ico
+
+- url: /robots\.txt
+  static_files: robots.txt
+  upload: robots\.txt
+
+- url: /synth_example\.html
+  static_files: synth_example.html
+  upload: synth_example\.html
+  mime_type: text/html; charset=UTF-8
+
+- url: /beepbox_offline\.html
+  static_files: beepbox_offline.html
+  upload: beepbox_offline\.html
+  mime_type: text/html; charset=UTF-8
+  http_headers:
+    Content-Disposition: "attachment; filename=beepbox_offline.html"
+
+- url: /2_3/beepbox_offline\.html
+  static_files: 2_3/beepbox_offline.html
+  upload: 2_3/beepbox_offline\.html
+  mime_type: text/html; charset=UTF-8
+  http_headers:
+    Content-Disposition: "attachment; filename=beepbox_offline.html"
+
+- url: /manifest\.webmanifest
+  static_files: manifest.webmanifest
+  upload: manifest\.webmanifest
+  http_headers:
+    Content-Type: application/manifest+json
+
+- url: /browserconfig\.xml
+  static_files: browserconfig.xml
+  upload: browserconfig\.xml
+
+- url: /(.*\.png)
+  static_files: \1
+  upload: (.*\.png)
+
+- url: /(.*\.js)
+  static_files: \1
+  upload: (.*\.js)
+  mime_type: application/javascript; charset=utf-8
+
+- url: /(.*\.js.map)
+  static_files: \1
+  upload: (.*\.js.map)
+  mime_type: application/json; charset=utf-8
+
+- url: /
+  static_files: index.html
+  upload: index\.html
+  mime_type: text/html; charset=UTF-8
+  secure: always
+  redirect_http_response_code: 301
+  http_headers:
+    Link: "<https://github.com/slarmoo/slarmoosbox/>; rel=\"canonical\"" 
+
+- url: /(.+/)*
+  static_files: \1index.html
+  upload: (.+/)*index\.html
+  mime_type: text/html; charset=UTF-8
+  secure: always
+  redirect_http_response_code: 301

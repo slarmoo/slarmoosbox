@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <!-- CDN for jQuery and select2 -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slarmoo's Box</title>
+    <meta name="application-name" content="Slarmoo's Box" />
+    <meta name="apple-mobile-web-app-title" content="Slarmoo's Box">
+    <meta name="description" content="Slarmoo's Box is a mod of Ultrabox that aims to advance Beepbox's capabilities." />
+    <meta name="keywords" content="chiptune, instrumental, music, song, melody, composition, tool, free, online, square wave, NES, NSF, slarmoosbox, ultrabox, beepbox, jummbox, pandorasbox, modbox, sandbox, goldbox, wackybox, todbox, slarmoo, slarmoos" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#247d1d" />
+    <meta name="msapplication-TileColor" content="#247d1d" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta property="og:image" content="https://slarmoo.github.io/slarmoosbox/website/icon_shadow_192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./icon_32.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link href="https://fonts.googleapis.com/css?family=B612" rel="stylesheet" media="none" onload="if (this.media != 'all') this.media='all';" /> <!-- this is a trick to load CSS asynchronously. -->
+    <style type="text/css">
+
+        html {
+            background: var(--page-margin, black);
+            overflow-x: hidden;
+            font-size: large;
+            font-family: 'B612', sans-serif;
+            line-height: 1.3;
+            color: var(--primary-text, white);
+        }
+
+        body {
+            margin: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            align-content: center;
+        }
+
+        #beepboxEditorContainer {
+            min-height: 645px;
+            overflow: auto;
+            background: var(--editor-background, black);
+            width: 100%;
+			max-width: 710px;
+            padding-left: 30px;
+            padding-right: 30px;
+        }
+
+        #text-content {
+            overflow: auto;
+            background: var(--editor-background, black);
+            width: 100%;
+			max-width: 710px;
+            padding-left: 30px;
+            padding-right: 30px;
+        }
+
+        #Hotdog { display: none; }
+
+        h1 {
+            font-size: 1.7rem;
+            text-align: center;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+            color: var(--mod-title, #247d1d);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            -webkit-text-stroke-width: 0;
+        }
+
+        .centerDiv {
+			margin: 0px auto;
+		}
+
+        a {
+            color: var(--link-accent, #98f);
+        }
+
+        .donation form {
+            display: inline;
+        }
+
+        .donation input[type="submit"] {
+            appearance: none;
+            -webkit-appearance: none;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: inherit;
+            color: var(--link-accent, #98f);
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+        } 
+
+        /* wide screen */
+		@media (min-width: 711px) {
+            html {
+                width: 100%;
+            }
+
+            body {
+                width: 100%;
+            }
+
+            .column-container {
+				width: 710px;
+                display: flex;
+				gap: 25px;
+            }
+
+            .instructions-column {
+				min-width: 0;
+            }
+
+            .bsky-column {
+				width: 300px;
+				flex-shrink: 0;
+			}
+        }
+
+        /* narrow screen */
+		@media (max-width: 710px) {
+            body {
+                width: 100%;
+            }
+
+            p, .donation {
+                margin: 1em 0.5em;
+            }
+
+            .column-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body id="secondImage">
+    <script>
+        const image = localStorage.getItem('customTheme2');
+        const el  = document.getElementById('secondImage');
+        if (image != null && image !== "null" && image !== "undefined") {
+            el.style.backgroundImage="url(" + image + ")";
+            el.style.backgroundRepeat= "repeat";
+        }
+    </script>
+    <div id="beepboxEditorContainer">
+        <noscript>
+            Sorry, Slarmoo's Box requires a JavaScript-enabled browser.
+        </noscript>
+    </div>
+    <div id="text-content">
+        <section>
+
+            <h1>
+                <font id="sbtitle">Slarmoo's Box</font>
+                <span id="plant" style="display: inline; color:#62a13b"></span>
+                <!-- <span id="plant" style="display: inline; color: var(--plant-color, var(--link-accent, #62a13b));"></span> -->
+            </h1>
+            
+            <p id="introduction">
+                Slarmoo's Box is a mod of Ultrabox that aims to advance Beepbox's capabilities.
+            </p>
+            <!-- <p>
+                All song data is contained in the URL at the top of your browser.
+                When you make changes to the song, the URL is updated to reflect your changes.
+                When you are satisfied with your song, just copy and paste the URL to save and share your song!
+            </p> -->
+            <p>
+                If you have any questions, please visit the <a href="./faq.html">FAQ</a>. Visit the <a href="./patch_notes.html">patch notes</a> to see the latest changes made.
+                <img id="Hotdog" src="" width="500" height="333" onclick="changeHotdogSize()" />
+            </p>
+    <div class="donation">
+        BeepBox is a passion project, and will always be free to use. If you find it valuable and have the means, please feel free to show your gratitude to the original creator of Beepbox here: 
+        <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
+            <input type="hidden" name="cmd" value="_donations" />
+            <input type="hidden" name="business" value="QZJTX9GRYEV9N" />
+            <input type="hidden" name="currency_code" value="USD" />
+            <input type="submit" name="submit" value="Paypal"/>
+        </form>
+        <br/>
+        Additionally, Slarmoo's Box takes a lot of time to make and update. If you have found it valuable and are able to do so, please consider donating to Slarmoo here: 
+        <form action="https://www.paypal.com/donate/?hosted_button_id=BMLD7HPKFR6NG" method="post" target="_blank">
+            <input type="submit" name="submit" value="Paypal" />
+        </form>
+    </div>
+        </section>
+
+        <div class="column-container">
+            <main class="instructions-column">
+                <section>
+                    <h2>
+                        Instructions
+                    </h2>
+                    <p>
+                        You can add or remove notes by clicking on the gray rows at the top.
+                        Slarmoo's Box automatically plays the notes out loud for you. Try it!
+		
+                    </p>
+                    <p>
+                        Notes go into patterns, and you can edit one pattern at a time.
+                        Those numbered boxes at the bottom of the editor are the different patterns you can edit.
+                        <span id="bar-editing">
+                            Click the boxes to move to a different part of the song, or click the arrows on the currently selected box to swap which pattern is played during that part of the song.
+                        </span>
+                    </p>
+                    <p>
+                        Slarmoo's Box can play several rows of patterns simultaneously, and each row has its own set of patterns.
+                        Most rows can play melodies or harmonies, but the bottom row is for drums.
+                    </p>
+                    <p>
+                        All song data is contained in the URL at the top of your browser.
+                        When you make changes to the song, the URL is updated to reflect your changes.
+                        When you are satisfied with your song, just copy and paste the URL to save and share your song!
+                    </p>
+
+                    <div id="keyboard-instructions">
+                        <p>
+                            When Slarmoo's Box has focus (click on its interface above), you can use these keyboard shortcuts: <br />
+                        </p>
+                        <ul>
+                            <li><b>Spacebar</b>: play or pause the song</li>
+                            <li><b>Shift Spacebar</b>: play from mouse location</li>
+							<li><b>Z</b>: undo, <b>Y or Shift Z</b>: redo</li>
+                            <li><b>C</b>: copy pattern from selection</li>
+                            <li><b>V</b>: paste pattern into selection</li>
+                            <li><b>X</b>: cut pattern</li>
+                            <li><b>0-9</b>: assign pattern number to selection</li>
+							<li><b>Arrows</b>: move selection</li>
+							<li><b>Ctrl & Arrows</b>: move selected channel up or down</li>
+							<li><b>[ ]</b>: move playhead backward or forward one bar</li>
+							<li><b>F/H</b>: move to First or Highlighted pattern</li>
+                            <li><b>Shift F</b>: move to start of loop</li>
+							<li><b>Shift & Drag</b>: select part of a pattern</li>
+                            <li><b>Enter</b>: add a new bar after currently selected one</li>
+                            <li><b>Shift Enter</b>: add a new bar before currently selected one</li>
+                            <li><b>Backspace</b>: delete currently selected bar</li>
+                            <li><b>Ctrl Enter</b>: add channel</li>
+                            <li><b>Ctrl Backspace</b>: delete currently selected channel</li>
+                            <li><b>D</b>: duplicate a pattern</li>
+                            <li><b>N</b>: create a new blank pattern</li>
+                            <li><b>+/-</b>: move notes up or down</li>
+                            <li><b>Shift & +/-</b>: move notes up or down one octave</li>
+                            <li><b>A</b>: select entire song</li>
+                            <li><b>Shift A</b>: select current channel</li>
+                            <li><b>Shift ~</b>: new blank song</li>
+                            <li><b>B</b>: loop bar</li>
+                            <li><b>R</b>: random preset</li>
+                            <li><b>Shift R</b>: random instrument</li>
+                            <li><b>Alt R</b>: random instrument with currently selected intrument type</li>
+                            <li><b>Shift P</b>: open song player</li>
+                            <li><b>Alt E</b>: open/close all envelope dropdowns</li>
+                            <li><b>Alt F</b>: open/close all fm dropdowns</li>
+                        </ul>
+                        If you have channel muting enabled: 
+                        <ul>
+                            <li><b>S</b>: Solo/unsolo a channel</li>
+                            <li><b>M</b> (or shift S): Mute/unmute a channel</li>
+                            <li><b>Shift M</b>: Mute/unmute entire song</li>
+                        </ul>
+                        And if you're in the song player:
+                        <ul>
+                            <li><b>Spacebar</b>: play or pause the song</li>
+                            <li><b>[ ]</b>: move playhead backward or forward one bar</li>
+							<li><b>F</b>: move to first pattern </li>
+                            <li><b>L</b>: toggle loop</li>
+                            <li><b>Z/+/-</b>: toggle zoom</li>
+                            <li><b> Ctrl E/P</b>: return to editor</li>
+                            <li><b>Ctrl S</b>: shorten song player link</li>
+                            <li><b>C</b>: copy link</li>
+                        </ul>
+                        <p>These are just a few shortcuts, check Slarmoo's Box's edit menu for more!</p>
+                    </div>
+                    <p>
+                        In the note pattern editor, you can click and drag horizontally on a note to adjust its duration.
+                        You can also click above or below an existing note to add more notes to be played simultaneously, which is called a chord.
+                    </p>
+                    <div id="mobile-instructions" style="display: none;">
+						<p>
+							You can also long-press in the pattern editor to select a time range within a pattern, which you can then drag to move multiple notes at once.<br/>
+						</p>
+					</div>
+                    <p>
+                        ADVANCED: Drag vertically from an existing note to bend its pitch, or drag vertically from above or below the note to adjust its volume. You can perform fine volume adjustment if you hold Control while doing this!
+                    </p>
+                    <p>
+                        ADVANCED: Click and drag on the pattern grid to make a selection. You can then press C/V to mass copy/paste parts of your song.
+
+                    </p>
+                    <p>
+                        Slarmoo's Box has many more features.
+                        Try playing with the buttons and menus on the right side to find out what it can do!
+                        You can also click on the label next to each option for a description of what it does.
+                        Some features are hard to find anywhere though - for example, if your song has any modulator channels, you can hold Ctrl or Shift while the song is playing to record the movement of sliders directly! If you want to learn more tips, tricks, and best practices though, see below.
+                    </p>
+                    <p>
+						Want to see what people have made with BeepBox? Songs that were shared on Twitter prior to 2023-05-22 can now be browsed in <a href="https://twitter-archive.beepbox.co/" target="_blank">this interactive archive</a>!
+                    </p>
+                </section>
+                <section>
+                    <h2>
+                        About
+                    </h2>
+                    <p>
+                        Slarmoo's Box is a mod of BeepBox developed by Slarmoo. The easiest way to contact the developers is via the <a href="https://discord.gg/Tc997TstJb" target="_blank">Beepbox Modding Discord</a>.<br><br>
+                    </p>
+                    <p>
+                        Slarmoo's Box does not claim ownership over songs created with it, so original songs belong to their authors.
+                    </p>
+                    <p>
+                        Neither Slarmoo's Box nor its creators assume responsibility for any copyrighted material played on Slarmoo's Box. No songs are ever received, recorded, or distributed by Slarmoo's Box's servers. All song data is contained in the URL after the hash (#) mark, and Slarmoo's Box running inside your browser converts that data into sound waves.
+                    </p>
+                    <p>
+                        Slarmoo's Box does not collect, track, or share any user data.
+                    </p>
+                    <p>
+                        You can download and use <a href="https://github.com/slarmoo/slarmoosbox" target="_blank">the source code</a> under the MIT license.
+                        The original BeepBox source code by John Nesky can be found <a href="https://github.com/johnnesky/beepbox" target="_blank">here</a>.
+                    </p>
+                    <p>
+                        The patch notes of Slarmoo's Box are available <a href="./patch_notes.html">here</a>.
+                    </p>     
+                    <p>
+                        To see everyone who helped with this project, visit the <a href="./credits.html">credits</a>
+                    </p>
+                </section>
+            </main>
+            <aside class="bsky-column">
+				<h2>
+					Shared on Bluesky:
+				</h2>
+				<div>
+					<!-- <a class="bsky-timeline" data-width="300" data-height="2000" data-link-color="#9988ff" data-chrome="noheader nofooter transparent" data-dnt="true" data-theme="dark" href="https://twitter.com/beepboxco?ref_src=twsrc%5Etfw" target="_blank">Songs retweeted by @beepboxco</a> -->
+                    <bsky-embed
+						feed="at://did:plc:mbrx5fkqsdgk5l2dfhygecm6/app.bsky.feed.generator/aaabsv7gjrgl2"
+						mode="dark"
+						link-target="_blank"
+						link-image="false"
+						limit="5"
+						load-more="true"
+						disable-styles="false"
+						custom-styles="a.mt-4.rounded-md.border.border-slate-300.block {display: none;} .flex > div { max-width: 90%; } .whitespace-pre-wrap { word-wrap: break-word;}"
+					  >
+                    </bsky-embed>
+                    <script async>
+                    // only load bsky-embed if it's actually visible
+                    // (the downside of doing this is that you have to manually reload the page to load/unload the library)
+                    if (window.localStorage.getItem("showDescription") != "false") {
+                        const bsky_script = document.createElement("script");
+
+                        bsky_script.src = "https://cdn.jsdelivr.net/npm/bsky-embed@0.2.2/dist/bsky-embed.es.min.js";
+                        bsky_script.type = "module";
+
+                        document.head.appendChild(bsky_script);
+                    }
+                    </script>
+					<!-- <script type="module" src="https://cdn.jsdelivr.net/npm/bsky-embed/dist/bsky-embed.es.js" async></script> -->
+				</div>
+			</aside>
+        </div>
+    </div>
+
+    <!--
+    Instead of loading js beepbox editor interface directly, test for browser support.
+    <script type="text/javascript" src="beepbox_editor.min.js"></script>
+    -->
+    <script type="text/javascript">
+
+        // Randomize display of header
+
+        const foolishPlants = ["xoBssybA", "<(\"𓆏\")", "\"Do people even read these?\" No probably not but I don't care!!!", "shitbox4 is the worst!", "The last two plants are unrelated", "( σ ‸σ)", "100% vegan", "https://tinyurl.com/iploggersong", "You're making a masterpiece", "Once was Ultrabox", "Free!", "plus", "check out My Abyss!", "is not full of water!", "The last two plants are unrelated", "Please send me this song!"];
+        document.getElementById("plant").innerHTML = "  " + foolishPlants[(Math.floor(Math.random() * foolishPlants.length))];
+        document.getElementById("sbtitle").innerText = "AbyssBox";
+        document.getElementById("sbtitle").style.color = "#bf2c5d";
+        document.getElementById("introduction").innerText = "AbyssBox is an all-encompassing mod of UltraBox that adds smaller but meaningful changes across the board. From new effects to quality of life changes to countless themes, AbyssBox overall makes the user experience more convenient and simple to use while also providing a different enough experience from UltraBox and its contemporaries to be worth using.";
+        
+        if(Math.random() * 10000 < 1) {
+            document.getElementById("plant").addEventListener("click", function (event) {
+                window.open("./macandcheese.html", "_blank");
+            })
+            const a = document.createElement("a");
+            document.getElementById("plant").innerHTML = " macaroni and cheese";
+            document.getElementById("plant").style.color = "#bb8822";
+        }
+
+        if(document.getElementById("plant").innerText.includes("🐲")) {
+            document.getElementById("plant").addEventListener("mouseover", function (event) {
+                document.getElementById("plant").innerText = " 🌈🍂🍁🍀🌷🍄🐍🌈🍃🌺🍄";
+            }, { once: true })
+        } 
+
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|android|ipad|playbook|silk/i.test(navigator.userAgent)) {
+            document.getElementById("introduction").innerHTML = "Slarmoo's Box is an online tool for sketching and sharing chiptune melodies. Make sure that your volume is turned up, then press the play button!";
+            document.getElementById("keyboard-instructions").style.display = "none";
+            document.getElementById("mobile-instructions").style.display = "";
+            document.getElementById("bar-editing").innerHTML = "Tap the boxes to move to a different part of the song, or tap on the currently selected box to swap which pattern is played during that part of the song.";
+			//document.getElementById("offline-instructions").innerHTML = 'You can use UltraBox when your device is offline if you put a shortcut to UltraBox on your home screen. <ul><li>Chrome: find the "Add to Home Screen" option in the ⋮ menu.</li><li>Firefox: find the "Add Page Shortcut" option in the ⋮ menu.</li><li>Safari: find the "Add to Home Screen" option in the bookmark menu.</li></ul>';
+        }
+
+        function browserHasRequiredFeatures() {
+            "use strict";
+            if (window.AudioContext == undefined && window.webkitAudioContext == undefined) {
+                return false;
+            }
+
+            try {
+                eval("class T {}");
+                eval("const a = () => 0");
+                eval("for (const a of []);");
+            } catch (error) {
+                return false;
+            }
+
+            return true;
+        }
+
+        if (browserHasRequiredFeatures()) {
+            // Go ahead and load js beepbox editor interface:
+            var fileref = document.createElement("script");
+            fileref.setAttribute("type", "text/javascript");
+            // if ((date.getDate() == 1) && date.getMonth() == 3) {
+            //     fileref.setAttribute("src", "foolish_editor.min.js");
+            // } else {
+                fileref.setAttribute("src", "beepbox_editor.min.js");
+            // }
+            document.head.appendChild(fileref);
+        } else {
+            document.getElementById("beepboxEditorContainer").innerHTML = "Sorry, Slarmoo's Box doesn't support your browser. Try a recent version of Chrome, Firefox, Edge, Safari, or Opera.";
+        }
+
+		// If the page was loaded with an old song version that old versions of BeepBox support,
+		// update the links to the old versions so that they'll open the song.
+	    //HEY, ULTRABOX DOESN'T HAVE THESE, WHAT DO WE DO????
+		if (/^#[1-6]/.test(location.hash)) {
+			document.getElementById("linkTo2_3").href += location.hash;
+		}
+		if (/^#[1-8]/.test(location.hash)) {
+			document.getElementById("linkTo3_0").href += location.hash;
+		}
+    </script>
+</body>
+</html>
