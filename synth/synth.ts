@@ -3164,6 +3164,7 @@ export class Song {
     private static readonly _variant = 0x73; //"s" ~ slarmoo's box
 
     public title: string;
+    public titleNotifier: Function[] = [];
     public scale: number;
     public scaleCustom: boolean[] = [];
     public key: number;
@@ -3455,7 +3456,7 @@ export class Song {
 
         //This is the tab's display name
         this.title = "Untitled";
-        document.title = this.title + " - " + EditorConfig.versionDisplayName;
+        this.titleNotifier.forEach(o => o());
 
         if (andResetChannels) {
             this.pitchChannelCount = 3;
@@ -4414,7 +4415,7 @@ export class Song {
                 // Length of song name string
                 var songNameLength = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                 this.title = decodeURIComponent(compressed.substring(charIndex, charIndex + songNameLength));
-                document.title = this.title + " - " + EditorConfig.versionDisplayName;
+                this.titleNotifier.forEach(o => o());
 
                 charIndex += songNameLength;
             } break;

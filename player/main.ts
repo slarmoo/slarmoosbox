@@ -683,6 +683,7 @@ function onKeyPressed(event: KeyboardEvent): void {
 	switch (event.keyCode) {
 		case 70: // first bar
 			synth.playhead = 0;
+			synth.resetEffects();
 			synth.computeLatestModValues();
 			renderPlayhead();
 			event.preventDefault();
@@ -694,12 +695,14 @@ function onKeyPressed(event: KeyboardEvent): void {
 			break;
 		case 219: // left brace
 			synth.goToPrevBar();
+			synth.resetEffects();
 			synth.computeLatestModValues();
 			renderPlayhead();
 			event.preventDefault();
 			break;
 		case 221: // right brace
 			synth.goToNextBar();
+			synth.resetEffects();
 			synth.computeLatestModValues();
 			renderPlayhead();
 			event.preventDefault();

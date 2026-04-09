@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 import { Config } from "../synth/SynthConfig";
-import { isMobile } from "./EditorConfig";
+import { EditorConfig, isMobile } from "./EditorConfig";
 import { Pattern, Channel, Song, Synth } from "../synth/synth";
 import { SongRecovery, generateUid, errorAlert } from "./SongRecovery";
 import { ColorConfig } from "./ColorConfig";
@@ -84,6 +84,9 @@ export class SongDocument {
                 setDefaultInstruments(this.song);
                 this.song.scale = this.prefs.defaultScale;
             }
+			const updateDocumentTitle = () => document.title = this.song.title + " - " + EditorConfig.versionDisplayName;
+			this.song.titleNotifier.push(updateDocumentTitle);
+			updateDocumentTitle();
         } catch (error) {
             errorAlert(error);
         }
