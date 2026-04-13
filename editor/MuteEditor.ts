@@ -91,7 +91,7 @@ export class MuteEditor {
         this._channelDropDownChannel = Math.floor(Math.min(this._buttons.length, Math.max(0, parseInt(this._channelDropDown.style.getPropertyValue("top")) / ChannelRow.patternHeight)));
         this._doc.muteEditorChannel = this._channelDropDownChannel;
 
-        this._channelNameDisplay.style.setProperty("display", "");
+		this._channelNameDisplay.style.setProperty("display", "none");
 
         // Check if channel is at limit, in which case another can't be inserted
         if ((this._channelDropDownChannel < this._doc.song.pitchChannelCount && this._doc.song.pitchChannelCount == Config.pitchChannelCountMax)
@@ -117,6 +117,9 @@ export class MuteEditor {
             this._channelDropDown.options[2].disabled = false;
         }
 
+		this._channelDropDown.options[3].text = this._doc.song.channels[this._channelDropDownChannel].muted ? "Unmute Channel" : "Mute Channel";
+		this._channelDropDown.options[4].text = this._isChannelSolo() ? "Unsolo Channel" : "Solo Channel";
+
         // Also, can't delete the last pitch channel.
         if (this._doc.song.pitchChannelCount == 1 && this._channelDropDownChannel == 0) {
             this._channelDropDown.options[6].disabled = true;
@@ -132,58 +135,45 @@ export class MuteEditor {
         this._channelDropDownOpen = false;
         event.stopPropagation();
 
-        switch (this._channelDropDown.value) {
-            case "rename":
-                this._channelNameInput.input.style.setProperty("display", "");
-                this._channelNameInput.input.style.setProperty("transform", this._channelNameDisplay.style.getPropertyValue("transform"));
-                if (this._channelNameDisplay.textContent != null) {
-                    this._channelNameInput.input.value = this._channelNameDisplay.textContent;
-                }
-                else {
-                    this._channelNameInput.input.value = "";
-                }
-                this._channelNameInput.input.select();
-                break;
-            case "chnUp":
-                this._doc.record(new ChangeChannelOrder(this._doc, this._channelDropDownChannel, this._channelDropDownChannel, -1));
-                break;
-            case "chnDown":
-                this._doc.record(new ChangeChannelOrder(this._doc, this._channelDropDownChannel, this._channelDropDownChannel, 1));
-                break;
-            case "chnMute":
-                this._doc.song.channels[this._channelDropDownChannel].muted = !this._doc.song.channels[this._channelDropDownChannel].muted;
-                this.render();
-                break;
-            case "chnSolo": {
-                // Check for any channel not matching solo pattern
-                let shouldSolo: boolean = false;
-                for (let channel: number = 0; channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channel++) {
-                    if (this._doc.song.channels[channel].muted == (channel == this._channelDropDownChannel)) {
-                        shouldSolo = true;
-                        channel = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount;
-                    }
-                }
-                if (shouldSolo) {
-                    for (let channel: number = 0; channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channel++) {
-                        this._doc.song.channels[channel].muted = (channel != this._channelDropDownChannel);
-                    }
-                }
-                else {
-                    for (let channel: number = 0; channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channel++) {
-                        this._doc.song.channels[channel].muted = false;
-                    }
-                }
-                this.render();
-                break;
-            }
-            case "chnInsert": {
-                this._doc.channel = this._channelDropDownChannel;
-                this._doc.selection.resetBoxSelection();
-                this._doc.selection.insertChannel();
-                break;
-            }
-            case "chnDelete": {
-                this._doc.record(new ChangeRemoveChannel(this._doc, this._channelDropDownChannel, this._channelDropDownChannel));
+		switch (this._channelDropDown.value) {
+			case "rename":
+				this._channelNameInput.input.style.setProperty("display", "");
+				this._channelNameInput.input.style.setProperty("transform", this._channelNameDisplay.style.getPropertyValue("transform"));
+				if (this._channelNameDisplay.textContent != null) {
+					this._channelNameInput.input.value = this._channelNameDisplay.textContent;
+				}
+				else {
+					this._channelNameInput.input.value = "";
+				}
+				this._channelNameInput.input.select();
+				break;
+			case "chnUp":
+				this._doc.record(new ChangeChannelOrder(this._doc, this._channelDropDownChannel, this._channelDropDownChannel, -1));
+				break;
+			case "chnDown":
+				this._doc.record(new ChangeChannelOrder(this._doc, this._channelDropDownChannel, this._channelDropDownChannel, 1));
+				break;
+			case "chnMute":
+				this._doc.song.channels[this._channelDropDownChannel].muted = !this._doc.song.channels[this._channelDropDownChannel].muted;
+				this.render();
+				break;
+			case "chnSolo": {
+				// Check for any channel not matching solo pattern
+				let isSolo = this._isChannelSolo();
+				for (let channel = 0; channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channel++) {
+					this._doc.song.channels[channel].muted = isSolo ? false : (channel !== this._channelDropDownChannel);
+				}
+				this.render();
+				break;
+			}
+			case "chnInsert": {
+				this._doc.channel = this._channelDropDownChannel;
+				this._doc.selection.resetBoxSelection();
+				this._doc.selection.insertChannel();
+				break;
+			}
+			case "chnDelete": {
+				this._doc.record(new ChangeRemoveChannel(this._doc, this._channelDropDownChannel, this._channelDropDownChannel));
 
                 break;
             }
@@ -263,17 +253,32 @@ export class MuteEditor {
         }
     }
 
-    public onKeyUp(event: KeyboardEvent): void {
-        switch (event.keyCode) {
-            case 27: // esc
-            case 13: // enter
-                this._channelDropDownOpen = false;
-                this._channelNameDisplay.style.setProperty("display", "none");
-                break;
-            default:
-                break;
-        }
-    }
+	public onKeyUp(event: KeyboardEvent): void {
+		switch (event.keyCode) {
+			case 27: // esc
+				this._channelDropDownOpen = false;
+				//console.log("close");
+				this._channelNameDisplay.style.setProperty("display", "none");
+				break;
+			case 13: // enter
+				this._channelDropDownOpen = false;
+				//console.log("close");
+				this._channelNameDisplay.style.setProperty("display", "none");
+				break;
+			default:
+				break;
+		}
+	}
+
+	private _isChannelSolo = () => {
+		for (let channel = 0; channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channel++) {
+			if (channel !== this._channelDropDownChannel && !this._doc.song.channels[channel].muted) {
+				return false;
+			}
+		}
+
+		return !this._doc.song.channels[this._channelDropDownChannel].muted;
+	}
 
     public render(): void {
         if (!this._doc.prefs.enableChannelMuting) return;
