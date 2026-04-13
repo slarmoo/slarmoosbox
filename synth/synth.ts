@@ -554,7 +554,7 @@ export class Pattern {
         }
 
         if (patternObject["notes"] && patternObject["notes"].length > 0) {
-            const maxNoteCount: number = Math.min(song.beatsPerBar * Config.partsPerBeat * (isModChannel ? Config.modCount : 1), patternObject["notes"].length >>> 0);
+            const maxNoteCount: number = Math.min(song.partsPerPattern * (isModChannel ? Config.modCount : 1), patternObject["notes"].length >>> 0);
 
             // TODO: Consider supporting notes specified in any timing order, sorting them and truncating as necessary.
             //let tickClock: number = 0;
@@ -606,7 +606,7 @@ export class Pattern {
                         size = ((pointObject["forMod"] | 0) > 0) ? Math.round(pointObject["volume"] | 0) : Math.max(0, Math.min(volumeCap, Math.round((pointObject["volume"] | 0) * volumeCap / 100)));
                     }
 
-                    if (time > song.beatsPerBar * Config.partsPerBeat) continue;
+                    if (time > song.partsPerPattern) continue;
                     if (note.pins.length == 0) {
                         //if (time < noteClock) continue;
                         note.start = time;
@@ -3208,6 +3208,10 @@ export class Song {
         }
     }
 
+    public get partsPerPattern() {
+        return this.beatsPerBar * Config.partsPerBeat;
+    }
+
     // Returns the ideal new note volume when dragging (max volume for a normal note, a "neutral" value for mod notes based on how they work)
     public getNewNoteVolume = (isMod: boolean, modChannel?: number, modInstrument?: number, modCount?: number): number => {
         if (!isMod || modChannel == undefined || modInstrument == undefined || modCount == undefined)
@@ -4183,10 +4187,10 @@ export class Song {
                         curPart = note.end;
                     }
 
-                    if (curPart < this.beatsPerBar * Config.partsPerBeat + (+isModChannel)) {
+                    if (curPart < this.partsPerPattern + (+isModChannel)) {
                         bits.write(2, 0); // rest
                         if (isModChannel) bits.write(1, 0); // positive offset
-                        bits.writePartDuration(this.beatsPerBar * Config.partsPerBeat + (+isModChannel) - curPart);
+                        bits.writePartDuration(this.partsPerPattern + (+isModChannel) - curPart);
                     }
                 } else {
                     bits.write(1, 0);
@@ -6222,7 +6226,7 @@ export class Song {
                         const newNotes: Note[] = newPattern.notes;
                         let noteCount: number = 0;
                         // Due to arbitrary note positioning, mod channels don't end the count until curPart actually exceeds the max
-                        while (curPart < this.beatsPerBar * Config.partsPerBeat + (+isModChannel)) {
+                        while (curPart < this.partsPerPattern + (+isModChannel)) {
 
                             const useOldShape: boolean = bits.read(1) == 1;
                             let newNote: boolean = false;
@@ -6408,7 +6412,7 @@ export class Song {
                                     }
                                 }
 
-                                curPart = validateRange(0, this.beatsPerBar * Config.partsPerBeat, note.end);
+                                curPart = validateRange(0, this.partsPerPattern, note.end);
                             }
                         }
                         newNotes.length = noteCount;

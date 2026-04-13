@@ -328,7 +328,7 @@ export class Selection {
         }
 
         const selectionCopy: SelectionCopy = {
-            "partDuration": this.patternSelectionActive ? this.patternSelectionEnd - this.patternSelectionStart : this._doc.song.beatsPerBar * Config.partsPerBeat,
+            "partDuration": this.patternSelectionActive ? this.patternSelectionEnd - this.patternSelectionStart : this._doc.song.partsPerPattern,
             "channels": channels,
         };
         window.localStorage.setItem("selectionCopy", JSON.stringify(selectionCopy));

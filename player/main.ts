@@ -491,7 +491,7 @@ function renderPlayhead(): void {
 		if (notesFlashWhenPlayed) {
 			const playheadBar: number = Math.floor(synth.playhead);
 			const modPlayhead: number = synth.playhead - playheadBar;
-			const partsPerBar: number = synth.song.beatsPerBar * Config.partsPerBeat;
+			const partsPerBar: number = synth.song.partsPerPattern;
 			const noteFlashElementsForThisBar: SVGPathElement[] = noteFlashElementsPerBar[playheadBar];
 
 			if (noteFlashElementsForThisBar != null && playheadBar !== currentNoteFlashBar) {
@@ -560,7 +560,7 @@ function renderTimeline(): void {
 	timeline.style.height = timelineHeight + "px";
 		
 	const barWidth: number = timelineWidth / synth.song.barCount;
-	const partWidth: number = barWidth / (synth.song.beatsPerBar * Config.partsPerBeat);
+	const partWidth: number = barWidth / (synth.song.partsPerPattern);
 
 		const wavePitchHeight: number = (timelineHeight-1) / windowPitchCount;
 		const drumPitchHeight: number =  (timelineHeight-1) / Config.drumCount;
