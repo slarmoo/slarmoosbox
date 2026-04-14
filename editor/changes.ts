@@ -147,7 +147,7 @@ function removeRedundantPins(pins: NotePin[]): void {
     }
 }
 
-function projectNoteIntoBar(oldNote: Note, timeOffset: number, noteStartPart: number, noteEndPart: number, newNotes: Note[]): void {
+function projectNoteIntoBar(doc: SongDocument, oldNote: Note, timeOffset: number, noteStartPart: number, noteEndPart: number, newNotes: Note[]): void {
     // Create a new note, and interpret the pitch bend and size events
     // to determine where we need to insert pins to control interval and volume.
     const newNote: Note = new Note(-1, noteStartPart, noteEndPart, Config.noteSizeMax, false);
@@ -197,7 +197,7 @@ function projectNoteIntoBar(oldNote: Note, timeOffset: number, noteStartPart: nu
 
     let joinedWithPrevNote: boolean = false;
     if (newNote.start == 0) {
-        newNote.continuesLastPattern = (timeOffset < 0 || oldNote.continuesLastPattern);
+        newNote.continuesLastPattern = !doc.song.getChannelIsMod(doc.channel) && (timeOffset < 0 || oldNote.continuesLastPattern);
     } else {
         newNote.continuesLastPattern = false;
         if (newNotes.length > 0 && oldNote.continuesLastPattern) {
@@ -467,7 +467,7 @@ export class ChangeMoveAndOverflowNotes extends ChangeGroup {
                                 // This is a consideration to allow arbitrary note sequencing, e.g. for mod channels (so the pattern being used can jump around)
                                 pattern = newChannel.patterns[newChannel.bars[bar] - 1];
 
-                                projectNoteIntoBar(oldNote, absoluteNoteStart - barStartPart - noteStartPart, noteStartPart, noteEndPart, pattern.notes);
+                                projectNoteIntoBar(doc, oldNote, absoluteNoteStart - barStartPart - noteStartPart, noteStartPart, noteEndPart, pattern.notes);
                             }
                         }
                     }
@@ -3652,7 +3652,7 @@ export class ChangePaste extends ChangeGroup {
                 for (const pin of noteObject["pins"]) {
                     note.pins.push(makeNotePin(pin.interval, pin.time, pin.size));
                 }
-                note.continuesLastPattern = (noteObject["continuesLastPattern"] === true) && (note.start == 0);
+                note.continuesLastPattern = !doc.song.getChannelIsMod(doc.channel) && (noteObject["continuesLastPattern"] === true) && (note.start == 0);
                 pattern.notes.splice(noteInsertionIndex++, 0, note);
                 if (note.end > selectionEnd) {
                     this.append(new ChangeNoteLength(doc, note, note.start, selectionEnd));
@@ -4364,7 +4364,7 @@ export class ChangeMoveNotesSideways extends ChangeGroup {
                                 const noteEndPart: number = Math.min(partsPerBar, absoluteNoteEnd - barStartPart);
 
                                 if (noteStartPart < noteEndPart) {
-                                    projectNoteIntoBar(oldNote, absoluteNoteStart - barStartPart - noteStartPart, noteStartPart, noteEndPart, newNotes);
+                                    projectNoteIntoBar(doc, oldNote, absoluteNoteStart - barStartPart - noteStartPart, noteStartPart, noteEndPart, newNotes);
                                 }
                             }
                         }
@@ -4855,7 +4855,8 @@ export class ChangeNoteAdded extends UndoableChange {
 export class ChangeNoteLength extends ChangePins {
     constructor(doc: SongDocument | null, note: Note, truncStart: number, truncEnd: number) {
         super(doc, note);
-        const continuesLastPattern: boolean = ((this._oldStart < 0 || note.continuesLastPattern) && truncStart == 0);
+        const continuesLastPattern: boolean = (doc === null || !doc.song.getChannelIsMod(doc.channel))
+            && ((this._oldStart < 0 || note.continuesLastPattern) && truncStart == 0);
 
         truncStart -= this._oldStart;
         truncEnd -= this._oldStart;
