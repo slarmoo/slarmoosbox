@@ -46,7 +46,7 @@ import { SpectrumEditor, SpectrumEditorPrompt } from "./SpectrumEditor";
 import { CustomThemePrompt } from "./CustomThemePrompt";
 import { ThemePrompt } from "./ThemePrompt";
 import { TipPrompt } from "./TipPrompt";
-import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback, ChangeRingMod, ChangeRingModHz, ChangeRingModChipWave, ChangeRingModPulseWidth, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeMonophonicTone } from "./changes";
+import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback, ChangeRingMod, ChangeRingModHz, ChangeRingModChipWave, ChangeRingModPulseWidth, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeMonophonicTone, ChangeLoop, ChangeChannelBar } from "./changes";
 
 import { TrackEditor } from "./TrackEditor";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
@@ -1077,7 +1077,7 @@ export class SongEditor {
     private readonly _harmonicsRow: HTMLElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("harmonics"), style: "font-size: smaller"}, "Harmonics:"), this._harmonicsZoom, this._harmonicsEditor.container);
 
     //SongEditor.ts
-    readonly envelopeEditor: EnvelopeEditor = new EnvelopeEditor(this.doc, (id: number, submenu: number, subtype: string) => this._toggleDropdownMenu(id, submenu, subtype), (name: string) => this._openPrompt(name));
+    readonly envelopeEditor: EnvelopeEditor = new EnvelopeEditor(this.doc, (id: number, submenu: number, subtype: string) => this._toggleDropdownMenu(id, submenu), (name: string) => this._openPrompt(name));
     private readonly _envelopeSpeedDisplay: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: smaller; text-overflow: clip;` }, "x1");
     private readonly _envelopeSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.modulators.dictionary["envelope speed"].maxRawVol, value: "0", step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeEnvelopeSpeed(this.doc, oldValue, newValue), false);
     private readonly _envelopeSpeedRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("envelopeSpeed") }, "‣ Spd:"), this._envelopeSpeedDisplay, this._envelopeSpeedSlider.container);
@@ -1218,8 +1218,7 @@ export class SongEditor {
         this._noteFilterRow,
         this._noteFilterSimpleCutRow,
         this._noteFilterSimplePeakRow,
-        // this._corruptionRow,
-        // this._corruptionTypeRow,
+        this._granularContainerRow,
         this._distortionRow,
         this._aliasingRow,
         this._bitcrusherQuantizationRow,
@@ -1229,7 +1228,6 @@ export class SongEditor {
         this._echoDelayRow,
         this._reverbRow,
         this._ringModContainerRow,
-        this._granularContainerRow,
         div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
             span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("envelopes") }, "Envelopes")),
             this._envelopeDropdown,
@@ -1816,73 +1814,72 @@ export class SongEditor {
         this._customAlgorithmCanvas.redrawCanvas();
     }
 
-    private _toggleDropdownMenu(dropdown: DropdownID, submenu: number = 0, subtype: string | null = null): void {
+    private _toggleDropdownMenu(dropdown: DropdownID, submenu: number = 0): void {
         let target: HTMLButtonElement = this._vibratoDropdown;
         let group: HTMLElement = this._vibratoDropdownGroup;
+        let shouldOpen: boolean = false;
         switch (dropdown) {
             case DropdownID.Envelope:
                 target = this._envelopeDropdown;
                 this._openEnvelopeDropdown = this._openEnvelopeDropdown ? false : true;
                 group = this._envelopeDropdownGroup;
+                shouldOpen = this._openEnvelopeDropdown;
                 break;
             case DropdownID.Vibrato:
                 target = this._vibratoDropdown;
                 this._openVibratoDropdown = this._openVibratoDropdown ? false : true;
                 group = this._vibratoDropdownGroup;
+                shouldOpen = this._openVibratoDropdown;
                 break;
             case DropdownID.Pan:
                 target = this._panDropdown;
                 this._openPanDropdown = this._openPanDropdown ? false : true;
                 group = this._panDropdownGroup;
+                shouldOpen = this._openPanDropdown;
                 break;
             case DropdownID.Chord:
                 target = this._chordDropdown;
                 this._openChordDropdown = this._openChordDropdown ? false : true;
                 group = this._chordDropdownGroup;
+                shouldOpen = this._openChordDropdown;
                 break;
             case DropdownID.Transition:
                 target = this._transitionDropdown;
                 this._openTransitionDropdown = this._openTransitionDropdown ? false : true;
                 group = this._transitionDropdownGroup;
+                shouldOpen = this._openTransitionDropdown;
                 break;
             case DropdownID.FM:
                 target = this._operatorDropdowns[submenu];
                 this._openOperatorDropdowns[submenu] = this._openOperatorDropdowns[submenu] ? false : true;
                 group = this._operatorDropdownGroups[submenu];
+                shouldOpen = this._openOperatorDropdowns[submenu];
                 break;
             case DropdownID.PulseWidth:
                 target = this._pulseWidthDropdown;
                 this._openPulseWidthDropdown = this._openPulseWidthDropdown ? false : true;
                 group = this._pulseWidthDropdownGroup;
+                shouldOpen = this._openPulseWidthDropdown;
                 break;
             case DropdownID.Unison:
                 target = this._unisonDropdown;
                 this._openUnisonDropdown = this._openUnisonDropdown ? false : true;
                 group = this._unisonDropdownGroup;
+                shouldOpen = this._openUnisonDropdown;
                 break;
             case DropdownID.EnvelopeSettings:
                 target = this.envelopeEditor.extraSettingsDropdowns[submenu];
                 this.envelopeEditor.openExtraSettingsDropdowns[submenu] = this.envelopeEditor.openExtraSettingsDropdowns[submenu] ? false : true;
                 group = this.envelopeEditor.extraSettingsDropdownGroups[submenu];
+                shouldOpen = this.envelopeEditor.openExtraSettingsDropdowns[submenu];
                 break;
         }
 
-        if (target.textContent == "▼") {
+        if (shouldOpen) {
             let instrument: Instrument = this.doc.song.channels[this.doc.channel].instruments[this.doc.getCurrentInstrument()];
             target.textContent = "▲";
             if (dropdown == DropdownID.EnvelopeSettings) {
                 group.style.display = "flex";
-                // if (subtype == "pitch") { 
-                //     this.envelopeEditor.extraPitchSettingsGroups[submenu].style.display = "flex";
-                //     this.envelopeEditor.perEnvelopeSpeedGroups[submenu].style.display = "none";
-                // } else {
-                //     this.envelopeEditor.extraPitchSettingsGroups[submenu].style.display = "none";
-                //     if (subtype == "notesize" || subtype == "none" || subtype == "punch") {
-                //         this.envelopeEditor.perEnvelopeSpeedGroups[submenu].style.display = "none";
-                //     } else {
-                //         this.envelopeEditor.perEnvelopeSpeedGroups[submenu].style.display = "flex";
-                //     }
-                // }
                 this.envelopeEditor.rerenderExtraSettings();
             } else if (group != this._chordDropdownGroup) {
                 group.style.display = "";
@@ -1905,8 +1902,7 @@ export class SongEditor {
                 );
             }
 
-        }
-        else {
+        } else {
             for (let i: number = 0; i < group.children.length; i++) {
                 (group.children[i] as HTMLElement).style.animationDelay = '0s';
                 (group.children[i] as HTMLElement).style.opacity = '0';
@@ -2803,14 +2799,12 @@ export class SongEditor {
                 if (this._openChordDropdown) {
                     if (instrument.chord == Config.chords.dictionary["arpeggio"].index) {
                         this._chordDropdownGroup.style.display = "";
-                    } else if (instrument.chord == Config.chords.dictionary["monophonic"].index) {
-                        this._chordDropdownGroup.style.display = "";
-                        setSelectedValue(this._chordSelect, instrument.chord);
                     } else {
                         this._chordDropdownGroup.style.display = "none";
                     }
                 }
                 if (instrument.chord == Config.chords.dictionary["monophonic"].index) {
+                    setSelectedValue(this._chordSelect, instrument.chord);
                     this._monophonicNoteInputBox.value = instrument.monoChordTone + 1 + "";
                     this._monophonicNoteInputBox.style.display = "";
                     this._chordSelectContainer.style.width = "52.5%";
@@ -2965,7 +2959,7 @@ export class SongEditor {
                 this._granularContainerRow.style.display = "none";
             }
 
-            if (instrument.type == InstrumentType.chip || instrument.type == InstrumentType.customChipWave || instrument.type == InstrumentType.harmonics || instrument.type == InstrumentType.pickedString || instrument.type == InstrumentType.spectrum || instrument.type == InstrumentType.pwm || instrument.type == InstrumentType.noise || instrument.type == InstrumentType.drumset) {
+            if (instrument.type != InstrumentType.mod) {
                 this._unisonSelectRow.style.display = "";
                 setSelectedValue(this._unisonSelect, instrument.unison);
                 this._unisonVoicesInputBox.value = instrument.unisonVoices + "";
@@ -4240,37 +4234,45 @@ export class SongEditor {
                     } else {
                         const leftSel = Math.min(this.doc.selection.boxSelectionX0, this.doc.selection.boxSelectionX1);
                         const rightSel = Math.max(this.doc.selection.boxSelectionX0, this.doc.selection.boxSelectionX1);
-                        if ((leftSel < this.doc.synth.loopBarStart || this.doc.synth.loopBarStart == -1)
-                            || (rightSel > this.doc.synth.loopBarEnd || this.doc.synth.loopBarEnd == -1)
-                        ) {
-                            this.doc.synth.loopBarStart = leftSel;
-                            this.doc.synth.loopBarEnd = rightSel;
-
-                            if (!this.doc.synth.playing) {
-                                this.doc.synth.snapToBar();
-                                this.doc.performance.play();
-                            }
-                        }
-                        else {
-                            this.doc.synth.loopBarStart = -1;
-                            this.doc.synth.loopBarEnd = -1;
-                        }
-
-                        // Pressed while viewing a different bar than the current synth playhead.
-                        if (this.doc.bar != Math.floor(this.doc.synth.playhead) && this.doc.synth.loopBarStart != -1) {
-
-                            this.doc.synth.goToBar(this.doc.bar);
-                            this.doc.synth.snapToBar();
-                            this.doc.synth.initModFilters(this.doc.song);
-                            this.doc.synth.computeLatestModValues();
+                        if (event.altKey) {
+                            let oldStart: number = this.doc.song.loopStart;
+                            let oldLength: number = this.doc.song.loopLength;
+                            this.doc.record(new ChangeLoop(this.doc, oldStart, oldLength, leftSel, rightSel - leftSel + 1));
+                            this.doc.synth.jumpIntoLoop();
                             if (this.doc.prefs.autoFollow) {
-                                this.doc.selection.setChannelBar(this.doc.channel, Math.floor(this.doc.synth.playhead));
+                                new ChangeChannelBar(this.doc, this.doc.channel, Math.floor(this.doc.synth.playhead), true);
+                            }
+                        } else {
+                            if ((leftSel < this.doc.synth.loopBarStart || this.doc.synth.loopBarStart == -1)
+                                || (rightSel > this.doc.synth.loopBarEnd || this.doc.synth.loopBarEnd == -1)
+                            ) {
+                                this.doc.synth.loopBarStart = leftSel;
+                                this.doc.synth.loopBarEnd = rightSel;
+
+                                if (!this.doc.synth.playing) {
+                                    this.doc.synth.snapToBar();
+                                    this.doc.performance.play();
+                                }
+                            } else {
+                                this.doc.synth.loopBarStart = -1;
+                                this.doc.synth.loopBarEnd = -1;
                             }
 
+                            // Pressed while viewing a different bar than the current synth playhead.
+                            if (this.doc.bar != Math.floor(this.doc.synth.playhead) && this.doc.synth.loopBarStart != -1) {
+
+                                this.doc.synth.goToBar(this.doc.bar);
+                                this.doc.synth.snapToBar();
+                                this.doc.synth.initModFilters(this.doc.song);
+                                this.doc.synth.computeLatestModValues();
+                                if (this.doc.prefs.autoFollow) {
+                                    this.doc.selection.setChannelBar(this.doc.channel, Math.floor(this.doc.synth.playhead));
+                                }
+
+                            }
+
+                            this._loopEditor.setLoopAt(this.doc.synth.loopBarStart, this.doc.synth.loopBarEnd);
                         }
-
-                        this._loopEditor.setLoopAt(this.doc.synth.loopBarStart, this.doc.synth.loopBarEnd);
-
                     }
                 }
                 event.preventDefault();
@@ -4345,8 +4347,7 @@ export class SongEditor {
                     const instrument: Instrument = this.doc.song.channels[this.doc.channel].instruments[this.doc.getCurrentInstrument()];
                     const isAllOpen: boolean = this.envelopeEditor.openExtraSettingsDropdowns.every((x) => { return x == true })
                     for (let i = 0; i < instrument.envelopeCount; i++) {
-                        if (isAllOpen) this.envelopeEditor.openExtraSettingsDropdowns[i] = false;
-                        else this.envelopeEditor.openExtraSettingsDropdowns[i] = true;
+                        if (isAllOpen == this.envelopeEditor.openExtraSettingsDropdowns[i]) this._toggleDropdownMenu(DropdownID.EnvelopeSettings, i);
                     }
                     this.envelopeEditor.rerenderExtraSettings();
                     event.preventDefault();
@@ -4384,8 +4385,7 @@ export class SongEditor {
                         if (!this._openOperatorDropdowns[i]) isAllOpen = false;
                     }
                     for (let i = 0; i < operatorCount; i++) {
-                        if (this._openOperatorDropdowns[i] == false && !isAllOpen || isAllOpen)
-                            this._toggleDropdownMenu(DropdownID.FM, i);
+                        if (this._openOperatorDropdowns[i] == isAllOpen) this._toggleDropdownMenu(DropdownID.FM, i);
                     }
                     event.preventDefault();
                 } else if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {

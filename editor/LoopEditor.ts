@@ -78,8 +78,7 @@ export class LoopEditor {
 
         if (bar >= this._loopAtPointStart && bar <= this._loopAtPointEnd + 1) {
             this._cursor.mode = this._loopMode;
-        }
-        else if (bar > this._doc.song.loopStart - 0.25 && bar < this._doc.song.loopStart + this._doc.song.loopLength + 0.25) {
+        } else if (bar > this._doc.song.loopStart - 0.25 && bar < this._doc.song.loopStart + this._doc.song.loopLength + 0.25) {
             if (bar - this._doc.song.loopStart < this._doc.song.loopLength * 0.5) {
                 this._cursor.mode = this._startMode;
             } else {
@@ -211,8 +210,7 @@ export class LoopEditor {
             } else if (this._cursor.mode == this._bothMode) {
                 const endPoints: Endpoints = this._findEndPoints(bar);
                 this._change = new ChangeLoop(this._doc, oldStart, oldEnd - oldStart, endPoints.start, endPoints.length);
-            }
-            else if (this._cursor.mode == this._loopMode) {
+            } else if (this._cursor.mode == this._loopMode) {
                 this._doc.synth.loopBarStart = -1;
                 this._doc.synth.loopBarEnd = -1;
                 this.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
