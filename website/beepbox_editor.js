@@ -1168,7 +1168,7 @@ var beepbox = (function (exports) {
         { name: "noteVolume", computeIndex: 0, displayName: "note volume", perNote: true, interleave: false, isFilter: false, maxCount: 1, effect: null, compatibleInstruments: null },
         { name: "pulseWidth", computeIndex: 2, displayName: "pulse width", perNote: true, interleave: false, isFilter: false, maxCount: 1, effect: null, compatibleInstruments: [6, 8] },
         { name: "stringSustain", computeIndex: 3, displayName: "sustain", perNote: true, interleave: false, isFilter: false, maxCount: 1, effect: null, compatibleInstruments: [7] },
-        { name: "unison", computeIndex: 4, displayName: "unison", perNote: true, interleave: false, isFilter: false, maxCount: 1, effect: null, compatibleInstruments: [0, 5, 7, 9, 6, 2, 3, 4] },
+        { name: "unison", computeIndex: 4, displayName: "unison", perNote: true, interleave: false, isFilter: false, maxCount: 1, effect: null, compatibleInstruments: [0, 5, 7, 9, 6, 2, 3, 4, 1, 11, 8] },
         { name: "operatorFrequency", computeIndex: 5, displayName: "fm# freq", perNote: true, interleave: true, isFilter: false, maxCount: _a$1.operatorCount + 2, effect: null, compatibleInstruments: [1, 11] },
         { name: "operatorAmplitude", computeIndex: 11, displayName: "fm# volume", perNote: true, interleave: false, isFilter: false, maxCount: _a$1.operatorCount + 2, effect: null, compatibleInstruments: [1, 11] },
         { name: "feedbackAmplitude", computeIndex: 17, displayName: "fm feedback", perNote: true, interleave: false, isFilter: false, maxCount: 1, effect: null, compatibleInstruments: [1, 11] },
@@ -24474,9 +24474,9 @@ li.select2-results__option[role=group] > strong:hover {
             pulseFunction(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState);
         }
         static supersawSynth(synth, bufferIndex, runLength, tone, instrumentState) {
-            const voiceCount = Config.supersawVoiceCount | 0;
-            const unisonsVoices = instrumentState.unisonVoices;
-            let supersawFunction = Synth.supersawFunctionCache[unisonsVoices];
+            const supersawVoiceCount = Config.supersawVoiceCount | 0;
+            const unisonVoiceCount = instrumentState.unisonVoices;
+            let supersawFunction = Synth.supersawFunctionCache[unisonVoiceCount];
             if (supersawFunction == undefined) {
                 let supersawSource = `return (synth, bufferIndex, runLength, tone, instrumentState) => {
         const data = synth.tempMonoInstrumentSampleBuffer;
@@ -24487,20 +24487,20 @@ li.select2-results__option[role=group] > strong:hover {
         const unisonSign = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
 
         `;
-                for (let i = 0; i < voiceCount; i++) {
-                    for (let j = 0; j < unisonsVoices; j++) {
+                for (let i = 0; i < supersawVoiceCount; i++) {
+                    for (let j = 0; j < unisonVoiceCount; j++) {
                         supersawSource += `
                     let phase#@ = tone.phases[$];
-                    `.replaceAll("#", i + "").replaceAll("@", j + "").replaceAll("$", (j * voiceCount + i) + "");
+                    `.replaceAll("#", i + "").replaceAll("@", j + "").replaceAll("$", (j * supersawVoiceCount + i) + "");
                     }
                 }
-                for (let j = 0; j < unisonsVoices; j++) {
+                for (let j = 0; j < unisonVoiceCount; j++) {
                     supersawSource += `
                 let phaseDelta# = tone.phaseDeltas[#];
                 const phaseDeltaScale# = +tone.phaseDeltaScales[#];
                 `.replaceAll("#", j + "");
                 }
-                for (let i = 0; i < voiceCount; i++) {
+                for (let i = 0; i < supersawVoiceCount; i++) {
                     supersawSource += `
                 const unisonDetune# = tone.supersawUnisonDetunes[#];
                 `.replaceAll("#", i + "");
@@ -24529,28 +24529,29 @@ li.select2-results__option[role=group] > strong:hover {
             // the delta before first sample to get a nonzero value.
             let supersawSample = 0;
             `;
-                for (let j = 0; j < unisonsVoices; j++) {
+                for (let j = 0; j < unisonVoiceCount; j++) {
                     supersawSource += `
             phase0# = (phase0# + phaseDelta#) - ((phase0# + phaseDelta#) | 0);
-            supersawSample += phase0# - 0.5 * (1.0 + (${voiceCount} - 1.0) * dynamism);
+            let bphase0# = phase0# - 0.5 * (1.0 + (${supersawVoiceCount} - 1.0) * dynamism);
             // This is a PolyBLEP, which smooths out discontinuities at any frequency to reduce aliasing. 
             if (!instrumentState.aliases) {
                 if (phase0# < phaseDelta#) {
                     var t = phase0# / phaseDelta#;
-                    supersawSample -= (t + t - t * t - 1) * 0.5;
+                    bphase0# -= (t + t - t * t - 1) * 0.5;
                 } else if (phase0# > 1.0 - phaseDelta#) {
                     var t = (phase0# - 1.0) / phaseDelta#;
-                    supersawSample -= (t + t + t * t + 1) * 0.5;
+                    bphase0# -= (t + t + t * t + 1) * 0.5;
                 }
             }
+            supersawSample += bphase0#${j > 0 ? " * unisonSign" : ""};
                 `.replaceAll("#", j + "");
                 }
                 supersawSource += `
 
             if (!instrumentState.aliases) {
             `;
-                for (let i = 1; i < voiceCount; i++) {
-                    for (let j = 0; j < unisonsVoices; j++) {
+                for (let i = 1; i < supersawVoiceCount; i++) {
+                    for (let j = 0; j < unisonVoiceCount; j++) {
                         supersawSource += `
                 const detunedPhaseDelta#@ = phaseDelta@ * unisonDetune#;
                 // The phase initially starts at a zero crossing so apply
@@ -24566,7 +24567,7 @@ li.select2-results__option[role=group] > strong:hover {
                     const t = (aphase#@ - 1.0) / detunedPhaseDelta#@;
                     bphase#@ -= (t + t + t * t + 1) * 0.5 * dynamism;
                 }
-                supersawSample += bphase#@ * unisonSign;
+                supersawSample += bphase#@${j > 0 ? " * unisonSign" : ""};
                 phase#@ = aphase#@;
                 `.replaceAll("#", i + "").replaceAll("@", j + "");
                     }
@@ -24574,14 +24575,14 @@ li.select2-results__option[role=group] > strong:hover {
                 supersawSource += `
             } else {
              `;
-                for (let i = 1; i < voiceCount; i++) {
-                    for (let j = 0; j < unisonsVoices; j++) {
+                for (let i = 1; i < supersawVoiceCount; i++) {
+                    for (let j = 0; j < unisonVoiceCount; j++) {
                         supersawSource += `
                 const detunedPhaseDelta#@ = phaseDelta@ * unisonDetune#;
                 // The phase initially starts at a zero crossing so apply
                 // the delta before first sample to get a nonzero value.
                 phase#@ = (phase#@ + detunedPhaseDelta#@) - ((phase#@ + detunedPhaseDelta#@) | 0);
-                supersawSample += phase#@ * dynamism * unisonSign;
+                supersawSample += phase#@ * dynamism${j > 0 ? " * unisonSign" : ""};
                 `.replaceAll("#", i + "").replaceAll("@", j + "");
                     }
                 }
@@ -24602,7 +24603,7 @@ li.select2-results__option[role=group] > strong:hover {
             initialFilterInput2 = initialFilterInput1;
             initialFilterInput1 = inputSample;
             `;
-                for (let j = 0; j < unisonsVoices; j++) {
+                for (let j = 0; j < unisonVoiceCount; j++) {
                     supersawSource += `
                 phaseDelta# *= phaseDeltaScale#;
                 `.replaceAll("#", j + "");
@@ -24617,14 +24618,14 @@ li.select2-results__option[role=group] > strong:hover {
 
             data[sampleIndex] += output;
         }`;
-                for (let i = 0; i < voiceCount; i++) {
-                    for (let j = 0; j < unisonsVoices; j++) {
+                for (let i = 0; i < supersawVoiceCount; i++) {
+                    for (let j = 0; j < unisonVoiceCount; j++) {
                         supersawSource += `
                 tone.phases[$] = phase#@;
-                `.replaceAll("#", i + "").replaceAll("@", j + "").replaceAll("$", (j * voiceCount + i) + "");
+                `.replaceAll("#", i + "").replaceAll("@", j + "").replaceAll("$", (j * supersawVoiceCount + i) + "");
                     }
                 }
-                for (let j = 0; j < unisonsVoices; j++) {
+                for (let j = 0; j < unisonVoiceCount; j++) {
                     supersawSource += `
             tone.phaseDeltas[#] = phaseDelta#;
             `.replaceAll("#", j + "");
@@ -24643,7 +24644,7 @@ li.select2-results__option[role=group] > strong:hover {
         tone.initialNoteFilterInput2 = initialFilterInput2;
         }`;
                 supersawFunction = new Function("Config", "Synth", supersawSource)(Config, Synth);
-                Synth.supersawFunctionCache[unisonsVoices] = supersawFunction;
+                Synth.supersawFunctionCache[unisonVoiceCount] = supersawFunction;
             }
             supersawFunction(synth, bufferIndex, runLength, tone, instrumentState);
         }
@@ -39450,7 +39451,6 @@ You should be redirected to the song at:<br /><br />
                 this._doc.record(new ChangeCustomScale(this._doc, this._flags));
             };
             this._flags = _doc.song.scaleCustom.slice();
-            console.log(this._flags);
             this._keyNames = [];
             for (let i = 0; i < Config.pitchesPerOctave; i++) {
                 this._keyNames[i] = SVG.text({ style: "font-size: 12px;", "fill": ColorConfig.invertedText, "text-anchor": "middle", "dominant-baseline": "central", "pointer-events": "none", "font-weight": "bolder" });

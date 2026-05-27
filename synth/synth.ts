@@ -14608,9 +14608,9 @@ export class Synth {
     }
 
     private static supersawSynth(synth: Synth, bufferIndex: number, runLength: number, tone: Tone, instrumentState: InstrumentState): void {
-        const voiceCount: number = Config.supersawVoiceCount | 0;
-        const unisonsVoices: number = instrumentState.unisonVoices;
-        let supersawFunction: Function = Synth.supersawFunctionCache[unisonsVoices];
+        const supersawVoiceCount: number = Config.supersawVoiceCount | 0;
+        const unisonVoiceCount: number = instrumentState.unisonVoices;
+        let supersawFunction: Function = Synth.supersawFunctionCache[unisonVoiceCount];
         if (supersawFunction == undefined) {
             let supersawSource: string = `return (synth, bufferIndex, runLength, tone, instrumentState) => {
         const data = synth.tempMonoInstrumentSampleBuffer;
@@ -14621,22 +14621,22 @@ export class Synth {
         const unisonSign = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
 
         `
-            for (let i: number = 0; i < voiceCount; i++) {
-                for (let j: number = 0; j < unisonsVoices; j++) {
+            for (let i: number = 0; i < supersawVoiceCount; i++) {
+                for (let j: number = 0; j < unisonVoiceCount; j++) {
                     supersawSource += `
                     let phase#@ = tone.phases[$];
-                    `.replaceAll("#", i + "").replaceAll("@", j + "").replaceAll("$", (j * voiceCount + i) + "");
+                    `.replaceAll("#", i + "").replaceAll("@", j + "").replaceAll("$", (j * supersawVoiceCount + i) + "");
                 }
             }
 
-            for (let j: number = 0; j < unisonsVoices; j++) {
+            for (let j: number = 0; j < unisonVoiceCount; j++) {
                 supersawSource += `
                 let phaseDelta# = tone.phaseDeltas[#];
                 const phaseDeltaScale# = +tone.phaseDeltaScales[#];
                 `.replaceAll("#", j + "");
             }
 
-            for (let i: number = 0; i < voiceCount; i++) {
+            for (let i: number = 0; i < supersawVoiceCount; i++) {
                 supersawSource += `
                 const unisonDetune# = tone.supersawUnisonDetunes[#];
                 `.replaceAll("#", i + "");
@@ -14666,20 +14666,21 @@ export class Synth {
             // the delta before first sample to get a nonzero value.
             let supersawSample = 0;
             `
-            for (let j: number = 0; j < unisonsVoices; j++) {
+            for (let j: number = 0; j < unisonVoiceCount; j++) {
                 supersawSource += `
             phase0# = (phase0# + phaseDelta#) - ((phase0# + phaseDelta#) | 0);
-            supersawSample += phase0# - 0.5 * (1.0 + (${voiceCount} - 1.0) * dynamism);
+            let bphase0# = phase0# - 0.5 * (1.0 + (${supersawVoiceCount} - 1.0) * dynamism);
             // This is a PolyBLEP, which smooths out discontinuities at any frequency to reduce aliasing. 
             if (!instrumentState.aliases) {
                 if (phase0# < phaseDelta#) {
                     var t = phase0# / phaseDelta#;
-                    supersawSample -= (t + t - t * t - 1) * 0.5;
+                    bphase0# -= (t + t - t * t - 1) * 0.5;
                 } else if (phase0# > 1.0 - phaseDelta#) {
                     var t = (phase0# - 1.0) / phaseDelta#;
-                    supersawSample -= (t + t + t * t + 1) * 0.5;
+                    bphase0# -= (t + t + t * t + 1) * 0.5;
                 }
             }
+            supersawSample += bphase0#${j > 0 ? " * unisonSign" : ""};
                 `.replaceAll("#", j + "");
             }
 
@@ -14688,8 +14689,8 @@ export class Synth {
             if (!instrumentState.aliases) {
             `
 
-            for (let i: number = 1; i < voiceCount; i++) {
-                for (let j: number = 0; j < unisonsVoices; j++) {
+            for (let i: number = 1; i < supersawVoiceCount; i++) {
+                for (let j: number = 0; j < unisonVoiceCount; j++) {
                     supersawSource += `
                 const detunedPhaseDelta#@ = phaseDelta@ * unisonDetune#;
                 // The phase initially starts at a zero crossing so apply
@@ -14705,7 +14706,7 @@ export class Synth {
                     const t = (aphase#@ - 1.0) / detunedPhaseDelta#@;
                     bphase#@ -= (t + t + t * t + 1) * 0.5 * dynamism;
                 }
-                supersawSample += bphase#@ * unisonSign;
+                supersawSample += bphase#@${j > 0 ? " * unisonSign" : ""};
                 phase#@ = aphase#@;
                 `.replaceAll("#", i + "").replaceAll("@", j + "");
                 }
@@ -14714,14 +14715,14 @@ export class Synth {
             supersawSource += `
             } else {
              `
-            for (let i: number = 1; i < voiceCount; i++) {
-                for (let j: number = 0; j < unisonsVoices; j++) {
+            for (let i: number = 1; i < supersawVoiceCount; i++) {
+                for (let j: number = 0; j < unisonVoiceCount; j++) {
                     supersawSource += `
                 const detunedPhaseDelta#@ = phaseDelta@ * unisonDetune#;
                 // The phase initially starts at a zero crossing so apply
                 // the delta before first sample to get a nonzero value.
                 phase#@ = (phase#@ + detunedPhaseDelta#@) - ((phase#@ + detunedPhaseDelta#@) | 0);
-                supersawSample += phase#@ * dynamism * unisonSign;
+                supersawSample += phase#@ * dynamism${j > 0 ? " * unisonSign" : ""};
                 `.replaceAll("#", i + "").replaceAll("@", j + "");
                 }
             }
@@ -14742,7 +14743,7 @@ export class Synth {
             initialFilterInput2 = initialFilterInput1;
             initialFilterInput1 = inputSample;
             `
-            for (let j: number = 0; j < unisonsVoices; j++) {
+            for (let j: number = 0; j < unisonVoiceCount; j++) {
                 supersawSource += `
                 phaseDelta# *= phaseDeltaScale#;
                 `.replaceAll("#", j + "")
@@ -14757,14 +14758,14 @@ export class Synth {
 
             data[sampleIndex] += output;
         }`
-            for (let i: number = 0; i < voiceCount; i++) {
-                for (let j: number = 0; j < unisonsVoices; j++) {
+            for (let i: number = 0; i < supersawVoiceCount; i++) {
+                for (let j: number = 0; j < unisonVoiceCount; j++) {
                     supersawSource += `
                 tone.phases[$] = phase#@;
-                `.replaceAll("#", i + "").replaceAll("@", j + "").replaceAll("$", (j * voiceCount + i) + "");
+                `.replaceAll("#", i + "").replaceAll("@", j + "").replaceAll("$", (j * supersawVoiceCount + i) + "");
                 }
             }
-            for (let j: number = 0; j < unisonsVoices; j++) {
+            for (let j: number = 0; j < unisonVoiceCount; j++) {
                 supersawSource += `
             tone.phaseDeltas[#] = phaseDelta#;
             `.replaceAll("#", j + "");
@@ -14783,7 +14784,7 @@ export class Synth {
         tone.initialNoteFilterInput2 = initialFilterInput2;
         }`
             supersawFunction = new Function("Config", "Synth", supersawSource)(Config, Synth);
-            Synth.supersawFunctionCache[unisonsVoices] = supersawFunction;
+            Synth.supersawFunctionCache[unisonVoiceCount] = supersawFunction;
         }
 
         supersawFunction(synth, bufferIndex, runLength, tone, instrumentState);

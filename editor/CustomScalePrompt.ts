@@ -28,7 +28,6 @@ export class CustomScalePrompt implements Prompt {
 
     constructor(private _doc: SongDocument) {
         this._flags = _doc.song.scaleCustom.slice();
-        console.log(this._flags)
         this._keyNames = [];
         for (let i: number = 0; i < Config.pitchesPerOctave; i++) {
             this._keyNames[i] = SVG.text({ style: "font-size: 12px;", "fill": ColorConfig.invertedText, "text-anchor": "middle", "dominant-baseline": "central", "pointer-events": "none", "font-weight": "bolder" });
@@ -60,6 +59,7 @@ export class CustomScalePrompt implements Prompt {
             key.setAttribute("height", String(height));
 
             const highlight: SVGRectElement = SVG.rect({ x: x, y: y + height - 3, width: width, height: 3, fill: ColorConfig.primaryText });
+            //SVG.polygon({ points: `${x},${y + height} ${x + width / 2},${y + height - 10} ${x + width},${y + height}`, fill: ColorConfig.primaryText });
             this._highlights.push(highlight);
 
             const wrappedKey: SVGGElement = SVG.g(
