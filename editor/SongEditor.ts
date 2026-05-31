@@ -4345,7 +4345,10 @@ export class SongEditor {
                 } else if (event.altKey) {
                     //open / close all envelope dropdowns
                     const instrument: Instrument = this.doc.song.channels[this.doc.channel].instruments[this.doc.getCurrentInstrument()];
-                    const isAllOpen: boolean = this.envelopeEditor.openExtraSettingsDropdowns.every((x) => { return x == true })
+                    let isAllOpen: boolean = true;
+                    for (let i = 0; i < instrument.envelopeCount; i++) {
+                        isAllOpen &&= this.envelopeEditor.openExtraSettingsDropdowns[i];
+                    }
                     for (let i = 0; i < instrument.envelopeCount; i++) {
                         if (isAllOpen == this.envelopeEditor.openExtraSettingsDropdowns[i]) this._toggleDropdownMenu(DropdownID.EnvelopeSettings, i);
                     }

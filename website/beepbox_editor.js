@@ -49078,7 +49078,10 @@ You should be redirected to the song at:<br /><br />
                         }
                         else if (event.altKey) {
                             const instrument = this.doc.song.channels[this.doc.channel].instruments[this.doc.getCurrentInstrument()];
-                            const isAllOpen = this.envelopeEditor.openExtraSettingsDropdowns.every((x) => { return x == true; });
+                            let isAllOpen = true;
+                            for (let i = 0; i < instrument.envelopeCount; i++) {
+                                isAllOpen && (isAllOpen = this.envelopeEditor.openExtraSettingsDropdowns[i]);
+                            }
                             for (let i = 0; i < instrument.envelopeCount; i++) {
                                 if (isAllOpen == this.envelopeEditor.openExtraSettingsDropdowns[i])
                                     this._toggleDropdownMenu(8, i);
