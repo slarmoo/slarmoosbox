@@ -220,14 +220,14 @@ const volumeBarContainer: SVGSVGElement = SVG.svg({ style: `touch-action: none; 
 	outVolumeBar,
 	outVolumeCap,
 );
-const sampleLoadingBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.indicatorPrimary};` });
-// const sampleFailedBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleFailed};` });
-const sampleLoadingBarContainer: HTMLDivElement = div({ class: `sampleLoadingContainer`, style: `overflow: hidden; margin: auto; width: 90%; height: 50%; background-color: var(--empty-sample-bar, ${ColorConfig.indicatorSecondary});`, preserveAspectRatio: "none" }, sampleLoadingBar, /*sampleFailedBar*/);
-const sampleLoadingStatusContainer: HTMLDivElement = div({},
-	div({ class: "selectRow", style: "overflow: hidden; margin: auto; width: 160px; height: 10px; " },
-		sampleLoadingBarContainer,
-	));
-const volumeBarContainerDiv: HTMLDivElement = div({ class: `volBarContainer`, style: "display:flex; flex-direction:column; touch-action: none; overflow: hidden; margin: auto" }, volumeBarContainer, sampleLoadingStatusContainer);
+
+const sampleLoadingBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleLoaded};` });
+const sampleFailedBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleFailed};` });
+const sampleLoadingBarContainer: HTMLDivElement = div({ style: `overflow: hidden; margin: auto; width: 90%; height: 5px; display: flex; background-color: ${ColorConfig.indicatorSecondary};` },
+	sampleLoadingBar,
+	sampleFailedBar,
+);
+
 document.body.appendChild(visualizationContainer);
 document.body.appendChild(
 	div({style: `flex-shrink: 0; height: 20vh; min-height: 22px; max-height: 70px; display: flex; align-items: center;`},
@@ -236,7 +236,10 @@ document.body.appendChild(
 		volumeIcon,
 		volumeSlider,
 		zoomButton,
-		volumeBarContainerDiv,
+		div({ style: "display: flex; flex-direction: column; overflow: hidden; margin: auto" },
+			volumeBarContainer,
+			sampleLoadingBarContainer,
+		),
 		oscilloscope.canvas, //make it auto remove itself later
 		titleText,
 		editLink,
@@ -400,6 +403,12 @@ function volumeUpdate(): void {
 function animateVolume(useOutVolumeCap: number, historicOutCap: number): void {
 	outVolumeBar.setAttribute("width", "" + Math.min(144, useOutVolumeCap * 144));
 	outVolumeCap.setAttribute("x", "" + (8 + Math.min(144, historicOutCap * 144)));
+}
+
+function updateSampleLoadingBar(e: SampleLoadedEvent): void {
+	sampleLoadingBar.style.width = `${e.computeSamplesLoadedPercentage()}%`;
+	sampleFailedBar.style.width = `${e.computeSamplesFailedPercentage()}%`;
+	sampleLoadingBarContainer.title = `Out of ${e.totalSamples} samples, ${e.samplesLoaded} loaded, and ${e.samplesFailed} did not load`;
 }
 
 function onTogglePlay(): void {
@@ -773,31 +782,7 @@ function onShareClicked(): void {
 	(<any>navigator).share({ url: location.href });
 }
 
-function updateSampleLoadingBar(_e: Event): void {
-	// @TODO: Avoid this cast and type EventTarget/Event properly.
-	const e: SampleLoadedEvent = <SampleLoadedEvent>_e;
-	const percent: number = (
-		e.totalSamples === 0
-			? 0
-			: Math.floor((e.samplesLoaded / e.totalSamples) * 100)
-	);
-	// const failedPercent: number = (
-	// 	e.totalSamples === 0
-	// 		? 0
-	// 		: Math.floor((e.samplesFailed / e.totalSamples) * 100)
-	// );
-	// sampleNum = Boolean(percent > 0 && failedPercent > 0);
-	sampleLoadingBarContainer.title = "Total Samples: " + String(e.totalSamples) + "; Loaded Samples: " + String(e.samplesLoaded) + "; ";//Samples Failed: " + String(e.samplesFailed) + ";";
-	sampleLoadingBar.style.width = `${percent}%`;
-	// sampleFailedBar.style.width = `${failedPercent + Number(sampleNum)}%`;
-	if (e.totalSamples != 0) {
-		sampleLoadingBarContainer.style.backgroundColor = "var(--indicator-secondary)";
-	} else {
-		sampleLoadingBarContainer.style.backgroundColor = "var(--empty-sample-bar, var(--indicator-secondary))";
-	}
-}
-
-	if ( top !== self ) {
+if ( top !== self ) {
 	// In an iframe.
 	copyLink.style.display = "none";
 	shareLink.style.display = "none";
@@ -844,7 +829,7 @@ zoomButton.addEventListener("click", onToggleZoom);
 copyLink.addEventListener("click", onCopyClicked);
 shareLink.addEventListener("click", onShareClicked);
 window.addEventListener("hashchange", hashUpdatedExternally);
-sampleLoadEvents.addEventListener("sampleloaded", updateSampleLoadingBar.bind(this));
+sampleLoadEvents.addEventListener("sampleloaded", (event) => updateSampleLoadingBar(event));
 
 // When compiling synth.ts as a standalone module named "beepbox", expose these classes as members to JavaScript:
 	export {Dictionary, DictionaryArray, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config, NotePin, Note, Pattern, Instrument, Channel, Synth as Synth};
