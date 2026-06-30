@@ -39,14 +39,26 @@ var beepbox = (function (exports) {
             this.urlTable = {};
             this.totalSamples = 0;
             this.samplesLoaded = 0;
+            this.samplesFailed = 0;
         }
     }
     const sampleLoadingState = new SampleLoadingState();
     class SampleLoadedEvent extends Event {
-        constructor(totalSamples, samplesLoaded) {
+        constructor(totalSamples, samplesLoaded, samplesFailed) {
             super("sampleloaded");
             this.totalSamples = totalSamples;
             this.samplesLoaded = samplesLoaded;
+            this.samplesFailed = samplesFailed;
+        }
+        computeSamplesLoadedPercentage() {
+            return (this.totalSamples === 0
+                ? 0
+                : Math.round((this.samplesLoaded / this.totalSamples) * 100));
+        }
+        computeSamplesFailedPercentage() {
+            return (this.totalSamples === 0
+                ? 0
+                : Math.round((this.samplesFailed / this.totalSamples) * 100));
         }
     }
     class SampleLoadEvents extends EventTarget {
@@ -92,14 +104,16 @@ var beepbox = (function (exports) {
                 }
                 sampleLoadingState.samplesLoaded++;
                 sampleLoadingState.statusTable[chipWaveIndex] = 1;
-                sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded));
+                sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded, sampleLoadingState.samplesFailed));
                 if (!closedSampleLoaderAudioContext) {
                     closedSampleLoaderAudioContext = true;
                     sampleLoaderAudioContext.close();
                 }
             }).catch((error) => {
                 sampleLoadingState.statusTable[chipWaveIndex] = 2;
-                alert("Failed to load " + url + ":\n" + error);
+                sampleLoadingState.samplesFailed++;
+                sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded, sampleLoadingState.samplesFailed));
+                console.log("Failed to load " + url + ":\n" + error);
                 if (!closedSampleLoaderAudioContext) {
                     closedSampleLoaderAudioContext = true;
                     sampleLoaderAudioContext.close();
@@ -109,118 +123,115 @@ var beepbox = (function (exports) {
     }
     function loadScript(url) {
         const result = new Promise((resolve, reject) => {
-            if (!Config.willReloadForCustomSamples) {
-                const script = document.createElement("script");
-                script.src = url;
-                document.head.appendChild(script);
-                script.addEventListener("load", (event) => {
-                    resolve();
-                });
+            if (window["HTML_OFFLINE"] === true) {
+                resolve();
+            }
+            else {
+                if (!Config.willReloadForCustomSamples) {
+                    const script = document.createElement("script");
+                    script.src = url;
+                    document.head.appendChild(script);
+                    script.addEventListener("load", (event) => {
+                        resolve();
+                    });
+                }
             }
         });
         return result;
     }
+    const bundledSamplePacks = {
+        legacy: "legacysamples",
+        nintaribox: "nintariboxsamples",
+        mariopaintbox: "mariopaintboxsamples"
+    };
     function loadBuiltInSamples(set) {
         const defaultIndex = 0;
         const defaultIntegratedSamples = Config.chipWaves[defaultIndex].samples;
         const defaultSamples = Config.rawRawChipWaves[defaultIndex].samples;
-        if (set == 0) {
-            const chipWaves = [
-                { name: "paandorasbox kick", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "paandorasbox snare", expression: 3.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "paandorasbox piano1", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 2 },
-                { name: "paandorasbox WOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
-                { name: "paandorasbox overdrive", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -2 },
-                { name: "paandorasbox trumpet", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 1.2 },
-                { name: "paandorasbox saxophone", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -5 },
-                { name: "paandorasbox orchestrahit", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
-                { name: "paandorasbox detatched violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
-                { name: "paandorasbox synth", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -0.8 },
-                { name: "paandorasbox sonic3snare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "paandorasbox come on", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
-                { name: "paandorasbox choir", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
-                { name: "paandorasbox overdriveguitar", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6.2 },
-                { name: "paandorasbox flute", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6 },
-                { name: "paandorasbox legato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -28 },
-                { name: "paandorasbox tremolo violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -33 },
-                { name: "paandorasbox amen break", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -55 },
-                { name: "paandorasbox pizzicato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -11 },
-                { name: "paandorasbox tim allen grunt", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -20 },
-                { name: "paandorasbox tuba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 44 },
-                { name: "paandorasbox loopingcymbal", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17 },
-                { name: "paandorasbox standardkick", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -7 },
-                { name: "paandorasbox standardsnare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "paandorasbox closedhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 5 },
-                { name: "paandorasbox foothihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 4 },
-                { name: "paandorasbox openhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -31 },
-                { name: "paandorasbox crashcymbal", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -43 },
-                { name: "paandorasbox pianoC4", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.5 },
-                { name: "paandorasbox liver pad", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -22.5 },
-                { name: "paandorasbox marimba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -15.5 },
-                { name: "paandorasbox susdotwav", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -24.5 },
-                { name: "paandorasbox wackyboxtts", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17.5 },
-                { name: "paandorasbox peppersteak_1", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.2 },
-                { name: "paandorasbox peppersteak_2", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -47 },
-                { name: "paandorasbox vinyl_noise", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -50 },
-                { name: "paandorasbeta slap bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -56 },
-                { name: "paandorasbeta HD EB overdrive guitar", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60 },
-                { name: "paandorasbeta sunsoft bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -18.5 },
-                { name: "paandorasbeta masculine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
-                { name: "paandorasbeta feminine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60.5 },
-                { name: "paandorasbeta tololoche", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -29.5 },
-                { name: "paandorasbeta harp", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -54 },
-                { name: "paandorasbeta pan flute", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -58 },
-                { name: "paandorasbeta krumhorn", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -46 },
-                { name: "paandorasbeta timpani", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
-                { name: "paandorasbeta crowd hey", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -29 },
-                { name: "paandorasbeta wario land 4 brass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -68 },
-                { name: "paandorasbeta wario land 4 rock organ", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -63 },
-                { name: "paandorasbeta wario land 4 DAOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -35 },
-                { name: "paandorasbeta wario land 4 hour chime", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -47.5 },
-                { name: "paandorasbeta wario land 4 tick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -12.5 },
-                { name: "paandorasbeta kirby kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-                { name: "paandorasbeta kirby snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-                { name: "paandorasbeta kirby bongo", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-                { name: "paandorasbeta kirby click", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-                { name: "paandorasbeta sonor kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
-                { name: "paandorasbeta sonor snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
-                { name: "paandorasbeta sonor snare (left hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
-                { name: "paandorasbeta sonor snare (right hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
-                { name: "paandorasbeta sonor high tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
-                { name: "paandorasbeta sonor low tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
-                { name: "paandorasbeta sonor hihat (closed)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -17 },
-                { name: "paandorasbeta sonor hihat (half opened)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -21 },
-                { name: "paandorasbeta sonor hihat (open)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -54.5 },
-                { name: "paandorasbeta sonor hihat (open tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -43.5 },
-                { name: "paandorasbeta sonor hihat (pedal)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28 },
-                { name: "paandorasbeta sonor crash", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -51 },
-                { name: "paandorasbeta sonor crash (tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -50.5 },
-                { name: "paandorasbeta sonor ride", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46 }
-            ];
-            sampleLoadingState.totalSamples += chipWaves.length;
-            const startIndex = Config.rawRawChipWaves.length;
-            for (const chipWave of chipWaves) {
-                const chipWaveIndex = Config.rawRawChipWaves.length;
-                const rawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-                const rawRawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-                const integratedChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultIntegratedSamples };
-                Config.rawRawChipWaves[chipWaveIndex] = rawRawChipWave;
-                Config.rawRawChipWaves.dictionary[chipWave.name] = rawRawChipWave;
-                Config.rawChipWaves[chipWaveIndex] = rawChipWave;
-                Config.rawChipWaves.dictionary[chipWave.name] = rawChipWave;
-                Config.chipWaves[chipWaveIndex] = integratedChipWave;
-                Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
-                sampleLoadingState.statusTable[chipWaveIndex] = 0;
-                sampleLoadingState.urlTable[chipWaveIndex] = "legacySamples";
-            }
-            loadScript("samples.js")
-                .then(() => loadScript("samples2.js"))
-                .then(() => loadScript("samples3.js"))
-                .then(() => loadScript("drumsamples.js"))
-                .then(() => loadScript("wario_samples.js"))
-                .then(() => loadScript("kirby_samples.js"))
-                .then(() => {
-                const chipWaveSamples = [
+        const sets = [
+            {
+                name: bundledSamplePacks.legacy,
+                chipWaves: [
+                    { name: "paandorasbox kick", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                    { name: "paandorasbox snare", expression: 3.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                    { name: "paandorasbox piano1", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 2 },
+                    { name: "paandorasbox WOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
+                    { name: "paandorasbox overdrive", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -2 },
+                    { name: "paandorasbox trumpet", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 1.2 },
+                    { name: "paandorasbox saxophone", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -5 },
+                    { name: "paandorasbox orchestrahit", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
+                    { name: "paandorasbox detatched violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
+                    { name: "paandorasbox synth", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -0.8 },
+                    { name: "paandorasbox sonic3snare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                    { name: "paandorasbox come on", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
+                    { name: "paandorasbox choir", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
+                    { name: "paandorasbox overdriveguitar", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6.2 },
+                    { name: "paandorasbox flute", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6 },
+                    { name: "paandorasbox legato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -28 },
+                    { name: "paandorasbox tremolo violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -33 },
+                    { name: "paandorasbox amen break", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -55 },
+                    { name: "paandorasbox pizzicato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -11 },
+                    { name: "paandorasbox tim allen grunt", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -20 },
+                    { name: "paandorasbox tuba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 44 },
+                    { name: "paandorasbox loopingcymbal", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17 },
+                    { name: "paandorasbox standardkick", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -7 },
+                    { name: "paandorasbox standardsnare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                    { name: "paandorasbox closedhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 5 },
+                    { name: "paandorasbox foothihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 4 },
+                    { name: "paandorasbox openhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -31 },
+                    { name: "paandorasbox crashcymbal", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -43 },
+                    { name: "paandorasbox pianoC4", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.5 },
+                    { name: "paandorasbox liver pad", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -22.5 },
+                    { name: "paandorasbox marimba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -15.5 },
+                    { name: "paandorasbox susdotwav", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -24.5 },
+                    { name: "paandorasbox wackyboxtts", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17.5 },
+                    { name: "paandorasbox peppersteak_1", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.2 },
+                    { name: "paandorasbox peppersteak_2", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -47 },
+                    { name: "paandorasbox vinyl_noise", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -50 },
+                    { name: "paandorasbeta slap bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -56 },
+                    { name: "paandorasbeta HD EB overdrive guitar", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60 },
+                    { name: "paandorasbeta sunsoft bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -18.5 },
+                    { name: "paandorasbeta masculine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
+                    { name: "paandorasbeta feminine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60.5 },
+                    { name: "paandorasbeta tololoche", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -29.5 },
+                    { name: "paandorasbeta harp", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -54 },
+                    { name: "paandorasbeta pan flute", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -58 },
+                    { name: "paandorasbeta krumhorn", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -46 },
+                    { name: "paandorasbeta timpani", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
+                    { name: "paandorasbeta crowd hey", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -29 },
+                    { name: "paandorasbeta wario land 4 brass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -68 },
+                    { name: "paandorasbeta wario land 4 rock organ", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -63 },
+                    { name: "paandorasbeta wario land 4 DAOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -35 },
+                    { name: "paandorasbeta wario land 4 hour chime", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -47.5 },
+                    { name: "paandorasbeta wario land 4 tick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -12.5 },
+                    { name: "paandorasbeta kirby kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
+                    { name: "paandorasbeta kirby snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
+                    { name: "paandorasbeta kirby bongo", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
+                    { name: "paandorasbeta kirby click", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
+                    { name: "paandorasbeta sonor kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
+                    { name: "paandorasbeta sonor snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
+                    { name: "paandorasbeta sonor snare (left hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
+                    { name: "paandorasbeta sonor snare (right hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
+                    { name: "paandorasbeta sonor high tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
+                    { name: "paandorasbeta sonor low tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
+                    { name: "paandorasbeta sonor hihat (closed)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -17 },
+                    { name: "paandorasbeta sonor hihat (half opened)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -21 },
+                    { name: "paandorasbeta sonor hihat (open)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -54.5 },
+                    { name: "paandorasbeta sonor hihat (open tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -43.5 },
+                    { name: "paandorasbeta sonor hihat (pedal)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28 },
+                    { name: "paandorasbeta sonor crash", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -51 },
+                    { name: "paandorasbeta sonor crash (tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -50.5 },
+                    { name: "paandorasbeta sonor ride", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46 }
+                ],
+                associatedScripts: [
+                    "samples.js",
+                    "samples2.js",
+                    "samples3.js",
+                    "drumsamples.js",
+                    "wario_samples.js",
+                    "kirby_samples.js"
+                ],
+                getSampleArrays: () => [
                     centerWave(kicksample),
                     centerWave(snaresample),
                     centerWave(pianosample),
@@ -291,97 +302,41 @@ var beepbox = (function (exports) {
                     centerWave(funkcrash),
                     centerWave(funkcrashtip),
                     centerWave(funkride)
-                ];
-                let chipWaveIndexOffset = 0;
-                for (const chipWaveSample of chipWaveSamples) {
-                    const chipWaveIndex = startIndex + chipWaveIndexOffset;
-                    Config.rawChipWaves[chipWaveIndex].samples = chipWaveSample;
-                    Config.rawRawChipWaves[chipWaveIndex].samples = chipWaveSample;
-                    Config.chipWaves[chipWaveIndex].samples = performIntegral(chipWaveSample);
-                    sampleLoadingState.statusTable[chipWaveIndex] = 1;
-                    sampleLoadingState.samplesLoaded++;
-                    sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded));
-                    chipWaveIndexOffset++;
-                }
-            });
-        }
-        else if (set == 1) {
-            const chipWaves = [
-                { name: "chronoperc1final", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "synthkickfm", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "mcwoodclick1", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "acoustic snare", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 }
-            ];
-            sampleLoadingState.totalSamples += chipWaves.length;
-            const startIndex = Config.rawRawChipWaves.length;
-            for (const chipWave of chipWaves) {
-                const chipWaveIndex = Config.rawRawChipWaves.length;
-                const rawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-                const rawRawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-                const integratedChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultIntegratedSamples };
-                Config.rawRawChipWaves[chipWaveIndex] = rawRawChipWave;
-                Config.rawRawChipWaves.dictionary[chipWave.name] = rawRawChipWave;
-                Config.rawChipWaves[chipWaveIndex] = rawChipWave;
-                Config.rawChipWaves.dictionary[chipWave.name] = rawChipWave;
-                Config.chipWaves[chipWaveIndex] = integratedChipWave;
-                Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
-                sampleLoadingState.statusTable[chipWaveIndex] = 0;
-                sampleLoadingState.urlTable[chipWaveIndex] = "nintariboxSamples";
-            }
-            loadScript("nintaribox_samples.js")
-                .then(() => {
-                const chipWaveSamples = [
+                ],
+            },
+            {
+                name: bundledSamplePacks.nintaribox,
+                chipWaves: [
+                    { name: "chronoperc1final", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                    { name: "synthkickfm", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                    { name: "mcwoodclick1", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
+                    { name: "acoustic snare", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 }
+                ],
+                associatedScripts: ["nintaribox_samples.js"],
+                getSampleArrays: () => [
                     centerWave(chronoperc1finalsample),
                     centerWave(synthkickfmsample),
                     centerWave(woodclicksample),
                     centerWave(acousticsnaresample)
-                ];
-                let chipWaveIndexOffset = 0;
-                for (const chipWaveSample of chipWaveSamples) {
-                    const chipWaveIndex = startIndex + chipWaveIndexOffset;
-                    Config.rawChipWaves[chipWaveIndex].samples = chipWaveSample;
-                    Config.rawRawChipWaves[chipWaveIndex].samples = chipWaveSample;
-                    Config.chipWaves[chipWaveIndex].samples = performIntegral(chipWaveSample);
-                    sampleLoadingState.statusTable[chipWaveIndex] = 1;
-                    sampleLoadingState.samplesLoaded++;
-                    sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded));
-                    chipWaveIndexOffset++;
-                }
-            });
-        }
-        else if (set == 2) {
-            const chipWaves = [
-                { name: "cat", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
-                { name: "gameboy", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 7 },
-                { name: "mario", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
-                { name: "drum", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 4 },
-                { name: "yoshi", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
-                { name: "star", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
-                { name: "fire flower", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
-                { name: "dog", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
-                { name: "oink", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 3 },
-                { name: "swan", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 1 },
-                { name: "face", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -12 }
-            ];
-            sampleLoadingState.totalSamples += chipWaves.length;
-            const startIndex = Config.rawRawChipWaves.length;
-            for (const chipWave of chipWaves) {
-                const chipWaveIndex = Config.rawRawChipWaves.length;
-                const rawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-                const rawRawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
-                const integratedChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultIntegratedSamples };
-                Config.rawRawChipWaves[chipWaveIndex] = rawRawChipWave;
-                Config.rawRawChipWaves.dictionary[chipWave.name] = rawRawChipWave;
-                Config.rawChipWaves[chipWaveIndex] = rawChipWave;
-                Config.rawChipWaves.dictionary[chipWave.name] = rawChipWave;
-                Config.chipWaves[chipWaveIndex] = integratedChipWave;
-                Config.chipWaves.dictionary[chipWave.name] = rawChipWave;
-                sampleLoadingState.statusTable[chipWaveIndex] = 0;
-                sampleLoadingState.urlTable[chipWaveIndex] = "marioPaintboxSamples";
-            }
-            loadScript("mario_paintbox_samples.js")
-                .then(() => {
-                const chipWaveSamples = [
+                ],
+            },
+            {
+                name: bundledSamplePacks.mariopaintbox,
+                chipWaves: [
+                    { name: "cat", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
+                    { name: "gameboy", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 7 },
+                    { name: "mario", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
+                    { name: "drum", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 4 },
+                    { name: "yoshi", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
+                    { name: "star", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
+                    { name: "fire flower", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
+                    { name: "dog", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
+                    { name: "oink", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 3 },
+                    { name: "swan", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 1 },
+                    { name: "face", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -12 }
+                ],
+                associatedScripts: ["mario_paintbox_samples.js"],
+                getSampleArrays: () => [
                     centerWave(catpaintboxsample),
                     centerWave(gameboypaintboxsample),
                     centerWave(mariopaintboxsample),
@@ -393,7 +348,30 @@ var beepbox = (function (exports) {
                     centerWave(oinkpaintbox),
                     centerWave(swanpaintboxsample),
                     centerWave(facepaintboxsample)
-                ];
+                ],
+            }
+        ];
+        if (set >= 0 && set < sets.length) {
+            const setDefinition = sets[set];
+            const chipWaves = setDefinition.chipWaves;
+            sampleLoadingState.totalSamples += chipWaves.length;
+            const startIndex = Config.rawRawChipWaves.length;
+            for (const chipWave of chipWaves) {
+                const chipWaveIndex = Config.rawRawChipWaves.length;
+                const rawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
+                const rawRawChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultSamples };
+                const integratedChipWave = { index: chipWaveIndex, name: chipWave.name, expression: chipWave.expression, isSampled: chipWave.isSampled, isPercussion: chipWave.isPercussion, extraSampleDetune: chipWave.extraSampleDetune, samples: defaultIntegratedSamples };
+                Config.rawRawChipWaves[chipWaveIndex] = rawRawChipWave;
+                Config.rawRawChipWaves.dictionary[chipWave.name] = rawRawChipWave;
+                Config.rawChipWaves[chipWaveIndex] = rawChipWave;
+                Config.rawChipWaves.dictionary[chipWave.name] = rawChipWave;
+                Config.chipWaves[chipWaveIndex] = integratedChipWave;
+                Config.chipWaves.dictionary[chipWave.name] = integratedChipWave;
+                sampleLoadingState.statusTable[chipWaveIndex] = 0;
+                sampleLoadingState.urlTable[chipWaveIndex] = setDefinition.name;
+            }
+            Promise.all(setDefinition.associatedScripts.map(url => loadScript(url))).then(() => {
+                const chipWaveSamples = setDefinition.getSampleArrays();
                 let chipWaveIndexOffset = 0;
                 for (const chipWaveSample of chipWaveSamples) {
                     const chipWaveIndex = startIndex + chipWaveIndexOffset;
@@ -402,7 +380,7 @@ var beepbox = (function (exports) {
                     Config.chipWaves[chipWaveIndex].samples = performIntegral(chipWaveSample);
                     sampleLoadingState.statusTable[chipWaveIndex] = 1;
                     sampleLoadingState.samplesLoaded++;
-                    sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded));
+                    sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded, sampleLoadingState.samplesFailed));
                     chipWaveIndexOffset++;
                 }
             });
@@ -1663,7 +1641,7 @@ var beepbox = (function (exports) {
             return (_a = EditorConfig.presetCategories[0].presets.dictionary) === null || _a === void 0 ? void 0 : _a[TypePresets === null || TypePresets === void 0 ? void 0 : TypePresets[instrument]];
         }
     }
-    EditorConfig.version = "1.4.12";
+    EditorConfig.version = "1.4.13";
     EditorConfig.versionDisplayName = "Slarmoo's Box " + EditorConfig.version;
     EditorConfig.releaseNotesURL = "./patch_notes.html";
     EditorConfig.isOnMac = /^Mac/i.test(navigator.platform) || /Mac OS X/i.test(navigator.userAgent) || /^(iPhone|iPad|iPod)/i.test(navigator.platform) || /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
@@ -1987,6 +1965,9 @@ var beepbox = (function (exports) {
                 { name: "supersaw bass", generalMidi: false, settings: { "type": "supersaw", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 4756.83, "linearGain": 0.5 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "discreteEnvelope": false, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 4756.83, "linearGain": 0.5 }], "effects": ["note filter", "distortion", "chorus", "reverb"], "noteFilterType": true, "noteSimpleCut": 9, "noteSimplePeak": 2, "noteFilter": [{ "type": "low-pass", "cutoffHz": 7231.23, "linearGain": 1 }], "noteSubFilters1": [{ "type": "low-pass", "cutoffHz": 7231.23, "linearGain": 1 }], "distortion": 14, "aliases": false, "chorus": 29, "reverb": 0, "fadeInSeconds": 0.0263, "fadeOutTicks": -3, "pulseWidth": 50, "decimalOffset": 0, "dynamism": 100, "spread": 67, "shape": 0, "envelopes": [{ "target": "noteFilterAllFreqs", "envelope": "swell", "inverse": false, "perEnvelopeSpeed": 32, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1 }], "isDrum": false } },
                 { name: "ascension", generalMidi: false, isNoise: false, settings: { "type": "spectrum", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 4756.83, "linearGain": 0.3536 }, { "type": "high-pass", "cutoffHz": 420.45, "linearGain": 0.25 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 4756.83, "linearGain": 0.3536 }, { "type": "high-pass", "cutoffHz": 420.45, "linearGain": 0.25 }], "eqSubFilters1": [], "effects": ["granular", "chorus", "reverb"], "granular": 7, "grainSize": 44, "grainAmounts": 9, "grainRange": 37, "chorus": 71, "reverb": 19, "fadeInSeconds": 0, "fadeOutTicks": 24, "spectrum": [43, 0, 0, 57, 0, 0, 14, 100, 29, 0, 0, 100, 29, 0, 100, 0, 57, 29, 86, 14, 14, 100, 14, 0, 14, 14, 0, 0, 43, 0], "unison": "voiced", "envelopes": [{ "target": "noteVolume", "envelope": "swell", "inverse": false, "perEnvelopeSpeed": 0.7, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "panning", "envelope": "lfo", "inverse": false, "perEnvelopeSpeed": 0.3, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false, "waveform": 2, "steps": 6 }], "isDrum": false } },
                 { name: "liminal", generalMidi: false, isNoise: false, settings: { "type": "supersaw", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 6727.17, "linearGain": 1.4142 }, { "type": "high-pass", "cutoffHz": 840.9, "linearGain": 0.25 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 6727.17, "linearGain": 1.4142 }, { "type": "high-pass", "cutoffHz": 840.9, "linearGain": 0.25 }], "effects": ["detune", "vibrato", "note filter", "granular", "distortion", "bitcrusher", "chorus", "reverb"], "detuneCents": 8, "vibrato": "custom", "vibratoDepth": 0.48, "vibratoDelay": 0, "vibratoSpeed": 10, "vibratoType": 0, "noteFilterType": true, "noteSimpleCut": 6, "noteSimplePeak": 2, "noteFilter": [{ "type": "low-pass", "cutoffHz": 2196.8, "linearGain": 1 }], "noteSubFilters1": [{ "type": "low-pass", "cutoffHz": 2196.8, "linearGain": 1 }], "granular": 6, "grainSize": 49, "grainAmounts": 10, "grainRange": 40, "distortion": 57, "aliases": false, "bitcrusherOctave": 5, "bitcrusherQuantization": 0, "chorus": 29, "reverb": 48, "fadeInSeconds": 0, "fadeOutTicks": 72, "pulseWidth": 30, "decimalOffset": 0, "dynamism": 17, "spread": 83, "shape": 67, "envelopes": [{ "target": "noteVolume", "envelope": "twang", "inverse": false, "perEnvelopeSpeed": 17, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "pulseWidth", "envelope": "twang", "inverse": false, "perEnvelopeSpeed": 1.3333, "perEnvelopeLowerBound": 0.1, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "distortion", "envelope": "random", "inverse": false, "perEnvelopeSpeed": 1, "perEnvelopeLowerBound": 0.2, "perEnvelopeUpperBound": 1, "discrete": true, "steps": 8, "seed": 2, "waveform": 2 }, { "target": "panning", "envelope": "lfo", "inverse": false, "perEnvelopeSpeed": 0.3333, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false, "waveform": 2, "steps": 2 }, { "target": "noteVolume", "envelope": "swell", "inverse": false, "perEnvelopeSpeed": 18, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "noteVolume", "envelope": "note size", "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "granular", "envelope": "note size", "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }], "isDrum": false } },
+                { name: "dissonant tone", generalMidi: false, isNoise: false, settings: { "type": "harmonics", "eqFilter": [{ "type": "high-pass", "cutoffHz": 2000, "linearGain": 0.5 }, { "type": "peak", "cutoffHz": 6727.17, "linearGain": 2.8284 }, { "type": "low-pass", "cutoffHz": 13454.34, "linearGain": 0.1768 }, { "type": "peak", "cutoffHz": 9513.66, "linearGain": 2.8284 }, { "type": "peak", "cutoffHz": 3363.59, "linearGain": 0.5 }, { "type": "peak", "cutoffHz": 5656.85, "linearGain": 0.3536 }, { "type": "peak", "cutoffHz": 4756.83, "linearGain": 4 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "high-pass", "cutoffHz": 2000, "linearGain": 0.5 }, { "type": "peak", "cutoffHz": 6727.17, "linearGain": 2.8284 }, { "type": "low-pass", "cutoffHz": 13454.34, "linearGain": 0.1768 }, { "type": "peak", "cutoffHz": 9513.66, "linearGain": 2.8284 }, { "type": "peak", "cutoffHz": 3363.59, "linearGain": 0.5 }, { "type": "peak", "cutoffHz": 5656.85, "linearGain": 0.3536 }, { "type": "peak", "cutoffHz": 4756.83, "linearGain": 4 }], "eqSubFilters1": [], "effects": ["echo", "reverb"], "panDelay": 0, "echoSustain": 71, "echoDelayBeats": 1, "reverb": 29, "fadeInSeconds": 0, "fadeOutTicks": 96, "harmonics": [100, 0, 86, 71, 43, 29, 14, 86, 0, 0, 0, 0, 0, 0, 0, 71, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0], "unison": "custom", "unisonVoices": 3, "unisonSpread": 0.2, "unisonOffset": 0, "unisonExpression": 0.7, "unisonSign": 1, "envelopes": [{ "target": "noteVolume", "envelope": "wibble", "inverse": false, "perEnvelopeSpeed": 17, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "noteVolume", "envelope": "swell", "inverse": false, "perEnvelopeSpeed": 256, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }] } },
+                { name: "reverse arps", generalMidi: false, isNoise: false, settings: { "type": "harmonics", "eqFilter": [{ "type": "high-pass", "cutoffHz": 1000, "linearGain": 1 }, { "type": "peak", "cutoffHz": 16000, "linearGain": 0.25 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "high-pass", "cutoffHz": 1000, "linearGain": 1 }, { "type": "peak", "cutoffHz": 16000, "linearGain": 0.25 }], "effects": ["transition type", "pitch shift", "detune", "chorus", "echo", "reverb", "ring mod"], "transition": "interrupt", "clicklessTransition": false, "pitchShiftSemitones": 12, "detuneCents": 0, "ringMod": 29, "ringModHz": 95, "ringModWaveformIndex": 0, "ringModPulseWidth": 10, "ringModHzOffset": 50, "panDelay": 0, "chorus": 29, "echoSustain": 57, "echoDelayBeats": 1, "reverb": 19, "fadeInSeconds": 0, "fadeOutTicks": -6, "harmonics": [100, 86, 0, 71, 0, 0, 0, 14, 0, 0, 0, 29, 100, 0, 0, 86, 43, 0, 71, 0, 86, 0, 0, 0, 0, 0, 0, 0], "unison": "none", "envelopes": [{ "target": "noteVolume", "envelope": "swell", "inverse": false, "perEnvelopeSpeed": 32, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "ringModulationHz", "envelope": "lfo", "inverse": false, "perEnvelopeSpeed": 0.04, "perEnvelopeLowerBound": 0.8, "perEnvelopeUpperBound": 1.1, "discrete": false, "waveform": 0, "steps": 2 }] } },
+                { name: "icicle", generalMidi: false, settings: { "type": "spectrum", "eqFilter": [{ "type": "low-pass", "cutoffHz": 11313.71, "linearGain": 0.5 }], "eqFilterType": false, "eqSimpleCut": 7, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters1": [], "effects": ["granular", "bitcrusher", "echo", "reverb"], "granular": 10, "grainSize": 49, "grainAmounts": 6, "grainRange": 40, "bitcrusherOctave": 3.5, "bitcrusherQuantization": 43, "panDelay": 0, "echoSustain": 71, "echoDelayBeats": 1, "reverb": 74, "fadeInSeconds": 0.0575, "fadeOutTicks": -1, "spectrum": [86, 0, 43, 0, 14, 29, 0, 57, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "unison": "none", "envelopes": [] } },
             ])
         },
         {
@@ -1995,6 +1976,7 @@ var beepbox = (function (exports) {
                 { name: "discovery square", midiProgram: 80, settings: { "type": "chip", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 8000, "linearGain": 0.3536 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "discreteEnvelope": false, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 8000, "linearGain": 0.3536 }], "effects": ["bitcrusher"], "bitcrusherOctave": 5.5, "bitcrusherQuantization": 57, "fadeInSeconds": 0, "fadeOutTicks": -3, "wave": "square", "unison": "octave", "isUsingAdvancedLoopControls": false, "chipWaveLoopStart": 0, "chipWaveLoopEnd": 2, "chipWaveLoopMode": 0, "chipWavePlayBackwards": false, "chipWaveStartOffset": 0, "envelopes": [], "isDrum": false } },
                 { name: "VRC6 Sawtooth alt", midiProgram: 81, settings: { "type": "custom chip", "volume": 0, "eqFilter": [{ "type": "high-pass", "cutoffHz": 62.5, "linearGain": 0.5 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "discreteEnvelope": false, "eqSubFilters0": [{ "type": "high-pass", "cutoffHz": 62.5, "linearGain": 0.5 }], "effects": ["transition type", "chord type", "pitch shift", "detune", "vibrato", "distortion"], "transition": "interrupt", "clicklessTransition": false, "chord": "arpeggio", "fastTwoNoteArp": true, "arpeggioSpeed": 12, "pitchShiftSemitones": 12, "detuneCents": 0, "vibrato": "none", "vibratoDepth": 0, "vibratoDelay": 0, "vibratoSpeed": 10, "vibratoType": 0, "distortion": 0, "aliases": false, "fadeInSeconds": 0, "fadeOutTicks": -1, "wave": "square", "unison": "none", "customChipWave": { "0": -1, "1": -1, "2": -1, "3": -1, "4": -1, "5": -1, "6": -1, "7": -1, "8": -1, "9": -5, "10": -5, "11": -5, "12": -4, "13": -4, "14": -4, "15": -3, "16": -3, "17": -3, "18": -7, "19": -7, "20": -6, "21": -6, "22": -5, "23": -5, "24": -4, "25": -4, "26": -4, "27": -7, "28": -7, "29": -6, "30": -6, "31": -5, "32": -5, "33": -4, "34": -4, "35": -4, "36": -8, "37": -8, "38": -7, "39": -7, "40": -6, "41": -6, "42": -5, "43": -5, "44": -4, "45": -4, "46": 21, "47": 20, "48": 18, "49": 17, "50": 16, "51": 14, "52": 13, "53": 12, "54": 11, "55": 7, "56": 6, "57": 6, "58": 5, "59": 5, "60": 5, "61": 4, "62": 4, "63": 4 }, "customChipWaveIntegral": { "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 0, "12": 0, "13": 0, "14": 0, "15": 0, "16": 0, "17": 0, "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0, "24": 0, "25": 0, "26": 0, "27": 0, "28": 0, "29": 0, "30": 0, "31": 0, "32": 0, "33": 0, "34": 0, "35": 0, "36": 0, "37": 0, "38": 0, "39": 0, "40": 0, "41": 0, "42": 0, "43": 0, "44": 0, "45": 0, "46": 0, "47": 0, "48": 0, "49": 0, "50": 0, "51": 0, "52": 0, "53": 0, "54": 0, "55": 0, "56": 0, "57": 0, "58": 0, "59": 0, "60": 0, "61": 0, "62": 0, "63": 0, "64": 0 }, "envelopes": [], "isDrum": false } },
                 { name: "pulse arps", midiProgram: 80, settings: { "type": "PWM", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 16000, "linearGain": 0.125 }, { "type": "high-pass", "cutoffHz": 840.9, "linearGain": 2 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 7, "discreteEnvelope": false, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 16000, "linearGain": 0.125 }, { "type": "high-pass", "cutoffHz": 840.9, "linearGain": 2 }], "effects": ["transition type", "chord type", "detune", "chorus", "echo"], "transition": "interrupt", "clicklessTransition": false, "chord": "arpeggio", "fastTwoNoteArp": true, "arpeggioSpeed": 8, "detuneCents": 64, "chorus": 43, "echoSustain": 71, "echoDelayBeats": 0.333, "fadeInSeconds": 0, "fadeOutTicks": -1, "pulseWidth": 50, "decimalOffset": 0, "unison": "none", "envelopes": [{ "target": "detune", "envelope": "pitch", "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96 }, { "target": "pulseWidth", "envelope": "pitch", "inverse": true, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "pitchEnvelopeStart": 24, "pitchEnvelopeEnd": 83 }, { "target": "panning", "envelope": "lfo", "inverse": false, "perEnvelopeSpeed": 1, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "waveform": 0, "steps": 2 }, { "target": "noteVolume", "envelope": "twang", "inverse": false, "perEnvelopeSpeed": 32, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1 }, { "target": "chorus", "envelope": "twang", "inverse": false, "perEnvelopeSpeed": 32, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1 }], "isDrum": false } },
+                { name: "smooth triangle", midiProgram: 80, settings: { "type": "FM", "eqFilter": [], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [], "effects": ["transition type", "chord type", "detune"], "transition": "interrupt", "clicklessTransition": false, "chord": "arpeggio", "fastTwoNoteArp": true, "arpeggioSpeed": 8, "monoChordTone": 1, "detuneCents": 24, "panDelay": 0, "fadeInSeconds": 0, "fadeOutTicks": -1, "unison": "none", "algorithm": "1 2 3 4", "feedbackType": "1⟲", "feedbackAmplitude": 0, "operators": [{ "frequency": "1×", "amplitude": 15, "waveform": "triangle", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }], "envelopes": [{ "target": "detune", "envelope": "pitch", "inverse": false, "perEnvelopeSpeed": 1, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false, "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96 }] } },
             ])
         },
         {
@@ -2007,6 +1989,9 @@ var beepbox = (function (exports) {
                 { name: "harp 2", midiProgram: 46, settings: { "type": "FM6op", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 13454.34, "linearGain": 0.0884 }, { "type": "peak", "cutoffHz": 1000, "linearGain": 2.8284 }, { "type": "high-pass", "cutoffHz": 62.5, "linearGain": 0.25 }, { "type": "high-pass", "cutoffHz": 148.65, "linearGain": 0.5 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "discreteEnvelope": false, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 13454.34, "linearGain": 0.0884 }, { "type": "peak", "cutoffHz": 1000, "linearGain": 2.8284 }, { "type": "high-pass", "cutoffHz": 62.5, "linearGain": 0.25 }, { "type": "high-pass", "cutoffHz": 148.65, "linearGain": 0.5 }], "eqSubFilters1": [], "effects": ["detune", "note filter", "echo", "reverb"], "detuneCents": -23, "noteFilterType": false, "noteSimpleCut": 10, "noteSimplePeak": 0, "noteFilter": [{ "type": "low-pass", "cutoffHz": 6727.17, "linearGain": 0.0884 }, { "type": "peak", "cutoffHz": 105.11, "linearGain": 2.8284 }], "noteSubFilters0": [{ "type": "low-pass", "cutoffHz": 6727.17, "linearGain": 0.0884 }, { "type": "peak", "cutoffHz": 105.11, "linearGain": 2.8284 }], "echoSustain": 29, "echoDelayBeats": 1.083, "reverb": 74, "fadeInSeconds": 0, "fadeOutTicks": -1, "algorithm": "1←4 2←5 3←6", "feedbackType": "1⟲", "feedbackAmplitude": 5, "operators": [{ "frequency": "1×", "amplitude": 10, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 5, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 10, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "4×", "amplitude": 6, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "6×", "amplitude": 12, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 2, "waveform": "sine", "pulseWidth": 5 }], "envelopes": [{ "target": "noteVolume", "envelope": "decay", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": false, "perEnvelopeSpeed": 4, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1 }, { "target": "operatorFrequency", "envelope": "tremolo", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": false, "perEnvelopeSpeed": 8, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "index": 1 }, { "target": "detune", "envelope": "decay", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": false, "perEnvelopeSpeed": 7, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1 }, { "target": "noteFilterFreq", "envelope": "tremolo2", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": false, "perEnvelopeSpeed": 1, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "index": 0 }, { "target": "operatorAmplitude", "envelope": "twang", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": false, "perEnvelopeSpeed": 8, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "index": 4 }, { "target": "operatorAmplitude", "envelope": "swell", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": true, "perEnvelopeSpeed": 8, "perEnvelopeLowerBound": 0.4, "perEnvelopeUpperBound": 1, "index": 0 }, { "target": "noteVolume", "envelope": "punch", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1 }], "isDrum": false } },
                 { name: "electric guitar 1", midiProgram: 30, settings: { "type": "FM", "volume": 0, "eqFilter": [{ "type": "high-pass", "cutoffHz": 1189.21, "linearGain": 2 }, { "type": "low-pass", "cutoffHz": 4000, "linearGain": 1.4142 }, { "type": "peak", "cutoffHz": 707.11, "linearGain": 0.0884 }, { "type": "peak", "cutoffHz": 420.45, "linearGain": 0.0884 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "high-pass", "cutoffHz": 1189.21, "linearGain": 2 }, { "type": "low-pass", "cutoffHz": 4000, "linearGain": 1.4142 }, { "type": "peak", "cutoffHz": 707.11, "linearGain": 0.0884 }, { "type": "peak", "cutoffHz": 420.45, "linearGain": 0.0884 }], "effects": ["chord type", "vibrato", "note filter", "distortion", "reverb"], "chord": "monophonic", "fastTwoNoteArp": false, "arpeggioSpeed": 12, "monoChordTone": 0, "vibrato": "delayed", "vibratoDepth": 0.3, "vibratoDelay": 18.5, "vibratoSpeed": 10, "vibratoType": 0, "noteFilterType": false, "noteSimpleCut": 10, "noteSimplePeak": 0, "noteFilter": [{ "type": "low-pass", "cutoffHz": 1414.21, "linearGain": 4 }, { "type": "high-pass", "cutoffHz": 594.6, "linearGain": 1 }], "noteSubFilters0": [{ "type": "low-pass", "cutoffHz": 1414.21, "linearGain": 4 }, { "type": "high-pass", "cutoffHz": 594.6, "linearGain": 1 }], "distortion": 100, "aliases": false, "panDelay": 0, "reverb": 6, "fadeInSeconds": 0, "fadeOutTicks": 24, "algorithm": "1 2 3 4", "feedbackType": "1⟲", "feedbackAmplitude": 0, "operators": [{ "frequency": "1×", "amplitude": 15, "waveform": "sawtooth", "pulseWidth": 5 }, { "frequency": "2×", "amplitude": 0, "waveform": "sawtooth", "pulseWidth": 5 }, { "frequency": "4×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "0.25×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }], "envelopes": [{ "target": "noteVolume", "envelope": "punch", "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "vibratoDepth", "envelope": "rise", "inverse": false, "perEnvelopeSpeed": 9, "perEnvelopeLowerBound": 1, "perEnvelopeUpperBound": 2, "discrete": false }, { "target": "noteVolume", "envelope": "note size", "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "distortion", "envelope": "note size", "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }], "isDrum": false } },
                 { name: "electric guitar 2", midiProgram: 30, settings: { "type": "PWM", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 3363.59, "linearGain": 5.6569 }, { "type": "high-pass", "cutoffHz": 1681.79, "linearGain": 0.25 }, { "type": "peak", "cutoffHz": 5656.85, "linearGain": 2 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 3363.59, "linearGain": 5.6569 }, { "type": "high-pass", "cutoffHz": 1681.79, "linearGain": 0.25 }, { "type": "peak", "cutoffHz": 5656.85, "linearGain": 2 }], "effects": ["chord type", "vibrato", "note filter", "distortion", "bitcrusher", "chorus", "reverb"], "chord": "monophonic", "fastTwoNoteArp": false, "arpeggioSpeed": 12, "monoChordTone": 0, "vibrato": "custom", "vibratoDepth": 0.68, "vibratoDelay": 22, "vibratoSpeed": 10, "vibratoType": 0, "noteFilterType": false, "noteSimpleCut": 10, "noteSimplePeak": 0, "noteFilter": [{ "type": "low-pass", "cutoffHz": 1000, "linearGain": 2.8284 }], "noteSubFilters0": [{ "type": "low-pass", "cutoffHz": 1000, "linearGain": 2.8284 }], "distortion": 43, "aliases": false, "bitcrusherOctave": 6.5, "bitcrusherQuantization": 71, "panDelay": 0, "chorus": 14, "reverb": 13, "fadeInSeconds": 0, "fadeOutTicks": 24, "pulseWidth": 50, "decimalOffset": 0, "unison": "none", "envelopes": [{ "target": "noteFilterAllFreqs", "envelope": "rise", "inverse": false, "perEnvelopeSpeed": 0.3333, "perEnvelopeLowerBound": 0.8, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "pulseWidth", "envelope": "twang", "inverse": true, "perEnvelopeSpeed": 2.25, "perEnvelopeLowerBound": 0.5, "perEnvelopeUpperBound": 0.9, "discrete": false }, { "target": "noteVolume", "envelope": "note size", "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "bitcrusherQuantization", "envelope": "note size", "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }], "isDrum": false } },
+                { name: "tremolo strings 2", midiProgram: 44, settings: { "type": "FM", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 1681.79, "linearGain": 0.5 }, { "type": "high-pass", "cutoffHz": 297.3, "linearGain": 1 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 1681.79, "linearGain": 0.5 }, { "type": "high-pass", "cutoffHz": 297.3, "linearGain": 1 }], "effects": ["panning", "transition type", "vibrato", "granular", "chorus", "reverb"], "transition": "slide", "clicklessTransition": false, "vibrato": "custom", "vibratoDepth": 0.04, "vibratoDelay": 0, "vibratoSpeed": 3, "vibratoType": 1, "granular": 10, "grainSize": 49, "grainAmounts": 4, "grainRange": 40, "pan": 0, "panDelay": 0, "chorus": 43, "reverb": 68, "fadeInSeconds": 0.0413, "fadeOutTicks": 96, "algorithm": "(1 2)←(3 4)", "feedbackType": "1→2", "feedbackAmplitude": 9, "operators": [{ "frequency": "2×", "amplitude": 9, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "3×", "amplitude": 9, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "2×", "amplitude": 2, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "7×", "amplitude": 6, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }], "envelopes": [{ "target": "operatorAmplitude", "envelope": "swell", "inverse": false, "perEnvelopeSpeed": 32, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false, "index": 3 }, { "target": "feedbackAmplitude", "envelope": "twang", "inverse": false, "perEnvelopeSpeed": 2, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "noteVolume", "envelope": "lfo", "inverse": false, "perEnvelopeSpeed": 4, "perEnvelopeLowerBound": 0.5, "perEnvelopeUpperBound": 1, "discrete": false, "waveform": 0, "steps": 2 }, { "target": "noteVolume", "envelope": "note size", "inverse": false, "perEnvelopeSpeed": 1, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "granular", "envelope": "note size", "inverse": false, "perEnvelopeSpeed": 1, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }], "isDrum": false } },
+                { name: "french horn 2", midiProgram: 60, settings: { "type": "FM", "eqFilter": [{ "type": "low-pass", "cutoffHz": 2828.43, "linearGain": 0.5 }, { "type": "high-pass", "cutoffHz": 500, "linearGain": 0.5 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 2828.43, "linearGain": 0.5 }, { "type": "high-pass", "cutoffHz": 500, "linearGain": 0.5 }], "eqSubFilters1": [], "effects": ["note filter", "distortion", "chorus", "reverb"], "noteFilterType": false, "noteSimpleCut": 10, "noteSimplePeak": 0, "noteFilter": [{ "type": "low-pass", "cutoffHz": 16000, "linearGain": 0.0884 }], "distortion": 57, "aliases": false, "panDelay": 0, "chorus": 29, "reverb": 39, "fadeInSeconds": 0.0125, "fadeOutTicks": 12, "algorithm": "1←3 2←4", "feedbackType": "3⟲", "feedbackAmplitude": 9, "operators": [{ "frequency": "1×", "amplitude": 14, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 9, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 6, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 4, "waveform": "sine", "pulseWidth": 5 }], "envelopes": [{ "target": "feedbackAmplitude", "envelope": "swell", "inverse": false, "perEnvelopeSpeed": 32, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "distortion", "envelope": "lfo", "inverse": false, "perEnvelopeSpeed": 0.7, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false, "waveform": 0, "steps": 2 }, { "target": "operatorAmplitude", "envelope": "flare", "inverse": false, "perEnvelopeSpeed": 16, "perEnvelopeLowerBound": 0.2, "perEnvelopeUpperBound": 1, "discrete": false, "index": 0 }, { "target": "noteFilterAllFreqs", "envelope": "flare", "inverse": false, "perEnvelopeSpeed": 18, "perEnvelopeLowerBound": 0.4, "perEnvelopeUpperBound": 1, "discrete": false }] } },
+                { name: "pvc pipe", generalMidi: false, settings: { "type": "FM", "eqFilter": [{ "type": "low-pass", "cutoffHz": 5656.85, "linearGain": 11.3137 }, { "type": "peak", "cutoffHz": 2828.43, "linearGain": 2 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 5656.85, "linearGain": 11.3137 }, { "type": "peak", "cutoffHz": 2828.43, "linearGain": 2 }], "effects": ["note filter", "distortion", "chorus", "echo", "reverb"], "noteFilterType": false, "noteSimpleCut": 10, "noteSimplePeak": 0, "noteFilter": [{ "type": "low-pass", "cutoffHz": 11313.71, "linearGain": 1.4142 }], "noteSubFilters0": [{ "type": "low-pass", "cutoffHz": 11313.71, "linearGain": 1.4142 }], "distortion": 14, "aliases": false, "panDelay": 0, "chorus": 43, "echoSustain": 43, "echoDelayBeats": 1.75, "reverb": 68, "fadeInSeconds": 0, "fadeOutTicks": -1, "algorithm": "1←(2 3) 2←4", "feedbackType": "4⟲", "feedbackAmplitude": 6, "operators": [{ "frequency": "0.5×", "amplitude": 9, "waveform": "ramp", "pulseWidth": 5 }, { "frequency": "0.5×", "amplitude": 11, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 1, "waveform": "sawtooth", "pulseWidth": 5 }, { "frequency": "~1×", "amplitude": 7, "waveform": "sine", "pulseWidth": 5 }], "envelopes": [{ "target": "noteVolume", "envelope": "twang", "inverse": false, "perEnvelopeSpeed": 128, "perEnvelopeLowerBound": 0.1, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "operatorAmplitude", "envelope": "swell", "inverse": true, "perEnvelopeSpeed": 9, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false, "index": 3 }, { "target": "feedbackAmplitude", "envelope": "punch", "inverse": false, "perEnvelopeSpeed": 1, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false }, { "target": "noteFilterAllFreqs", "envelope": "twang", "inverse": false, "perEnvelopeSpeed": 16, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 0.2, "discrete": false }] } },
             ])
         },
         {
@@ -2017,7 +2002,9 @@ var beepbox = (function (exports) {
                 { name: "stationary harmonics", generalMidi: false, settings: { "type": "harmonics", "eqFilter": [{ "type": "low-pass", "cutoffHz": 4756.83, "linearGain": 0.3536 }, { "type": "high-pass", "cutoffHz": 353.55, "linearGain": 1 }, { "type": "peak", "cutoffHz": 1189.21, "linearGain": 0.5 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "discreteEnvelope": false, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 4756.83, "linearGain": 0.3536 }, { "type": "high-pass", "cutoffHz": 353.55, "linearGain": 1 }, { "type": "peak", "cutoffHz": 1189.21, "linearGain": 0.5 }], "effects": ["transition type", "chord type", "vibrato"], "transition": "continue", "clicklessTransition": false, "chord": "simultaneous", "fastTwoNoteArp": false, "arpeggioSpeed": 12, "vibrato": "shaky", "vibratoDepth": 0.1, "vibratoDelay": 0, "vibratoSpeed": 10, "vibratoType": 1, "fadeInSeconds": 0, "fadeOutTicks": 12, "harmonics": [100, 0, 57, 29, 14, 57, 29, 29, 14, 14, 29, 43, 14, 14, 14, 0, 14, 29, 29, 14, 0, 0, 14, 0, 0, 29, 14, 14], "unison": "stationary", "envelopes": [], "isDrum": false } },
                 { name: "dead souls", generalMidi: false, settings: { "type": "spectrum", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 8000, "linearGain": 0.1768 }, { "type": "high-pass", "cutoffHz": 353.55, "linearGain": 0.0884 }, { "type": "peak", "cutoffHz": 707.11, "linearGain": 1.4142 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "discreteEnvelope": true, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 8000, "linearGain": 0.1768 }, { "type": "high-pass", "cutoffHz": 353.55, "linearGain": 0.0884 }, { "type": "peak", "cutoffHz": 707.11, "linearGain": 1.4142 }], "effects": ["transition type", "chord type", "pitch shift", "detune", "distortion", "chorus", "reverb"], "transition": "interrupt", "clicklessTransition": false, "chord": "arpeggio", "fastTwoNoteArp": false, "arpeggioSpeed": 12, "pitchShiftSemitones": 24, "detuneCents": -200, "distortion": 100, "aliases": false, "chorus": 14, "reverb": 35, "fadeInSeconds": 0, "fadeOutTicks": -1, "spectrum": [100, 71, 43, 43, 29, 29, 29, 14, 14, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 57, 14, 14, 0, 0], "unison": "none", "envelopes": [{ "target": "pitchShift", "envelope": "random", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": false, "perEnvelopeSpeed": 24, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1.2, "steps": 16, "seed": 37, "waveform": 0 }, { "target": "noteVolume", "envelope": "note size", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "steps": 2, "seed": 2, "waveform": 0 }, { "target": "detune", "envelope": "note size", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": true, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "steps": 2, "seed": 2, "waveform": 0 }, { "target": "distortion", "envelope": "note size", "pitchEnvelopeStart": 0, "pitchEnvelopeEnd": 96, "inverse": false, "perEnvelopeSpeed": 0, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "steps": 2, "seed": 2, "waveform": 0 }], "isDrum": false } },
                 { name: "flutter", generalMidi: false, settings: { "type": "FM", "volume": 0, "eqFilter": [{ "type": "high-pass", "cutoffHz": 707.11, "linearGain": 1 }, { "type": "peak", "cutoffHz": 6727.17, "linearGain": 2.8284 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "discreteEnvelope": false, "eqSubFilters0": [{ "type": "high-pass", "cutoffHz": 707.11, "linearGain": 1 }, { "type": "peak", "cutoffHz": 6727.17, "linearGain": 2.8284 }], "effects": ["transition type", "chorus", "reverb", "ring mod"], "transition": "interrupt", "clicklessTransition": false, "ringMod": 100, "ringModHz": 100, "ringModWaveformIndex": 0, "panDelay": 0, "chorus": 14, "reverb": 10, "fadeInSeconds": 0, "fadeOutTicks": 12, "algorithm": "1←3 2←4", "feedbackType": "1⟲", "feedbackAmplitude": 3, "operators": [{ "frequency": "1×", "amplitude": 15, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 10, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "sine", "pulseWidth": 5 }], "envelopes": [{ "target": "ringModulationHz", "envelope": "fall", "inverse": false, "perEnvelopeSpeed": 1.5, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1.9 }, { "target": "noteVolume", "envelope": "blip", "inverse": false, "perEnvelopeSpeed": 0.25, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1 }], "isDrum": false } },
-                { name: "vinyl", generalMidi: false, settings: { "type": "noise", "volume": 0, "eqFilter": [{ "type": "high-pass", "cutoffHz": 1414.21, "linearGain": 0.3536 }, { "type": "low-pass", "cutoffHz": 1189.21, "linearGain": 0.25 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "discreteEnvelope": false, "eqSubFilters0": [{ "type": "high-pass", "cutoffHz": 1414.21, "linearGain": 0.3536 }, { "type": "low-pass", "cutoffHz": 1189.21, "linearGain": 0.25 }], "effects": ["transition type", "note filter", "distortion", "bitcrusher", "chorus", "echo", "reverb"], "transition": "interrupt", "clicklessTransition": false, "noteFilterType": false, "noteSimpleCut": 10, "noteSimplePeak": 0, "noteFilter": [{ "type": "high-pass", "cutoffHz": 250, "linearGain": 0.5 }, { "type": "low-pass", "cutoffHz": 8000, "linearGain": 1 }], "noteSubFilters0": [{ "type": "high-pass", "cutoffHz": 250, "linearGain": 0.5 }, { "type": "low-pass", "cutoffHz": 8000, "linearGain": 1 }], "distortion": 14, "aliases": false, "bitcrusherOctave": 5.5, "bitcrusherQuantization": 14, "chorus": 29, "echoSustain": 14, "echoDelayBeats": 0.083, "reverb": 32, "fadeInSeconds": 0, "fadeOutTicks": 24, "wave": "crackling", "unison": "none", "envelopes": [], "isDrum": false } },
+                { name: "vinyl", generalMidi: false, isNoise: true, settings: { "type": "noise", "volume": 0, "eqFilter": [{ "type": "high-pass", "cutoffHz": 1414.21, "linearGain": 0.3536 }, { "type": "low-pass", "cutoffHz": 1189.21, "linearGain": 0.25 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "discreteEnvelope": false, "eqSubFilters0": [{ "type": "high-pass", "cutoffHz": 1414.21, "linearGain": 0.3536 }, { "type": "low-pass", "cutoffHz": 1189.21, "linearGain": 0.25 }], "effects": ["transition type", "note filter", "distortion", "bitcrusher", "chorus", "echo", "reverb"], "transition": "interrupt", "clicklessTransition": false, "noteFilterType": false, "noteSimpleCut": 10, "noteSimplePeak": 0, "noteFilter": [{ "type": "high-pass", "cutoffHz": 250, "linearGain": 0.5 }, { "type": "low-pass", "cutoffHz": 8000, "linearGain": 1 }], "noteSubFilters0": [{ "type": "high-pass", "cutoffHz": 250, "linearGain": 0.5 }, { "type": "low-pass", "cutoffHz": 8000, "linearGain": 1 }], "distortion": 14, "aliases": false, "bitcrusherOctave": 5.5, "bitcrusherQuantization": 14, "chorus": 29, "echoSustain": 14, "echoDelayBeats": 0.083, "reverb": 32, "fadeInSeconds": 0, "fadeOutTicks": 24, "wave": "crackling", "unison": "none", "envelopes": [], "isDrum": false } },
+                { name: "crackle", generalMidi: false, isNoise: true, settings: { "type": "noise", "volume": 0, "eqFilter": [{ "type": "low-pass", "cutoffHz": 16000, "linearGain": 0.3536 }, { "type": "high-pass", "cutoffHz": 4756.83, "linearGain": 0.1768 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "eqSubFilters0": [{ "type": "low-pass", "cutoffHz": 16000, "linearGain": 0.3536 }, { "type": "high-pass", "cutoffHz": 4756.83, "linearGain": 0.1768 }], "eqSubFilters1": [{ "type": "low-pass", "cutoffHz": 16000, "linearGain": 0.3536 }, { "type": "high-pass", "cutoffHz": 4756.83, "linearGain": 0.1768 }], "eqSubFilters2": [{ "type": "low-pass", "cutoffHz": 8000, "linearGain": 0.3536 }, { "type": "high-pass", "cutoffHz": 4756.83, "linearGain": 0.1768 }], "eqSubFilters3": [{ "type": "low-pass", "cutoffHz": 8000, "linearGain": 0.1768 }, { "type": "high-pass", "cutoffHz": 4756.83, "linearGain": 0.1768 }], "effects": ["panning", "granular", "reverb"], "granular": 10, "grainSize": 1, "grainAmounts": 0, "grainRange": 0, "pan": -100, "panDelay": 0, "reverb": 6, "fadeInSeconds": 0, "fadeOutTicks": -3, "wave": "white", "unison": "none", "envelopes": [{ "target": "grainFreq", "envelope": "none", "inverse": false, "perEnvelopeSpeed": 1, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 0.1, "discrete": false }, { "target": "panning", "envelope": "random", "inverse": false, "perEnvelopeSpeed": 32, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": true, "steps": 32, "seed": 2, "waveform": 0 }], "isDrum": true } },
+                { name: "alien radio chatter", generalMidi: false, isNoise: false, settings: { "type": "FM", "eqFilter": [{ "type": "low-pass", "cutoffHz": 707.11, "linearGain": 2 }], "eqFilterType": false, "eqSimpleCut": 10, "eqSimplePeak": 0, "envelopeSpeed": 12, "effects": ["chord type", "note filter", "granular", "distortion", "reverb"], "chord": "strum", "fastTwoNoteArp": false, "arpeggioSpeed": 12, "monoChordTone": 1, "noteFilterType": true, "noteSimpleCut": 4, "noteSimplePeak": 1, "noteFilter": [{ "type": "low-pass", "cutoffHz": 1189.21, "linearGain": 0.5 }], "noteSubFilters1": [{ "type": "low-pass", "cutoffHz": 1189.21, "linearGain": 0.5 }], "granular": 4, "grainSize": 9, "grainAmounts": 9, "grainRange": 11, "distortion": 86, "aliases": false, "panDelay": 0, "reverb": 10, "fadeInSeconds": 0.0413, "fadeOutTicks": -12, "algorithm": "1←3 2←4", "feedbackType": "2→4", "feedbackAmplitude": 1, "operators": [{ "frequency": "0.5×", "amplitude": 12, "waveform": "trapezoid", "pulseWidth": 5 }, { "frequency": "18×", "amplitude": 15, "waveform": "pulse width", "pulseWidth": 4 }, { "frequency": "7×", "amplitude": 11, "waveform": "trapezoid", "pulseWidth": 5 }, { "frequency": "1×", "amplitude": 0, "waveform": "triangle", "pulseWidth": 5 }], "envelopes": [{ "target": "grainFreq", "envelope": "random", "inverse": false, "perEnvelopeSpeed": 0.3, "perEnvelopeLowerBound": 0, "perEnvelopeUpperBound": 1, "discrete": false, "steps": 3, "seed": 29, "waveform": 1 }] } },
             ])
         }
     ]);
@@ -2961,7 +2948,7 @@ var beepbox = (function (exports) {
                 }
             }
             if (patternObject["notes"] && patternObject["notes"].length > 0) {
-                const maxNoteCount = Math.min(song.beatsPerBar * Config.partsPerBeat * (isModChannel ? Config.modCount : 1), patternObject["notes"].length >>> 0);
+                const maxNoteCount = Math.min(song.partsPerPattern * (isModChannel ? Config.modCount : 1), patternObject["notes"].length >>> 0);
                 for (let j = 0; j < patternObject["notes"].length; j++) {
                     if (j >= maxNoteCount)
                         break;
@@ -3002,7 +2989,7 @@ var beepbox = (function (exports) {
                         else {
                             size = ((pointObject["forMod"] | 0) > 0) ? Math.round(pointObject["volume"] | 0) : Math.max(0, Math.min(volumeCap, Math.round((pointObject["volume"] | 0) * volumeCap / 100)));
                         }
-                        if (time > song.beatsPerBar * Config.partsPerBeat)
+                        if (time > song.partsPerPattern)
                             continue;
                         if (note.pins.length == 0) {
                             note.start = time;
@@ -4251,9 +4238,12 @@ var beepbox = (function (exports) {
             }
             if (effectsIncludeChord(this.effects)) {
                 instrumentObject["chord"] = this.getChord().name;
-                instrumentObject["fastTwoNoteArp"] = this.fastTwoNoteArp;
-                instrumentObject["arpeggioSpeed"] = this.arpeggioSpeed;
-                instrumentObject["monoChordTone"] = this.monoChordTone;
+                if (this.getChord().arpeggiates) {
+                    instrumentObject["fastTwoNoteArp"] = this.fastTwoNoteArp;
+                    instrumentObject["arpeggioSpeed"] = this.arpeggioSpeed;
+                }
+                if (this.getChord().name == "monophonic")
+                    instrumentObject["monoChordTone"] = this.monoChordTone;
             }
             if (effectsIncludePitchShift(this.effects)) {
                 instrumentObject["pitchShiftSemitones"] = this.pitchShift;
@@ -4297,7 +4287,6 @@ var beepbox = (function (exports) {
                 instrumentObject["ringModHz"] = Math.round(100 * this.ringModulationHz / (Config.ringModHzRange - 1));
                 instrumentObject["ringModWaveformIndex"] = this.ringModWaveformIndex;
                 instrumentObject["ringModPulseWidth"] = Math.round(100 * this.ringModPulseWidth / (Config.pulseWidthRange - 1));
-                instrumentObject["ringModHzOffset"] = Math.round(100 * this.ringModHzOffset / (Config.rmHzOffsetMax));
             }
             if (effectsIncludeDistortion(this.effects)) {
                 instrumentObject["distortion"] = Math.round(100 * this.distortion / (Config.distortionRange - 1));
@@ -5295,6 +5284,7 @@ var beepbox = (function (exports) {
     }
     class Song {
         constructor(string) {
+            this.titleNotifier = [];
             this.scaleCustom = [];
             this.channels = [];
             this.limitDecay = 4.0;
@@ -5485,6 +5475,9 @@ var beepbox = (function (exports) {
                 this.initToDefault(true);
             }
         }
+        get partsPerPattern() {
+            return this.beatsPerBar * Config.partsPerBeat;
+        }
         getChannelCount() {
             return this.pitchChannelCount + this.noiseChannelCount + this.modChannelCount;
         }
@@ -5504,6 +5497,15 @@ var beepbox = (function (exports) {
         }
         getChannelIsMod(channelIndex) {
             return (channelIndex >= this.pitchChannelCount + this.noiseChannelCount);
+        }
+        getLargestSongEQControlPointCount() {
+            let largest;
+            largest = this.eqFilter.controlPointCount;
+            for (let i = 0; i < Config.filterMorphCount; i++) {
+                if (this.eqSubFilters[i] != null && this.eqSubFilters[i].controlPointCount > largest)
+                    largest = this.eqSubFilters[i].controlPointCount;
+            }
+            return largest;
         }
         initToDefault(andResetChannels = true) {
             this.scale = 0;
@@ -5525,7 +5527,7 @@ var beepbox = (function (exports) {
                 this.eqSubFilters[i] = null;
             }
             this.title = "Untitled";
-            document.title = this.title + " - " + EditorConfig.versionDisplayName;
+            this.titleNotifier.forEach(o => o());
             if (andResetChannels) {
                 this.pitchChannelCount = 3;
                 this.noiseChannelCount = 1;
@@ -6161,11 +6163,11 @@ var beepbox = (function (exports) {
                             }
                             curPart = note.end;
                         }
-                        if (curPart < this.beatsPerBar * Config.partsPerBeat + (+isModChannel)) {
+                        if (curPart < this.partsPerPattern + (+isModChannel)) {
                             bits.write(2, 0);
                             if (isModChannel)
                                 bits.write(1, 0);
-                            bits.writePartDuration(this.beatsPerBar * Config.partsPerBeat + (+isModChannel) - curPart);
+                            bits.writePartDuration(this.partsPerPattern + (+isModChannel) - curPart);
                         }
                     }
                     else {
@@ -6290,23 +6292,24 @@ var beepbox = (function (exports) {
                     sampleLoadingState.urlTable = {};
                     sampleLoadingState.totalSamples = 0;
                     sampleLoadingState.samplesLoaded = 0;
-                    sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded));
+                    sampleLoadingState.samplesFailed = 0;
+                    sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded, sampleLoadingState.samplesFailed));
                     for (const url of compressed_array) {
-                        if (url.toLowerCase() === "legacysamples") {
+                        if (url.toLowerCase() === bundledSamplePacks.legacy) {
                             if (!willLoadLegacySamples) {
                                 willLoadLegacySamples = true;
                                 customSampleUrls.push(url);
                                 loadBuiltInSamples(0);
                             }
                         }
-                        else if (url.toLowerCase() === "nintariboxsamples") {
+                        else if (url.toLowerCase() === bundledSamplePacks.nintaribox) {
                             if (!willLoadNintariboxSamples) {
                                 willLoadNintariboxSamples = true;
                                 customSampleUrls.push(url);
                                 loadBuiltInSamples(1);
                             }
                         }
-                        else if (url.toLowerCase() === "mariopaintboxsamples") {
+                        else if (url.toLowerCase() === bundledSamplePacks.mariopaintbox) {
                             if (!willLoadMarioPaintboxSamples) {
                                 willLoadMarioPaintboxSamples = true;
                                 customSampleUrls.push(url);
@@ -6362,7 +6365,7 @@ var beepbox = (function (exports) {
                         {
                             var songNameLength = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                             this.title = decodeURIComponent(compressed.substring(charIndex, charIndex + songNameLength));
-                            document.title = this.title + " - " + EditorConfig.versionDisplayName;
+                            this.titleNotifier.forEach(o => o());
                             charIndex += songNameLength;
                         }
                         break;
@@ -6882,11 +6885,11 @@ var beepbox = (function (exports) {
                                 }
                             }
                             else if (fromGoldBox && !beforeFour && beforeSix) {
-                                if (document.URL.substring(document.URL.length - 13).toLowerCase() != "legacysamples") {
+                                if (document.URL.substring(document.URL.length - 13).toLowerCase() != bundledSamplePacks.legacy) {
                                     if (!willLoadLegacySamplesForOldSongs) {
                                         willLoadLegacySamplesForOldSongs = true;
                                         Config.willReloadForCustomSamples = true;
-                                        EditorConfig.customSamples = ["legacySamples"];
+                                        EditorConfig.customSamples = [bundledSamplePacks.legacy];
                                         loadBuiltInSamples(0);
                                     }
                                 }
@@ -7595,11 +7598,11 @@ var beepbox = (function (exports) {
                             if (fromGoldBox && !beforeFour && beforeSix) {
                                 const chipWaveForCompat = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                 if ((chipWaveForCompat + 62) > 85) {
-                                    if (document.URL.substring(document.URL.length - 13).toLowerCase() != "legacysamples") {
+                                    if (document.URL.substring(document.URL.length - 13).toLowerCase() != bundledSamplePacks.legacy) {
                                         if (!willLoadLegacySamplesForOldSongs) {
                                             willLoadLegacySamplesForOldSongs = true;
                                             Config.willReloadForCustomSamples = true;
-                                            EditorConfig.customSamples = ["legacySamples"];
+                                            EditorConfig.customSamples = [bundledSamplePacks.legacy];
                                             loadBuiltInSamples(0);
                                         }
                                     }
@@ -8127,7 +8130,7 @@ var beepbox = (function (exports) {
                                     let curPart = 0;
                                     const newNotes = newPattern.notes;
                                     let noteCount = 0;
-                                    while (curPart < this.beatsPerBar * Config.partsPerBeat + (+isModChannel)) {
+                                    while (curPart < this.partsPerPattern + (+isModChannel)) {
                                         const useOldShape = bits.read(1) == 1;
                                         let newNote = false;
                                         let shapeIndex = 0;
@@ -8317,7 +8320,7 @@ var beepbox = (function (exports) {
                                                     }
                                                 }
                                             }
-                                            curPart = validateRange(0, this.beatsPerBar * Config.partsPerBeat, note.end);
+                                            curPart = validateRange(0, this.partsPerPattern, note.end);
                                         }
                                     }
                                     newNotes.length = noteCount;
@@ -8654,7 +8657,8 @@ var beepbox = (function (exports) {
             sampleLoadingState.urlTable = {};
             sampleLoadingState.totalSamples = 0;
             sampleLoadingState.samplesLoaded = 0;
-            sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded));
+            sampleLoadingState.samplesFailed = 0;
+            sampleLoadEvents.dispatchEvent(new SampleLoadedEvent(sampleLoadingState.totalSamples, sampleLoadingState.samplesLoaded, sampleLoadingState.samplesFailed));
         }
         toJsonObject(enableIntro = true, loopCount = 1, enableOutro = true) {
             const channelArray = [];
@@ -8758,21 +8762,21 @@ var beepbox = (function (exports) {
                     const customSampleUrls = [];
                     const customSamplePresets = [];
                     for (const url of customSamples) {
-                        if (url.toLowerCase() === "legacysamples") {
+                        if (url.toLowerCase() === bundledSamplePacks.legacy) {
                             if (!willLoadLegacySamples) {
                                 willLoadLegacySamples = true;
                                 customSampleUrls.push(url);
                                 loadBuiltInSamples(0);
                             }
                         }
-                        else if (url.toLowerCase() === "nintariboxsamples") {
+                        else if (url.toLowerCase() === bundledSamplePacks.nintaribox) {
                             if (!willLoadNintariboxSamples) {
                                 willLoadNintariboxSamples = true;
                                 customSampleUrls.push(url);
                                 loadBuiltInSamples(1);
                             }
                         }
-                        else if (url.toLowerCase() === "mariopaintboxsamples") {
+                        else if (url.toLowerCase() === bundledSamplePacks.mariopaintbox) {
                             if (!willLoadMarioPaintboxSamples) {
                                 willLoadMarioPaintboxSamples = true;
                                 customSampleUrls.push(url);
@@ -9017,7 +9021,7 @@ var beepbox = (function (exports) {
                     Config.willReloadForCustomSamples = true;
                     Song._restoreChipWaveListToDefault();
                     loadBuiltInSamples(0);
-                    EditorConfig.customSamples = ["legacySamples"];
+                    EditorConfig.customSamples = [bundledSamplePacks.legacy];
                 }
                 else {
                     if (EditorConfig.customSamples != null && EditorConfig.customSamples.length > 0) {
@@ -11445,8 +11449,14 @@ var beepbox = (function (exports) {
                                             && pattern.notes.find(n => n.pitches[0] == (Config.modCount - 1 - mod))) {
                                             foundMod = true;
                                             pattern.notes.sort(function (a, b) { return (a.start == b.start) ? a.pitches[0] - b.pitches[0] : a.start - b.start; });
-                                            for (const note of pattern.notes) {
+                                            for (let noteIndex = 0; noteIndex < pattern.notes.length; noteIndex++) {
+                                                const note = pattern.notes[noteIndex];
                                                 if (note.pitches[0] == (Config.modCount - 1 - mod)) {
+                                                    if (noteIndex + 1 < pattern.notes.length
+                                                        && note.pitches[0] === pattern.notes[noteIndex + 1].pitches[0]
+                                                        && note.start === pattern.notes[noteIndex + 1].start) {
+                                                        continue;
+                                                    }
                                                     totalSamples += (Math.min(partsInBar - currentPart, note.start - currentPart)) * Config.ticksPerPart * this.getSamplesPerTickSpecificBPM(prevTempo);
                                                     if (note.start < partsInBar) {
                                                         for (let pinIdx = 1; pinIdx < note.pins.length; pinIdx++) {
@@ -11888,7 +11898,7 @@ var beepbox = (function (exports) {
             this.tick = 0;
             this.tickSampleCountdown = samplesPerTick;
             this.isAtStartOfTick = true;
-            if (this.loopRepeatCount != 0 && this.bar == Math.max(this.song.loopStart + this.song.loopLength, this.loopBarEnd)) {
+            if (this.loopRepeatCount != 0 && this.bar == Math.max(this.song.loopStart + this.song.loopLength, this.loopBarEnd + 1)) {
                 this.bar = this.song.loopStart;
                 if (this.loopBarStart != -1)
                     this.bar = this.loopBarStart;
