@@ -110,13 +110,45 @@
                 margin: 1em 0.5em;
             }
         }
+
+        a.link {
+            color: var(--secondary-text, rgb(193, 193, 193));
+            margin-left: 2em
+        }
+
+        a.link:hover {
+            color: var(--secondary-text, rgb(233, 233, 233));
+        }
+
+        #popup {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #247d1d;
+            color: white;
+            margin-top: 15px;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            opacity: 0;
+            transform: translateX(-100%); 
+            transition: all 0.5s ease;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        #popup.show {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
     </style>
 <body>
     <h1>
         <font color="#247d1d"> Frequently Asked Questions </font>
     </h1>
     <details>
-        <summary> What does Slarmoo's Box add? </summary>
+        <summary> What does Slarmoo's Box add? <a class="link">⤳</a></summary>
         <p> Slarmoo's Box is a mod of Ultrabox, and has all of the same features that Ultrabox has. </p>
         <p> Slarmoo's Box also adds a lot of new features. A non-exhaustive list is below: </p>
         <ul>
@@ -179,7 +211,10 @@
                         Opening and closing several dropdowns at once (envelopes and fm dropdowns)
                     </li>
                     <li>
-                        Random instrument generation with the current instrument type
+                        Random instrument generation with only currently selected features
+                    </li>
+                    <li>
+                        Pasting only specific instrument features
                     </li>
                     <li>
                         Moving the song loop to the currently highlighted selection
@@ -193,14 +228,14 @@
     </details>
 
     <details>
-        <summary> Is Slarmoo's Box compatible with Ultrabox? </summary>
+        <summary> Is Slarmoo's Box compatible with Ultrabox? <a class="link">⤳</a></summary>
         <span> Yes, Slarmoo's Box will properly import all songs from Ultrabox. </span>
         <span> Both changing the domain of the link and importing an Ultrabox json will work </span>
         <span> If you ever encounter any bugs with this please contact the developers at the links below </span>
     </details>
 
     <details>
-        <summary>How do I add custom samples?</summary>
+        <summary> How do I add custom samples? <a class="link">⤳</a></summary>
         Since Slarmoo's Box doesn't have a web server of its own, you'll have to first upload your sample to a CORS-friendly
         website.
         <ul>
@@ -219,7 +254,7 @@
     </details>
 
     <details>
-        <summary> What happened to the Envelopes? </summary>
+        <summary> What happened to the Envelopes? <a class="link">⤳</a></summary>
         <span> Slarmoo's Box 1.2 added individual envelope speeds.</span>
         <span> This caused a lot of envelope types to be redundant, and as such they were removed. </span>
         <span> Below is a table showing the conversion if you need it </span>
@@ -562,7 +597,7 @@
     </details>
 
     <details>
-        <summary> What can I do with Pitch Envelopes? </summary>
+        <summary> What can I do with Pitch Envelopes? <a class="link">⤳</a></summary>
         <span> Slarmoo's Box's pitch envelopes have a variety of unique uses. </span>
         <span> You can: </span>
         <ul>
@@ -577,7 +612,7 @@
     </details>
 
     <details>
-        <summary>Does Slarmoo's Box have an offline version?</summary>
+        <summary> Does Slarmoo's Box have an offline version? <a class="link">⤳</a></summary>
         Yes. You can access it <a href="https://github.com/slarmoo/slarmoosbox/releases">here</a>.<br>
         You can either download an OS-specific version that has custom sampling support, or the generic HTML version that
         lacks custom sampling support.<br>
@@ -585,7 +620,7 @@
     </details>
     
     <details>
-        <summary>Does Slarmoo's Box claim ownership over songs created with it?</summary>
+        <summary> Does Slarmoo's Box claim ownership over songs created with it? <a class="link">⤳</a></summary>
         Slarmoo's Box does not claim ownership over songs created with it, so original songs belong to their authors.<br><br>
         Neither Slarmoo's Box nor its creators assume responsibility for any copyrighted material played on Slarmoo's Box. No songs
         are ever received, recorded, or distributed by Slarmoo's Box's servers. All song data is contained in the URL after the
@@ -593,36 +628,59 @@
     </details>
 
     <details>
-        <summary>When will <code>x</code> feature be added?</summary>
-        Features can be requested at the links below, but after that it's up to Slarmoo to work on features if/when they can. 
+        <summary> When will <code>x</code> feature be added? <a class="link">⤳</a></summary>
+        Features, while able to be requested at the links below, are usually not chosen to be worked on.
         <br>
-        Note that Slarmoo very rarely chooses to add requested features and prefers to work on the features that they enjoy making instead. 
-        Contributions are welcome though, and can be made at the links below. 
+        Contributions are welcome though, and can be made on the <a href="https://github.com/slarmoo/slarmoosbox/?tab=contributing-ov-file">github page</a>.
         <br>
         Please be patient; Slarmoo works on Slarmoo's Box in their free time. They can't guarantee that anything will be out
         in a timely manner, or at all.
+        <br>
+        If you would like to follow Slarmoo's Box's development, you can do so either on the <a href="https://slarmoo.github.io/slarmoosboxtesting/website/">testing version</a> 
+        or the <a href="https://discord.gg/Tc997TstJb">BeepBox Modding Discord</a>.
     </details>
     
     <details>
-        <summary>Where can I contact the developers?</summary>
+        <summary> Where can I contact the developers? <a class="link">⤳</a></summary>
         You can contact the developers via the <a href="https://discord.gg/Tc997TstJb">BeepBox Modding Discord</a>.<br>
-        You can also contact us on the <a href="https://github.com/slarmoo/slarmoosbox/issues">issues page</a> if
+        You can also contact them on the <a href="https://github.com/slarmoo/slarmoosbox/issues">issues page</a> if
         you have ideas/suggestions or have encountered any bugs.
     </details>
+    <div id="popup">Copied link!</div>
+    <script>
+        document.body.addEventListener("keydown", function (event) {
+            if (event.key == "s") {
+                event.preventDefault();
+                if (!document.getElementById("snake")) {
+                    const link = document.createElement("a");
+                    link.href = "./snake.html"
+                    link.id = "snake"
+                    link.innerHTML = "🐍";
+                    document.body.appendChild(link);
+                }
+            }
+        });
+        const headers = document.getElementsByClassName("link");
+        for (const header of headers) {
+            const title = header.parentElement.innerText.replace(/\⤳/, "");
+            const link = title.replaceAll(/\?|\'| /g, "").toLowerCase();
+            header.name = link;
+            header.addEventListener("click", () => linkTo(link));
+            header.title = "Copy link to " + title;
+            if (location.hash.includes(link)) header.parentElement.parentElement.open = true;
+        }
+
+        function linkTo(update) {
+            window.history.replaceState(null, "", location.pathname + "#" + update);
+            navigator.clipboard.writeText(window.location).then(() => {
+                const popup = document.getElementById("popup");
+                popup.classList.add("show");
+                setTimeout(() => {
+                    popup.classList.remove("show");
+                }, 2000);
+            });
+        }
+    </script>
 </body>
 
 </html>
-<script>
-    document.body.addEventListener("keydown", function (event) {
-        if (event.key == "s" ) {
-            event.preventDefault();
-            if(!document.getElementById("snake")) {
-                const link = document.createElement("a");
-                link.href = "./snake.html"
-                link.id = "snake"
-                link.innerHTML = "🐍";
-                document.body.appendChild(link);
-            }
-        }
-    });
-</script>

@@ -724,13 +724,13 @@ function onKeyPressed(event: KeyboardEvent): void {
 			onToggleLoop();
 			break;
 		case 83: // s
-			if (event.ctrlKey) {
+			if (event.ctrlKey || event.metaKey) {
 				shortenUrl();
 				event.preventDefault();
 			}
 			break;
 		case 67: // c
-			onCopyClicked();
+			if (!event.ctrlKey && !event.metaKey) onCopyClicked();
 			break;
 	}
 }

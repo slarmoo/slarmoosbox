@@ -18,6 +18,11 @@ const beepboxEditorContainer: HTMLElement = document.getElementById("beepboxEdit
 beepboxEditorContainer.appendChild(editor.mainLayer);
 editor.whenUpdated();
 
+if (window.localStorage.getItem("customTheme2")) {
+    window.localStorage.setItem("customThemeImage", window.localStorage.getItem("customTheme2")!);
+    window.localStorage.removeItem("customTheme2"); //deprecated
+}
+
 // Fade-in transitions
 editor.mainLayer.className += " load";
 editor.mainLayer.getElementsByClassName("pattern-area")[0].className += " load";

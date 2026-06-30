@@ -275,7 +275,7 @@ html {
 
 .beepboxEditor .track-area {
 	grid-area: track-area;
-	background-image: url(${getLocalStorageItem("customTheme2", "")});
+	background-image: url(${getLocalStorageItem("customThemeImage", "")});
 }
 
 .beepboxEditor .loopEditor {
@@ -1585,7 +1585,7 @@ li.select2-results__option[role=group] > strong:hover {
 /* wide screen */
 @media (min-width: 711px) {
 	#beepboxEditorContainer {
-		background-image: url(${getLocalStorageItem("customTheme2", "")});
+		background-image: url(${getLocalStorageItem("customThemeImage", "")});
 		display: table;
 	}
 	.beepboxEditor {

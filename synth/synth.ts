@@ -2071,9 +2071,11 @@ export class Instrument {
         }
         if (effectsIncludeChord(this.effects)) {
             instrumentObject["chord"] = this.getChord().name;
-            instrumentObject["fastTwoNoteArp"] = this.fastTwoNoteArp;
-            instrumentObject["arpeggioSpeed"] = this.arpeggioSpeed;
-            instrumentObject["monoChordTone"] = this.monoChordTone;
+            if (this.getChord().arpeggiates) {
+                instrumentObject["fastTwoNoteArp"] = this.fastTwoNoteArp;
+                instrumentObject["arpeggioSpeed"] = this.arpeggioSpeed;
+            }
+            if (this.getChord().name == "monophonic") instrumentObject["monoChordTone"] = this.monoChordTone;
         }
         if (effectsIncludePitchShift(this.effects)) {
             instrumentObject["pitchShiftSemitones"] = this.pitchShift;
@@ -2117,7 +2119,7 @@ export class Instrument {
             instrumentObject["ringModHz"] = Math.round(100 * this.ringModulationHz / (Config.ringModHzRange - 1));
             instrumentObject["ringModWaveformIndex"] = this.ringModWaveformIndex;
             instrumentObject["ringModPulseWidth"] = Math.round(100 * this.ringModPulseWidth / (Config.pulseWidthRange - 1));
-            instrumentObject["ringModHzOffset"] = Math.round(100 * this.ringModHzOffset / (Config.rmHzOffsetMax));
+            // instrumentObject["ringModHzOffset"] = Math.round(100 * this.ringModHzOffset / (Config.rmHzOffsetMax));
         }
         if (effectsIncludeDistortion(this.effects)) {
             instrumentObject["distortion"] = Math.round(100 * this.distortion / (Config.distortionRange - 1));
@@ -3035,8 +3037,7 @@ export class Instrument {
                 if (this.noteSubFilters[i] != null && this.noteSubFilters[i]!.controlPointCount > largest)
                     largest = this.noteSubFilters[i]!.controlPointCount;
             }
-        }
-        else {
+        } else {
             largest = this.eqFilter.controlPointCount;
             for (let i: number = 0; i < Config.filterMorphCount; i++) {
                 if (this.eqSubFilters[i] != null && this.eqSubFilters[i]!.controlPointCount > largest)
@@ -3428,6 +3429,16 @@ export class Song {
 
     public getChannelIsMod(channelIndex: number): boolean {
         return (channelIndex >= this.pitchChannelCount + this.noiseChannelCount);
+    }
+
+    public getLargestSongEQControlPointCount() {
+        let largest: number;
+        largest = this.eqFilter.controlPointCount;
+        for (let i: number = 0; i < Config.filterMorphCount; i++) {
+            if (this.eqSubFilters[i] != null && this.eqSubFilters[i]!.controlPointCount > largest)
+                largest = this.eqSubFilters[i]!.controlPointCount;
+        }
+        return largest;
     }
 
     public initToDefault(andResetChannels: boolean = true): void {

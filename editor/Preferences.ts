@@ -3,11 +3,49 @@
 import {Scale, Config} from "../synth/SynthConfig";
 import {ColorConfig} from "../editor/ColorConfig";
 
+export class SelectiveInstrumentSettings {
+	public instrumentType: boolean = false;
+	public eqFilter: boolean = true;
+	public fade: boolean = true;
+	public instrumentTypeSettings: boolean = true;
+	public unison: boolean = true;
+	public effects: boolean = true;
+	public envelopes: boolean = true;
+	public instrumentPatterns: boolean = true;
+	public allInstruments: boolean = false;
+
+	toJsonObject(): string {
+		const object: any = {};
+		object["instrumentType"] = this.instrumentType;
+		object["eqFilter"] = this.eqFilter;
+		object["fade"] = this.fade;
+		object["instrumentTypeSettings"] = this.instrumentTypeSettings;
+		object["unison"] = this.unison;
+		object["effects"] = this.effects;
+		object["envelopes"] = this.envelopes;
+		object["instrumentPatterns"] = this.instrumentPatterns;
+		object["allInstruments"] = this.allInstruments;
+		return JSON.stringify(object);
+	}
+
+	fromJsonObject(object: any) {
+		if (object["instrumentType"] != undefined) this.instrumentType = object["instrumentType"];
+		if (object["eqFilter"] != undefined) this.eqFilter = object["eqFilter"];
+		if (object["fade"] != undefined) this.fade = object["fade"];
+		if (object["instrumentTypeSettings"] != undefined) this.instrumentTypeSettings = object["instrumentTypeSettings"];
+		if (object["unison"] != undefined) this.unison = object["unison"];
+		if (object["effects"] != undefined) this.effects = object["effects"];
+		if (object["envelopes"] != undefined) this.envelopes = object["envelopes"];
+		if (object["instrumentPatterns"] != undefined) this.instrumentPatterns = object["instrumentPatterns"];
+		if (object["allInstruments"] != undefined) this.allInstruments = object["allInstruments"];
+	}
+}
+
 export class Preferences {
 	public static readonly defaultVisibleOctaves: number = 3;
 	
 	public customTheme: string | null;
-	public customTheme2: string | null;
+	public customThemeImage: string | null;
 	public autoPlay: boolean;
 	public autoFollow: boolean;
 	public enableNotePreview: boolean;
@@ -44,6 +82,8 @@ export class Preferences {
 	public showInstrumentScrollbars: boolean;
 	public closePromptByClickoff: boolean;
 	public frostedGlassBackground: boolean;
+	public selectiveRandom: SelectiveInstrumentSettings = new SelectiveInstrumentSettings();
+	public selectivePaste: SelectiveInstrumentSettings = new SelectiveInstrumentSettings();
 	
 	constructor() {
 		this.reload();
@@ -84,8 +124,11 @@ export class Preferences {
 		this.layout = window.localStorage.getItem("layout") || "small";
 		this.colorTheme = window.localStorage.getItem("colorTheme") || ColorConfig.defaultTheme;
 		this.customTheme = window.localStorage.getItem("customTheme");
-        this.customTheme2 = window.localStorage.getItem("customTheme2");
+		this.customThemeImage = window.localStorage.getItem("customThemeImage") ||
+			window.localStorage.getItem("customTheme2"); //customTheme2 is not really a descriptive name for what it entails, so it's being deprecated
 		this.visibleOctaves = ((<any>window.localStorage.getItem("visibleOctaves")) >>> 0) || Preferences.defaultVisibleOctaves;
+		this.selectiveRandom.fromJsonObject(JSON.parse(window.localStorage.getItem("selectiveRandom") || "{}"));
+		this.selectivePaste.fromJsonObject(JSON.parse(window.localStorage.getItem("selectivePaste") || "{}"));
 		
 		const defaultScale: Scale | undefined = Config.scales.dictionary[window.localStorage.getItem("defaultScale")!];
 		this.defaultScale = (defaultScale != undefined) ? defaultScale.index : 0;
@@ -137,9 +180,11 @@ export class Preferences {
 		window.localStorage.setItem("layout", this.layout);
 		window.localStorage.setItem("colorTheme", this.colorTheme);
 		window.localStorage.setItem("customTheme", this.customTheme!);
-		window.localStorage.setItem("customTheme2", this.customTheme2!);
+		window.localStorage.setItem("customThemeImage", this.customThemeImage!);
 		window.localStorage.setItem("volume", String(this.volume));
 		window.localStorage.setItem("visibleOctaves", String(this.visibleOctaves));
+		window.localStorage.setItem("selectiveRandom", this.selectiveRandom.toJsonObject());
+		window.localStorage.setItem("selectivePaste", this.selectivePaste.toJsonObject());
 		
 	}
 }

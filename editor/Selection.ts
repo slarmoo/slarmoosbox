@@ -154,23 +154,18 @@ export class Selection {
                 return;
             }
             this.instrumentDigits = "";
-        }
-        else {
+        } else {
             this.digits += digit;
             let parsed: number = parseInt(this.digits);
             if (parsed <= this._doc.song.patternsPerChannel) {
-
                 this.setPattern(parsed);
-
                 return;
             }
 
             this.digits = digit;
             parsed = parseInt(this.digits);
             if (parsed <= this._doc.song.patternsPerChannel) {
-
                 this.setPattern(parsed);
-
                 return;
             }
 
@@ -868,14 +863,15 @@ export class Selection {
                 this._changeInstrument = new ChangeGroup();
                 const instruments: number[] = this._doc.recentPatternInstruments[this._doc.channel];
                 this._doc.notifier.changed(); // doc.recentPatternInstruments changes even if a 0 pattern is selected.
-                if (instruments.indexOf(instrument) == -1) {
+                const instrumentIndex: number = instruments.indexOf(instrument);
+                if (instrumentIndex == -1) {
                     instruments.push(instrument);
                     const maxLayers: number = this._doc.song.getMaxInstrumentsPerPattern(this._doc.channel);
                     if (instruments.length > maxLayers) {
                         instruments.splice(0, instruments.length - maxLayers);
                     }
                 } else {
-                    instruments.splice(instruments.indexOf(instrument), 1);
+                    instruments.splice(instrumentIndex, 1);
                     if (instruments.length == 0) instruments[0] = 0;
                 }
 
@@ -911,6 +907,23 @@ export class Selection {
                 this._doc.record(this._changeInstrument, canReplaceLastChange);
             }
         }
+    }
+
+    public setInstrumentNumbers(instrumentNumbers: number[]): ChangeGroup | null {
+        if (this._doc.song.patternInstruments && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
+            this._changeInstrument = new ChangeGroup();
+            if (this.boxSelectionActive) {
+                this._changeInstrument.append(new ChangeDuplicateSelectedReusedPatterns(this._doc, this.boxSelectionBar, this.boxSelectionWidth, this.boxSelectionChannel, this.boxSelectionHeight, false));
+            }
+            for (const channelIndex of this._eachSelectedChannel()) {
+                for (const pattern of this._eachSelectedPattern(channelIndex)) {
+                    this._changeInstrument.append(new ChangeSetPatternInstruments(this._doc, channelIndex, instrumentNumbers, pattern));
+                }
+            }
+            if (!this._changeInstrument.isNoop())
+                return this._changeInstrument;
+        } 
+        return null;
     }
 
     public resetBoxSelection(): void {

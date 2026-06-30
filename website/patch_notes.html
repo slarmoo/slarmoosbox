@@ -129,6 +129,30 @@
         <font color="#247d1d">Patch Notes (in reverse chronological order);</font>
     </h1>
 
+    <h2>Version 1.4.13 (QOL)<a class="link">⤳</a></h2>
+    <h3>
+        <ul>
+            <li>
+                New Keybinds!
+            </li>
+            <ul>
+                <li> <b>ctrl + left / right</b>: Swap a channel instrument with its neighbor (similar to swapping channels) </li>
+                <li> <b>alt + left / right</b>: Switch the currently selected instrument to its neighbor (similar to shift + number) </li>
+                <li> <b>alt + r</b>: has been revamped to "selective random", which allows you to randomize specific features of your instrument </li>
+                <li> <b>ctrl + alt + r</b>: open the selective random prompt to select which features you want randomized with selective random </li>
+                <li> <b>alt + v</b>: "selective paste", which will paste only specific features of an instrument </li>
+                <li> <b>ctrl + alt + v</b>: open the selective paste prompt to select which features you want pasted with selective paste </li>
+            </ul>
+            <li> Randomly generated FM, FM6op, and supersaw instruments will now be able to generate with unisons </li>
+            <li> The default custom theme is now based on the Slarmoo's Box Theme </li>
+            <li> If a song EQ subfilter point count exceeds the main filter point count it now can be properly modulated </li>
+            <li> Using ctrl + C to copy text properly works in the song player again </li>
+            <li> JSONS will no longer include the monophonic chord tone or the arpeggio speed if the chord type does not support it </li>
+            <li> Mod and song volume rendering will no longer break when modulating an envelope value </li>
+        </ul>
+    </h3>
+    <p>6/2x/2026</p>
+
     <h2>Version 1.4.12 (Unisons For All)<a class="link">⤳</a></h2>
     <h3>
         <ul>
@@ -609,7 +633,6 @@
         const headers = document.getElementsByClassName("link");
         for(const header of headers) {
             const updateVersion = header.parentElement.innerText.match(/v|Version [\d\.]+/)[0].replace(/v|Version /, "");
-            console.log(updateVersion);
             header.name = updateVersion;
             header.addEventListener("click", () => linkTo(updateVersion));
             header.title = "Copy link to " + updateVersion;

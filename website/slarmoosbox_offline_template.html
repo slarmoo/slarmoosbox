@@ -164,7 +164,7 @@
 
 <body id="secondImage">
     <script>
-        const image = localStorage.getItem('customTheme2');
+        const image = localStorage.getItem('customThemeImage');
         const el  = document.getElementById('secondImage');
 
         if (image != null && image !== "null" && image !== "undefined") {
@@ -202,13 +202,15 @@
         // Randomize display of header
 
         const plants = [
-                // jummbox/goldbox plants    
-                "🍂", "🌿", "🌺", "🍃", "🍄", "🍀🌷", "🌈🍂🍁🍀🌷🍄🐲🌈🍃🌺🍄", " 1️⃣3️⃣1️⃣2️⃣",
+                // jummbox plants    
+                "🍂", "🌿", "🌺", "🍃",
+                // goldbox plants
+                "🍄", "🍀🌷", "🌈🍂🍁🍀🌷🍄🐲🌈🍃🌺🍄", //" 1️⃣3️⃣1️⃣2️⃣",
                 //blubox plants
-                "≽(◕ ᴗ ◕)≼", "≽(ᴗ _ ᴗ)≼", "≽(⌐ _ ⌐)≼", "≽(ᵕ ‿ ᵕ)≼",
+                // "≽(◕ ᴗ ◕)≼", "≽(ᴗ _ ᴗ)≼", "≽(⌐ _ ⌐)≼", "≽(ᵕ ‿ ᵕ)≼", 
                 // familiarbox plant (there were others, but the code of familiarbox is long gone)
                 // this is actually a reference to really old lore chippy made for one of their projects 
-                "☀️⭐🕒👁️",
+                // "☀️⭐🕒👁️",
                 // suggested by mel, meant to supplement the lack of a worm logo
                 // (in case it doesn't show up, this is meant to be a worm emoji)
                 "🪱",
@@ -220,44 +222,48 @@
                 // blubox desktop plants 
                 "⚡", "🔵", "💫",
                 // LemmBox 
-                "🍋",
+                // "🍋",
                 // Slarmoo's Box plants
                 "✨", "🌈", "🌧️", "🪨", "🐍", "🌲", "🌳", "𓆏", "🦀", "🍄‍🟫", "🌵", "and Bobby", "🥚",
+                "🌾", "🎍", "🐳", "🪸", "🐚", "🍂🍁", "🪸🪸🫧🐙🐡🐠🐠🫧🐟",
                 //Current version
-                "1.4.6"
+                "1.4.13"
             ];
             const date = new Date();
             if (Math.floor(Math.random() * 3) == 0) { //more than doubled chance for a plant to show up
-                document.getElementById("goldboxPlant").innerHTML = "  " + plants[(Math.floor(Math.random() * plants.length))];
+                document.getElementById("plant").innerHTML = "  " + plants[(Math.floor(Math.random() * plants.length))];
                 //Slarmoo's Box holiday plants
                 const winterPlants = ["🎄", "🍪", "☃️", "🎁", "❄️"];
                 if ((date.getDate() >= 22 && date.getDate() <= 26) && date.getMonth() == 11) {
-                    document.getElementById("goldboxPlant").innerHTML = "  " + winterPlants[(Math.floor(Math.random() * winterPlants.length))];
+                    document.getElementById("plant").innerHTML = "  " + winterPlants[(Math.floor(Math.random() * winterPlants.length))];
                 }
                 //Slarmoo's Box Halloween plants
                 const spookyPlants = ["🎃", "🍬", "👻", "🐍", "🧪"];
                 if ((date.getDate() == 31) && date.getMonth() == 9) {
-                    document.getElementById("goldboxPlant").innerHTML = "  " + spookyPlants[(Math.floor(Math.random() * spookyPlants.length))];
+                    document.getElementById("plant").innerHTML = "  " + spookyPlants[(Math.floor(Math.random() * spookyPlants.length))];
                 }
                 //Slarmoo's Box valentines plants
                 const heartPlants = ["❤️", "🧡", "💛", "💚", "💙", "💜"];
                 if ((date.getDate() >= 13 && date.getDate() <= 15) && date.getMonth() == 1) {
-                    document.getElementById("goldboxPlant").innerHTML = "  " + heartPlants[(Math.floor(Math.random() * heartPlants.length))];
+                    document.getElementById("plant").innerHTML = "  " + heartPlants[(Math.floor(Math.random() * heartPlants.length))];
                 }
                 //Slarmoo's Box pi day plants
                 if ((date.getDate() == 14) && date.getMonth() == 2) {
                     const piePlants = ["π", "🥧", "🍏", "🍋", "3.14"];
-                    document.getElementById("goldboxPlant").innerHTML = "  " + piePlants[(Math.floor(Math.random() * piePlants.length))];
+                    document.getElementById("plant").innerHTML = "  " + piePlants[(Math.floor(Math.random() * piePlants.length))];
                 }
             }
             if ((date.getDate() == 1) && date.getMonth() == 3) {
-                const foolishPlants = ["Censorship Update", "19.8.4", "👁️", "🐍", "🚫"];
-                document.getElementById("goldboxPlant").innerHTML = "  " + foolishPlants[(Math.floor(Math.random() * foolishPlants.length))];
+                const foolishPlants = ["xoBssybA", "<(\"𓆏\")", "\"Do people even read these?\" No probably not but I don't care!!!", "shitbox4 is the worst!", "The last two plants are unrelated", "( σ ‸σ)", "100% vegan", "https://tinyurl.com/iploggersong", "You're making a masterpiece", "Once was Ultrabox", "Free!", "plus", "check out My Abyss!", "is not full of water!", "The last two plants are unrelated", "Please send me this song!"];
+                document.getElementById("plant").innerHTML = "  " + foolishPlants[(Math.floor(Math.random() * foolishPlants.length))];
+                document.getElementById("sbtitle").innerText = "AbyssBox";
+                document.getElementById("sbtitle").style.color = "#bf2c5d";
+                document.getElementById("introduction").innerText = "AbyssBox is an all-encompassing mod of UltraBox that adds smaller but meaningful changes across the board. From new effects to quality of life changes to countless themes, AbyssBox overall makes the user experience more convenient and simple to use while also providing a different enough experience from UltraBox and its contemporaries to be worth using.";
             }
             if ((date.getDate() == 13) && date.getMonth() == 4) {
                 const years = date.getFullYear() - 2024;
                 const birthdayPlants = [years + " year" + (years != 1 ? "s" : "") + "!", "🎂", "🎉", "Happy Birthday!", "Anniversary"];
-                document.getElementById("goldboxPlant").innerHTML = "  " + birthdayPlants[(Math.floor(Math.random() * birthdayPlants.length))];
+                document.getElementById("plant").innerHTML = "  " + birthdayPlants[(Math.floor(Math.random() * birthdayPlants.length))];
             }
 
             if (document.getElementById("goldboxPlant").innerText.includes("🐲")) {

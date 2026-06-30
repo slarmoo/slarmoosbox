@@ -157,7 +157,7 @@
 </head>
 <body id="secondImage">
     <script>
-        const image = localStorage.getItem('customTheme2');
+        const image = localStorage.getItem('customThemeImage');
         const el  = document.getElementById('secondImage');
         if (image != null && image !== "null" && image !== "undefined") {
             el.style.backgroundImage="url(" + image + ")";
@@ -247,7 +247,7 @@
                             <li><b>X</b>: cut pattern</li>
                             <li><b>0-9</b>: assign pattern number to selection</li>
 							<li><b>Arrows</b>: move selection</li>
-							<li><b>Ctrl & Arrows</b>: move selected channel up or down</li>
+							<li><b>Ctrl & Arrows</b>: move selected channel up or down, or selected instrument left or right</li>
 							<li><b>[ ]</b>: move playhead backward or forward one bar</li>
 							<li><b>F/H</b>: move to First or Highlighted pattern</li>
                             <li><b>Shift F</b>: move to start of loop</li>
@@ -268,7 +268,8 @@
                             <li><b>Alt B</b>: set song loop</li>
                             <li><b>R</b>: random preset</li>
                             <li><b>Shift R</b>: random instrument</li>
-                            <li><b>Alt R</b>: random instrument with currently selected intrument type</li>
+                            <li><b>Alt R</b>: random instrument with currently selected selective random settings</li>
+                            <li><b>Alt V</b>: paste instrument with currently selected selective paste settings</li>
                             <li><b>Shift P</b>: open song player</li>
                             <li><b>Alt E</b>: open/close all envelope dropdowns</li>
                             <li><b>Alt F</b>: open/close all fm dropdowns</li>
@@ -410,12 +411,12 @@
         // blubox desktop plants 
         "⚡","🔵","💫",
         // LemmBox 
-		"🍋",
+		// "🍋",
         // Slarmoo's Box plants
         "✨","🌈","🌧️","🪨","🐍","🌲","🌳","𓆏","🦀","🍄‍🟫","🌵","and Bobby","🥚",
         "🌾","🎍","🐳","🪸","🐚","🍂🍁","🪸🪸🫧🐙🐡🐠🐠🫧🐟",
         //Current version
-        "1.4.12"
+        "1.4.13"
         ];
         const date = new Date();
         if (Math.floor(Math.random() * 3) == 0) { //more than doubled chance for a plant to show up

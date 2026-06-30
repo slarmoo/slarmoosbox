@@ -37,6 +37,7 @@ import { KeyboardLayout } from "./KeyboardLayout";
 import { PatternEditor } from "./PatternEditor";
 import { Piano } from "./Piano";
 import { Prompt } from "./Prompt";
+import { SelectiveRandomPastePrompt } from "./SelectiveRandomPastePrompt";
 import { SongDocument } from "./SongDocument";
 import { SongDurationPrompt } from "./SongDurationPrompt";
 import { SustainPrompt } from "./SustainPrompt";
@@ -46,7 +47,7 @@ import { SpectrumEditor, SpectrumEditorPrompt } from "./SpectrumEditor";
 import { CustomThemePrompt } from "./CustomThemePrompt";
 import { ThemePrompt } from "./ThemePrompt";
 import { TipPrompt } from "./TipPrompt";
-import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback, ChangeRingMod, ChangeRingModHz, ChangeRingModChipWave, ChangeRingModPulseWidth, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeMonophonicTone, ChangeLoop, ChangeChannelBar } from "./changes";
+import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback, ChangeRingMod, ChangeRingModHz, ChangeRingModChipWave, ChangeRingModPulseWidth, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeMonophonicTone, ChangeLoop, ChangeChannelBar, ChangePasteInstrumentEditSelective, ChangeSwapInstrumentOrder } from "./changes";
 
 import { TrackEditor } from "./TrackEditor";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
@@ -104,6 +105,8 @@ function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement 
     // const randomGroup: HTMLElement = optgroup({ label: "▾ Randomize" });
     randomGroup.appendChild(option({ value: "randomPreset" }, "Random Preset"));
     randomGroup.appendChild(option({ value: "randomGenerated" }, "Random Generated"));
+    randomGroup.appendChild(option({ value: "advancedRandomGenerated" }, "Advanced Random Generated"));
+    randomGroup.appendChild(option({ value: "customizeAdvancedRandomGenerated" }, "Customize Advanced Random Generated"));
     menu.appendChild(randomGroup);
 
     let firstCategoryGroup: HTMLElement | null = null;
@@ -1738,7 +1741,7 @@ export class SongEditor {
         this.mainLayer.addEventListener("keyup", this._whenKeyReleased);
         this.mainLayer.addEventListener("focusin", this._onFocusIn);
         this._instrumentCopyButton.addEventListener("click", this._copyInstrument.bind(this));
-        this._instrumentPasteButton.addEventListener("click", this._pasteInstrument.bind(this));
+        this._instrumentPasteButton.addEventListener("click", this._pasteInstrument.bind(this, false));
         this._instrumentExportButton.addEventListener("click", this._exportInstruments.bind(this));
         this._instrumentImportButton.addEventListener("click", this._importInstruments.bind(this));
 
@@ -1947,21 +1950,22 @@ export class SongEditor {
                         if (Config.modulators[setting].maxIndex > 0) {
                             //detect that the mod actually does need updating for the specific index
                             const envelope = editor.doc.synth.song!.channels[channel].instruments[instrument].envelopes[index];
+                            if (!envelope) return false;
                             switch (setting) {
                                 case Config.modulators.dictionary["individual envelope speed"].index: {
-                                    if (envelope.tempEnvelopeSpeed == null) {
+                                    if (envelope.tempEnvelopeSpeed == null || envelope.tempEnvelopeSpeed == undefined) {
                                         return false;
                                     }
                                     break;
                                 }
                                 case Config.modulators.dictionary["individual envelope lower bound"].index: {
-                                    if (envelope.tempEnvelopeLowerBound == null) {
+                                    if (envelope.tempEnvelopeLowerBound == null || envelope.tempEnvelopeLowerBound == undefined) {
                                         return false;
                                     }
                                     break;
                                 }
                                 case Config.modulators.dictionary["individual envelope upper bound"].index: {
-                                    if (envelope.tempEnvelopeUpperBound == null) {
+                                    if (envelope.tempEnvelopeUpperBound == null || envelope.tempEnvelopeUpperBound == undefined) {
                                         return false;
                                     }
                                     break;
@@ -1973,7 +1977,6 @@ export class SongEditor {
                         if (Config.modulators[setting].invertSliderIndicator == true) {
                             currentVal = 1 - currentVal;
                         }
-
                         if (currentVal != editor._modSliderValues[setting][index]) {
                             editor._modSliderValues[setting][index] = currentVal;
                             slider.container.style.setProperty("--mod-position", (currentVal * 96.0 + 2.0) + "%");
@@ -2256,6 +2259,12 @@ export class SongEditor {
                     break;
                 case "drumsetSettings":
                     this.prompt = new SpectrumEditorPrompt(this.doc, this, true);
+                    break;
+                case "selectiveRandom":
+                    this.prompt = new SelectiveRandomPastePrompt(this.doc, true);
+                    break;
+                case "selectivePaste":
+                    this.prompt = new SelectiveRandomPastePrompt(this.doc, false);
                     break;
                 default:
                     this.prompt = new TipPrompt(this.doc, promptName);
@@ -3586,7 +3595,7 @@ export class SongEditor {
                     if (isSimple)
                         dotCount = 0;
                     if (useSongEq) {
-                        dotCount = this.doc.song.eqFilter.controlPointCount;
+                        dotCount = this.doc.song.getLargestSongEQControlPointCount();
                         if(this._modFilterBoxes[mod].children.length != 1 + dotCount * 2) {
                             while (this._modFilterBoxes[mod].firstChild) this._modFilterBoxes[mod].remove(0);
                             const dotList: string[] = [];
@@ -4279,7 +4288,7 @@ export class SongEditor {
                 break;
             case 67: // c
                 if (canPlayNotes) break;
-                if (event.shiftKey) {
+                if (event.shiftKey || event.altKey) {
                     this._copyInstrument();
                 } else {
                     this.doc.selection.copy();
@@ -4483,8 +4492,7 @@ export class SongEditor {
                     if (effectsIncludeNoteFilter(instrument.effects) && !instrument.noteFilterType && this.doc.channel < this.doc.song.pitchChannelCount + this.doc.song.noiseChannelCount)
                         this._openPrompt("customNoteFilterSettings");
                     break;
-                }
-                else if (event.ctrlKey) {
+                } else if (event.ctrlKey) {
                     let nextEmpty: number = 0;
                     while (nextEmpty < this.doc.song.patternsPerChannel && this.doc.song.channels[this.doc.channel].patterns[nextEmpty].notes.length > 0)
                         nextEmpty++;
@@ -4510,8 +4518,7 @@ export class SongEditor {
                         group.append(new ChangeSetPatternInstruments(this.doc, this.doc.channel, this.doc.recentPatternInstruments[this.doc.channel], this.doc.song.channels[this.doc.channel].patterns[nextEmpty - 1]));
 
                     }
-                }
-                else {
+                } else {
                     let nextUnused: number = 1;
                     while (this.doc.song.channels[this.doc.channel].bars.indexOf(nextUnused) != -1
                         && nextUnused <= this.doc.song.patternsPerChannel)
@@ -4611,10 +4618,13 @@ export class SongEditor {
                 break;
             case 86: // v
                 if (canPlayNotes) break;
-                if ((event.ctrlKey || event.metaKey) && event.shiftKey && !needControlForShortcuts) {
-                    this.doc.selection.pasteNumbers();
+                if ((event.ctrlKey || event.metaKey) && !needControlForShortcuts) {
+                    if (event.shiftKey) this.doc.selection.pasteNumbers();
+                    else if (event.altKey) this._openPrompt("selectivePaste");
                 } else if (event.shiftKey) {
                     this._pasteInstrument();
+                } else if (event.altKey) {
+                    this._pasteInstrument(true);
                 } else {
                     this.doc.selection.pasteNotes();
                 }
@@ -4650,11 +4660,14 @@ export class SongEditor {
                 break;
             case 82: // r
                 if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    if (event.shiftKey) {
-                        this._randomGenerated(false);
-                    } else if (event.altKey) {
+                if ((event.ctrlKey || event.metaKey) && event.altKey) {
+                    this._openPrompt("selectiveRandom");
+                    event.preventDefault();
+                } else if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
+                    if (event.altKey) {
                         this._randomGenerated(true);
+                    } else if (event.shiftKey) {
+                        this._randomGenerated(false);
                     } else {
                         this._randomPreset();
                     }
@@ -4745,7 +4758,13 @@ export class SongEditor {
                 event.preventDefault();
                 break;
             case 37: // left
-                if (event.shiftKey) {
+                if (event.ctrlKey || event.metaKey) {
+                    this._swapInstruments(this.doc.getCurrentInstrument() - 1);
+                } else if (event.altKey) {
+                    if (this.doc.getCurrentInstrument() > 0) {
+                        this.doc.selection.nextDigit((this.doc.getCurrentInstrument()) + "", true, false);
+                    }
+                } else if (event.shiftKey) {
                     this.doc.selection.boxSelectionX1 = Math.max(0, this.doc.selection.boxSelectionX1 - 1);
                     this.doc.selection.scrollToEndOfSelection();
                     this.doc.selection.selectionUpdated();
@@ -4756,7 +4775,13 @@ export class SongEditor {
                 event.preventDefault();
                 break;
             case 39: // right
-                if (event.shiftKey) {
+                if (event.ctrlKey || event.metaKey) {
+                    this._swapInstruments(this.doc.getCurrentInstrument());
+                } else if (event.altKey) {
+                    if (this.doc.getCurrentInstrument() < this.doc.song.channels[this.doc.channel].instruments.length - 1) {
+                        this.doc.selection.nextDigit((this.doc.getCurrentInstrument() + 2) + "", true, false);
+                    }
+                } else if (event.shiftKey) {
                     this.doc.selection.boxSelectionX1 = Math.min(this.doc.song.barCount - 1, this.doc.selection.boxSelectionX1 + 1);
                     this.doc.selection.scrollToEndOfSelection();
                     this.doc.selection.selectionUpdated();
@@ -4771,62 +4796,18 @@ export class SongEditor {
                 this.doc.selection.nextDigit("0", false, false);
                 break;
             case 48: // 0
-                if (canPlayNotes) break;
-                this.doc.selection.nextDigit("0", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
-                this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
-                event.preventDefault();
-                break;
             case 49: // 1
-                if (canPlayNotes) break;
-                this.doc.selection.nextDigit("1", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
-                this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
-                event.preventDefault();
-                break;
             case 50: // 2
-                if (canPlayNotes) break;
-                this.doc.selection.nextDigit("2", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
-                this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
-                event.preventDefault();
-                break;
             case 51: // 3
-                if (canPlayNotes) break;
-                this.doc.selection.nextDigit("3", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
-                this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
-                event.preventDefault();
-                break;
             case 52: // 4
-                if (canPlayNotes) break;
-                this.doc.selection.nextDigit("4", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
-                this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
-                event.preventDefault();
-                break;
             case 53: // 5
-                if (canPlayNotes) break;
-                this.doc.selection.nextDigit("5", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
-                this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
-                event.preventDefault();
-                break;
             case 54: // 6
-                if (canPlayNotes) break;
-                this.doc.selection.nextDigit("6", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
-                this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
-                event.preventDefault();
-                break;
             case 55: // 7
-                if (canPlayNotes) break;
-                this.doc.selection.nextDigit("7", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
-                this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
-                event.preventDefault();
-                break;
             case 56: // 8
-                if (canPlayNotes) break;
-                this.doc.selection.nextDigit("8", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
-                this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
-                event.preventDefault();
-                break;
             case 57: // 9
+                const numberPressed: number = event.keyCode - 48;
                 if (canPlayNotes) break;
-                this.doc.selection.nextDigit("9", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
+                this.doc.selection.nextDigit(numberPressed + "", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
                 this._renderInstrumentBar(this.doc.song.channels[this.doc.channel], this.doc.getCurrentInstrument(), ColorConfig.getChannelColor(this.doc.song, this.doc.channel));
                 event.preventDefault();
                 break;
@@ -5016,20 +4997,28 @@ export class SongEditor {
 
     private _copyInstrument = (): void => {
         const channel: Channel = this.doc.song.channels[this.doc.channel];
-        const instrument: Instrument = channel.instruments[this.doc.getCurrentInstrument()];
-        const instrumentCopy: any = instrument.toJsonObject();
-        instrumentCopy["isDrum"] = this.doc.song.getChannelIsNoise(this.doc.channel);
-        instrumentCopy["isMod"] = this.doc.song.getChannelIsMod(this.doc.channel);
-        window.localStorage.setItem("instrumentCopy", JSON.stringify(instrumentCopy));
+        const instrumentCopies: any[] = [];
+        for (let i: number = 0; i < channel.instruments.length; i++) {
+            const instrument: Instrument = channel.instruments[i];
+            const instrumentCopy: any = instrument.toJsonObject();
+            instrumentCopy["isDrum"] = this.doc.song.getChannelIsNoise(this.doc.channel);
+            instrumentCopy["isMod"] = this.doc.song.getChannelIsMod(this.doc.channel);
+            if (this.doc.getCurrentInstrument() == i) window.localStorage.setItem("instrumentCopy", JSON.stringify(instrumentCopy));
+            instrumentCopies.push(instrumentCopy);
+        }
+        window.localStorage.setItem("channelInstruments", JSON.stringify(this.doc.getCurrentPattern()?.instruments));
+        window.localStorage.setItem("instrumentCopies", JSON.stringify(instrumentCopies))
         this.refocusStage();
     }
 
-    private _pasteInstrument = (): void => {
+    private _pasteInstrument = (useSelectivePaste: boolean = false): void => {
         const channel: Channel = this.doc.song.channels[this.doc.channel];
         const instrument: Instrument = channel.instruments[this.doc.getCurrentInstrument()];
         const instrumentCopy: any = JSON.parse(String(window.localStorage.getItem("instrumentCopy")));
+        const instrumentCopies: any = JSON.parse(String(window.localStorage.getItem("instrumentCopies")));
         if (instrumentCopy != null && instrumentCopy["isDrum"] == this.doc.song.getChannelIsNoise(this.doc.channel) && instrumentCopy["isMod"] == this.doc.song.getChannelIsMod(this.doc.channel)) {
-            this.doc.record(new ChangePasteInstrument(this.doc, instrument, instrumentCopy));
+            this.doc.record(useSelectivePaste ? new ChangePasteInstrumentEditSelective(this.doc, instrumentCopy, instrumentCopies, JSON.parse(String(window.localStorage.getItem("channelInstruments"))))
+                : new ChangePasteInstrument(this.doc, instrument, instrumentCopy));
         }
         this.refocusStage();
     }
@@ -5063,10 +5052,14 @@ export class SongEditor {
         this.doc.record(new ChangePreset(this.doc, pickRandomPresetValue(isNoise)));
     }
 
-    private _randomGenerated(usesCurrentInstrumentType: boolean): void {
-        this.doc.record(new ChangeRandomGeneratedInstrument(this.doc, usesCurrentInstrumentType));
+    private _randomGenerated(useSelectiveRandom: boolean): void {
+        this.doc.record(new ChangeRandomGeneratedInstrument(this.doc, useSelectiveRandom));
     }
 
+    private _swapInstruments(left: number): void {
+        const swapChange = new ChangeSwapInstrumentOrder(this.doc, this.doc.channel, left);
+        if (!swapChange.isNoop()) this.doc.record(swapChange);
+    }
 
     private _whenSetTempo = (): void => {
         this.doc.record(new ChangeTempo(this.doc, -1, parseInt(this._tempoStepper.value) | 0));
@@ -5142,12 +5135,20 @@ export class SongEditor {
                 case "pasteInstrument":
                     this._pasteInstrument();
                     break;
+                case "selectivePasteInstrument":
+                    this._pasteInstrument(true);
+                    break;
                 case "randomPreset":
                     this._randomPreset();
                     break;
                 case "randomGenerated":
                     this._randomGenerated(false);
                     break;
+                case "selectiveRandomGenerated":
+                    this._randomGenerated(true);
+                    break;
+                case "customizeselectiveRandomGenerated":
+                    this._openPrompt("selectiveRandom");
             }
             this.doc.notifier.changed();
         } else {
