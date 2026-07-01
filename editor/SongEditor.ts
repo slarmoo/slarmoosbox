@@ -105,8 +105,8 @@ function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement 
     // const randomGroup: HTMLElement = optgroup({ label: "▾ Randomize" });
     randomGroup.appendChild(option({ value: "randomPreset" }, "Random Preset"));
     randomGroup.appendChild(option({ value: "randomGenerated" }, "Random Generated"));
-    randomGroup.appendChild(option({ value: "advancedRandomGenerated" }, "Advanced Random Generated"));
-    randomGroup.appendChild(option({ value: "customizeAdvancedRandomGenerated" }, "Customize Advanced Random Generated"));
+    randomGroup.appendChild(option({ value: "selectiveRandomGenerated" }, "Selective Random Generated"));
+    randomGroup.appendChild(option({ value: "customizeSelectiveRandomGenerated" }, "Customize Selective Random Generated"));
     menu.appendChild(randomGroup);
 
     let firstCategoryGroup: HTMLElement | null = null;
@@ -782,6 +782,8 @@ export class SongEditor {
         option({ value: "copy" }, "Copy Pattern (C)"),
         option({ value: "pasteNotes" }, "Paste Pattern Notes (V)"),
         option({ value: "pasteNumbers" }, "Paste Pattern Numbers (" + EditorConfig.ctrlSymbol + "⇧V)"),
+        option({ value: "pasteSelective" }, "Selective Instrument Paste (Alt + V)"),
+        option({ value: "customizePasteSelective" }, "Customize Selective Paste (" + EditorConfig.ctrlSymbol + " + Alt + V)"),
         option({ value: "insertBars" }, "Insert Bar (⏎)"),
         option({ value: "deleteBars" }, "Delete Selected Bars (⌫)"),
         option({ value: "insertChannel" }, "Insert Channel (" + EditorConfig.ctrlSymbol + "⏎)"),
@@ -5117,7 +5119,7 @@ export class SongEditor {
                 case "selectiveRandomGenerated":
                     this._randomGenerated(true);
                     break;
-                case "customizeselectiveRandomGenerated":
+                case "customizeSelectiveRandomGenerated":
                     this._openPrompt("selectiveRandom");
             }
             this.doc.notifier.changed();
@@ -5429,6 +5431,12 @@ export class SongEditor {
                 break;
             case "pasteNumbers":
                 this.doc.selection.pasteNumbers();
+                break;
+            case "pasteSelective":
+                this._pasteInstrument(true);
+                break;
+            case "customizePasteSelective":
+                this._openPrompt("selectivePaste");
                 break;
             case "transposeUp":
                 this.doc.selection.transpose(true, false);

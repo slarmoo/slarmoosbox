@@ -9,7 +9,7 @@ import { SelectiveInstrumentSettings } from "./Preferences";
 const { button, div, h2, p, input, span } = HTML;
 
 export class SelectiveRandomPastePrompt implements Prompt {
-    private readonly SpecificRandomPasteSettings: SelectiveInstrumentSettings;
+    private readonly SelectiveRandomPasteSettings: SelectiveInstrumentSettings;
 
     private readonly _cancelButton: HTMLButtonElement = button({ class: "cancelButton" });
     private readonly _okayButton: HTMLButtonElement = button({ class: "okayButton", style: "width:45%;" }, "Okay");
@@ -29,24 +29,24 @@ export class SelectiveRandomPastePrompt implements Prompt {
 
     constructor(private _doc: SongDocument, private _isRandom: boolean) {
 
-        if (this._isRandom) this.SpecificRandomPasteSettings = this._doc.prefs.selectiveRandom;
-        else this.SpecificRandomPasteSettings = this._doc.prefs.selectivePaste;
+        if (this._isRandom) this.SelectiveRandomPasteSettings = this._doc.prefs.selectiveRandom;
+        else this.SelectiveRandomPasteSettings = this._doc.prefs.selectivePaste;
 
-        this._instrumentTypeCheckbox = input({ "checked": this.SpecificRandomPasteSettings.instrumentType, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-        this._eqFilterCheckbox = input({ "checked": this.SpecificRandomPasteSettings.eqFilter, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-        this._fadeCheckbox = input({ "checked": this.SpecificRandomPasteSettings.fade, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-        this._instrumentTypeSettingsCheckbox = input({ "checked": this.SpecificRandomPasteSettings.instrumentTypeSettings, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-        this._unisonCheckbox = input({ "checked": this.SpecificRandomPasteSettings.unison, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-        this._effectsCheckbox = input({ "checked": this.SpecificRandomPasteSettings.effects, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-        this._envelopesCheckbox = input({ "checked": this.SpecificRandomPasteSettings.envelopes, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-        this._instrumentPatternsCheckbox = input({ "checked": this.SpecificRandomPasteSettings.instrumentPatterns, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-        this._allInstrumentsCheckbox = input({ "checked": this.SpecificRandomPasteSettings.allInstruments, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+        this._instrumentTypeCheckbox = input({ "checked": this.SelectiveRandomPasteSettings.instrumentType, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+        this._eqFilterCheckbox = input({ "checked": this.SelectiveRandomPasteSettings.eqFilter, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+        this._fadeCheckbox = input({ "checked": this.SelectiveRandomPasteSettings.fade, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+        this._instrumentTypeSettingsCheckbox = input({ "checked": this.SelectiveRandomPasteSettings.instrumentTypeSettings, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+        this._unisonCheckbox = input({ "checked": this.SelectiveRandomPasteSettings.unison, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+        this._effectsCheckbox = input({ "checked": this.SelectiveRandomPasteSettings.effects, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+        this._envelopesCheckbox = input({ "checked": this.SelectiveRandomPasteSettings.envelopes, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+        this._instrumentPatternsCheckbox = input({ "checked": this.SelectiveRandomPasteSettings.instrumentPatterns, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+        this._allInstrumentsCheckbox = input({ "checked": this.SelectiveRandomPasteSettings.allInstruments, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
 
         this._okayButton.addEventListener("click", this._saveChanges);
         this._cancelButton.addEventListener("click", this._close);
 
         this.container = div({ class: "prompt noSelection", style: "width: 250px;" },
-            h2(this._isRandom ? "Customize Specific Random" : "Customize Specific Paste"),
+            h2(this._isRandom ? "Customize Selective Random" : "Customize Selective Paste"),
             p((this._isRandom ? "When generating a random instrument with Alt + R" : "When pasting an instrument with Alt + V") +
                 ", you can choose which parameters you want " + (this._isRandom ? "randomized" : "pasted") + " here."),
             div({ style: "align-items: center; display: flex; flex-direction: row;"},
@@ -90,18 +90,18 @@ export class SelectiveRandomPastePrompt implements Prompt {
     private _saveChanges = (): void => {
         this._doc.prompt = null;
 
-        this.SpecificRandomPasteSettings.instrumentType = this._instrumentTypeCheckbox.checked;
-        this.SpecificRandomPasteSettings.eqFilter = this._eqFilterCheckbox.checked;
-        this.SpecificRandomPasteSettings.fade = this._fadeCheckbox.checked;
-        this.SpecificRandomPasteSettings.instrumentTypeSettings = this._instrumentTypeSettingsCheckbox.checked;
-        this.SpecificRandomPasteSettings.unison = this._unisonCheckbox.checked;
-        this.SpecificRandomPasteSettings.effects = this._effectsCheckbox.checked;
-        this.SpecificRandomPasteSettings.envelopes = this._envelopesCheckbox.checked;
-        this.SpecificRandomPasteSettings.instrumentPatterns = this._instrumentPatternsCheckbox.checked;
-        this.SpecificRandomPasteSettings.allInstruments = this._allInstrumentsCheckbox.checked;
+        this.SelectiveRandomPasteSettings.instrumentType = this._instrumentTypeCheckbox.checked;
+        this.SelectiveRandomPasteSettings.eqFilter = this._eqFilterCheckbox.checked;
+        this.SelectiveRandomPasteSettings.fade = this._fadeCheckbox.checked;
+        this.SelectiveRandomPasteSettings.instrumentTypeSettings = this._instrumentTypeSettingsCheckbox.checked;
+        this.SelectiveRandomPasteSettings.unison = this._unisonCheckbox.checked;
+        this.SelectiveRandomPasteSettings.effects = this._effectsCheckbox.checked;
+        this.SelectiveRandomPasteSettings.envelopes = this._envelopesCheckbox.checked;
+        this.SelectiveRandomPasteSettings.instrumentPatterns = this._instrumentPatternsCheckbox.checked;
+        this.SelectiveRandomPasteSettings.allInstruments = this._allInstrumentsCheckbox.checked;
 
-        if (this._isRandom) this._doc.prefs.selectiveRandom = this.SpecificRandomPasteSettings;
-        else this._doc.prefs.selectivePaste = this.SpecificRandomPasteSettings;
+        if (this._isRandom) this._doc.prefs.selectiveRandom = this.SelectiveRandomPasteSettings;
+        else this._doc.prefs.selectivePaste = this.SelectiveRandomPasteSettings;
         this._doc.prefs.save();
         this._close();
     }
