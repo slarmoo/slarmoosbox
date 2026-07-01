@@ -798,7 +798,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
             ]);
             instrument.preset = instrument.type = type;
 
-            if (type != InstrumentType.drumset) { // Drumset doesn't use fade.
+            if (type != InstrumentType.drumset && selectiveRandom.fade) { // Drumset doesn't use fade.
                 instrument.fadeIn = (Math.random() < 0.8) ? 0 : selectCurvedDistribution(0, Config.fadeInRange - 1, 0, 2);
                 instrument.fadeOut = selectCurvedDistribution(0, Config.fadeOutTicks.length - 1, Config.fadeOutNeutral, 2);
             }
@@ -1022,8 +1022,10 @@ export class ChangeRandomGeneratedInstrument extends Change {
             ]);
             instrument.preset = instrument.type = type;
 
-            instrument.fadeIn = (Math.random() < 0.5) ? 0 : selectCurvedDistribution(0, Config.fadeInRange - 1, 0, 2);
-            instrument.fadeOut = selectCurvedDistribution(0, Config.fadeOutTicks.length - 1, Config.fadeOutNeutral, 2);
+            if (selectiveRandom.fade) {
+                instrument.fadeIn = (Math.random() < 0.5) ? 0 : selectCurvedDistribution(0, Config.fadeInRange - 1, 0, 2);
+                instrument.fadeOut = selectCurvedDistribution(0, Config.fadeOutTicks.length - 1, Config.fadeOutNeutral, 2);
+            }
             if (selectiveRandom.unison) { // TODO: add noise
                 instrument.unison = Config.unisons.dictionary[selectWeightedRandom([
                     { item: "none", weight: 100 },

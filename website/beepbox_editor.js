@@ -27022,7 +27022,7 @@ li.select2-results__option[role=group] > strong:hover {
                         { item: 4, weight: 1 },
                     ]);
                 instrument.preset = instrument.type = type;
-                if (type != 4) {
+                if (type != 4 && selectiveRandom.fade) {
                     instrument.fadeIn = (Math.random() < 0.8) ? 0 : selectCurvedDistribution(0, Config.fadeInRange - 1, 0, 2);
                     instrument.fadeOut = selectCurvedDistribution(0, Config.fadeOutTicks.length - 1, Config.fadeOutNeutral, 2);
                 }
@@ -27251,8 +27251,10 @@ li.select2-results__option[role=group] > strong:hover {
                         { item: 11, weight: 2 },
                     ]);
                 instrument.preset = instrument.type = type;
-                instrument.fadeIn = (Math.random() < 0.5) ? 0 : selectCurvedDistribution(0, Config.fadeInRange - 1, 0, 2);
-                instrument.fadeOut = selectCurvedDistribution(0, Config.fadeOutTicks.length - 1, Config.fadeOutNeutral, 2);
+                if (selectiveRandom.fade) {
+                    instrument.fadeIn = (Math.random() < 0.5) ? 0 : selectCurvedDistribution(0, Config.fadeInRange - 1, 0, 2);
+                    instrument.fadeOut = selectCurvedDistribution(0, Config.fadeOutTicks.length - 1, Config.fadeOutNeutral, 2);
+                }
                 if (selectiveRandom.unison) {
                     instrument.unison = Config.unisons.dictionary[selectWeightedRandom([
                         { item: "none", weight: 100 },
@@ -43543,38 +43545,38 @@ You should be redirected to the song at:<br /><br />
             };
             this._saveChanges = () => {
                 this._doc.prompt = null;
-                this.SpecificRandomPasteSettings.instrumentType = this._instrumentTypeCheckbox.checked;
-                this.SpecificRandomPasteSettings.eqFilter = this._eqFilterCheckbox.checked;
-                this.SpecificRandomPasteSettings.fade = this._fadeCheckbox.checked;
-                this.SpecificRandomPasteSettings.instrumentTypeSettings = this._instrumentTypeSettingsCheckbox.checked;
-                this.SpecificRandomPasteSettings.unison = this._unisonCheckbox.checked;
-                this.SpecificRandomPasteSettings.effects = this._effectsCheckbox.checked;
-                this.SpecificRandomPasteSettings.envelopes = this._envelopesCheckbox.checked;
-                this.SpecificRandomPasteSettings.instrumentPatterns = this._instrumentPatternsCheckbox.checked;
-                this.SpecificRandomPasteSettings.allInstruments = this._allInstrumentsCheckbox.checked;
+                this.SelectiveRandomPasteSettings.instrumentType = this._instrumentTypeCheckbox.checked;
+                this.SelectiveRandomPasteSettings.eqFilter = this._eqFilterCheckbox.checked;
+                this.SelectiveRandomPasteSettings.fade = this._fadeCheckbox.checked;
+                this.SelectiveRandomPasteSettings.instrumentTypeSettings = this._instrumentTypeSettingsCheckbox.checked;
+                this.SelectiveRandomPasteSettings.unison = this._unisonCheckbox.checked;
+                this.SelectiveRandomPasteSettings.effects = this._effectsCheckbox.checked;
+                this.SelectiveRandomPasteSettings.envelopes = this._envelopesCheckbox.checked;
+                this.SelectiveRandomPasteSettings.instrumentPatterns = this._instrumentPatternsCheckbox.checked;
+                this.SelectiveRandomPasteSettings.allInstruments = this._allInstrumentsCheckbox.checked;
                 if (this._isRandom)
-                    this._doc.prefs.selectiveRandom = this.SpecificRandomPasteSettings;
+                    this._doc.prefs.selectiveRandom = this.SelectiveRandomPasteSettings;
                 else
-                    this._doc.prefs.selectivePaste = this.SpecificRandomPasteSettings;
+                    this._doc.prefs.selectivePaste = this.SelectiveRandomPasteSettings;
                 this._doc.prefs.save();
                 this._close();
             };
             if (this._isRandom)
-                this.SpecificRandomPasteSettings = this._doc.prefs.selectiveRandom;
+                this.SelectiveRandomPasteSettings = this._doc.prefs.selectiveRandom;
             else
-                this.SpecificRandomPasteSettings = this._doc.prefs.selectivePaste;
-            this._instrumentTypeCheckbox = input$7({ "checked": this.SpecificRandomPasteSettings.instrumentType, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-            this._eqFilterCheckbox = input$7({ "checked": this.SpecificRandomPasteSettings.eqFilter, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-            this._fadeCheckbox = input$7({ "checked": this.SpecificRandomPasteSettings.fade, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-            this._instrumentTypeSettingsCheckbox = input$7({ "checked": this.SpecificRandomPasteSettings.instrumentTypeSettings, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-            this._unisonCheckbox = input$7({ "checked": this.SpecificRandomPasteSettings.unison, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-            this._effectsCheckbox = input$7({ "checked": this.SpecificRandomPasteSettings.effects, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-            this._envelopesCheckbox = input$7({ "checked": this.SpecificRandomPasteSettings.envelopes, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-            this._instrumentPatternsCheckbox = input$7({ "checked": this.SpecificRandomPasteSettings.instrumentPatterns, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
-            this._allInstrumentsCheckbox = input$7({ "checked": this.SpecificRandomPasteSettings.allInstruments, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+                this.SelectiveRandomPasteSettings = this._doc.prefs.selectivePaste;
+            this._instrumentTypeCheckbox = input$7({ "checked": this.SelectiveRandomPasteSettings.instrumentType, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+            this._eqFilterCheckbox = input$7({ "checked": this.SelectiveRandomPasteSettings.eqFilter, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+            this._fadeCheckbox = input$7({ "checked": this.SelectiveRandomPasteSettings.fade, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+            this._instrumentTypeSettingsCheckbox = input$7({ "checked": this.SelectiveRandomPasteSettings.instrumentTypeSettings, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+            this._unisonCheckbox = input$7({ "checked": this.SelectiveRandomPasteSettings.unison, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+            this._effectsCheckbox = input$7({ "checked": this.SelectiveRandomPasteSettings.effects, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+            this._envelopesCheckbox = input$7({ "checked": this.SelectiveRandomPasteSettings.envelopes, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+            this._instrumentPatternsCheckbox = input$7({ "checked": this.SelectiveRandomPasteSettings.instrumentPatterns, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
+            this._allInstrumentsCheckbox = input$7({ "checked": this.SelectiveRandomPasteSettings.allInstruments, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
             this._okayButton.addEventListener("click", this._saveChanges);
             this._cancelButton.addEventListener("click", this._close);
-            this.container = div$c({ class: "prompt noSelection", style: "width: 250px;" }, h2$b(this._isRandom ? "Customize Specific Random" : "Customize Specific Paste"), p$6((this._isRandom ? "When generating a random instrument with Alt + R" : "When pasting an instrument with Alt + V") +
+            this.container = div$c({ class: "prompt noSelection", style: "width: 250px;" }, h2$b(this._isRandom ? "Customize Selective Random" : "Customize Selective Paste"), p$6((this._isRandom ? "When generating a random instrument with Alt + R" : "When pasting an instrument with Alt + V") +
                 ", you can choose which parameters you want " + (this._isRandom ? "randomized" : "pasted") + " here."), div$c({ style: "align-items: center; display: flex; flex-direction: row;" }, div$c({ style: "display: flex; flex-direction: column; align-items: flex-start;" }, div$c(span$4("Instrument Type: "), this._instrumentTypeCheckbox), div$c(span$4("EQ Filter: "), this._eqFilterCheckbox), div$c(span$4("Fade: "), this._fadeCheckbox), div$c(span$4("Instrument Type Settings: "), this._instrumentTypeSettingsCheckbox), div$c(span$4("Unison: "), this._unisonCheckbox), div$c(span$4("Effects: "), this._effectsCheckbox), div$c(span$4("Envelopes: "), this._envelopesCheckbox), this._isRandom || !this._doc.song.patternInstruments ? "" : div$c(span$4("Instrument Patterns: "), this._instrumentPatternsCheckbox), this._isRandom || (!this._doc.song.patternInstruments && !this._doc.song.layeredInstruments) ? "" : div$c(span$4("All Instruments: "), this._allInstrumentsCheckbox))), div$c({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" }, this._okayButton), this._cancelButton);
             this.container.addEventListener("keydown", this.whenKeyPressed);
         }
@@ -46929,8 +46931,8 @@ You should be redirected to the song at:<br /><br />
         const randomGroup = optgroup({ label: "Randomize ▾" });
         randomGroup.appendChild(option({ value: "randomPreset" }, "Random Preset"));
         randomGroup.appendChild(option({ value: "randomGenerated" }, "Random Generated"));
-        randomGroup.appendChild(option({ value: "advancedRandomGenerated" }, "Advanced Random Generated"));
-        randomGroup.appendChild(option({ value: "customizeAdvancedRandomGenerated" }, "Customize Advanced Random Generated"));
+        randomGroup.appendChild(option({ value: "selectiveRandomGenerated" }, "Selective Random Generated"));
+        randomGroup.appendChild(option({ value: "customizeSelectiveRandomGenerated" }, "Customize Selective Random Generated"));
         menu.appendChild(randomGroup);
         let firstCategoryGroup = null;
         let customSampleCategoryGroup = null;
@@ -47474,7 +47476,7 @@ You should be redirected to the song at:<br /><br />
             this._volumeBarContainer = SVG.svg({ style: `touch-action: none; overflow: visible; margin: auto; max-width: 20vw;`, width: "160px", height: "100%", preserveAspectRatio: "none", viewBox: "0 0 160 12" }, this._defs, this._outVolumeBarBg, this._outVolumeBar, this._outVolumeCap);
             this._volumeBarBox = div({ class: "playback-volume-bar", style: "height: 12px; align-self: center;" }, this._volumeBarContainer);
             this._fileMenu = select({ style: "width: 100%;" }, option({ selected: true, disabled: true, hidden: false }, "File"), option({ value: "new" }, "+ New Blank Song (⇧`)"), option({ value: "import" }, "↑ Import Song... (" + EditorConfig.ctrlSymbol + "O)"), option({ value: "export" }, "↓ Export Song... (" + EditorConfig.ctrlSymbol + "S)"), option({ value: "copyUrl" }, "⎘ Copy Song URL"), option({ value: "shareUrl" }, "⤳ Share Song URL"), option({ value: "configureShortener" }, "🛠 Customize Url Shortener..."), option({ value: "shortenUrl" }, "… Shorten Song URL"), option({ value: "viewPlayer" }, "▶ View in Song Player (⇧P)"), option({ value: "copyEmbed" }, "⎘ Copy HTML Embed Code"), option({ value: "songRecovery" }, "⚠ Recover Recent Song... (`)"));
-            this._editMenu = select({ style: "width: 100%;" }, option({ selected: true, disabled: true, hidden: false }, "Edit"), option({ value: "undo" }, "Undo (Z)"), option({ value: "redo" }, "Redo (Y)"), option({ value: "copy" }, "Copy Pattern (C)"), option({ value: "pasteNotes" }, "Paste Pattern Notes (V)"), option({ value: "pasteNumbers" }, "Paste Pattern Numbers (" + EditorConfig.ctrlSymbol + "⇧V)"), option({ value: "insertBars" }, "Insert Bar (⏎)"), option({ value: "deleteBars" }, "Delete Selected Bars (⌫)"), option({ value: "insertChannel" }, "Insert Channel (" + EditorConfig.ctrlSymbol + "⏎)"), option({ value: "deleteChannel" }, "Delete Selected Channels (" + EditorConfig.ctrlSymbol + "⌫)"), option({ value: "selectChannel" }, "Select Channel (⇧A)"), option({ value: "selectAll" }, "Select All (A)"), option({ value: "duplicatePatterns" }, "Duplicate Reused Patterns (D)"), option({ value: "transposeUp" }, "Move Notes Up (+ or ⇧+)"), option({ value: "transposeDown" }, "Move Notes Down (- or ⇧-)"), option({ value: "moveNotesSideways" }, "Move All Notes Sideways... (W)"), option({ value: "generateEuclideanRhythm" }, "Generate Euclidean Rhythm... (" + EditorConfig.ctrlSymbol + "E)"), option({ value: "beatsPerBar" }, "Change Beats Per Bar... (⇧B)"), option({ value: "barCount" }, "Change Song Length... (L)"), option({ value: "channelSettings" }, "Channel Settings... (Q)"), option({ value: "limiterSettings" }, "Limiter Settings... (⇧L)"), option({ value: "addExternal" }, "Add Custom Samples... (⇧Q)"));
+            this._editMenu = select({ style: "width: 100%;" }, option({ selected: true, disabled: true, hidden: false }, "Edit"), option({ value: "undo" }, "Undo (Z)"), option({ value: "redo" }, "Redo (Y)"), option({ value: "copy" }, "Copy Pattern (C)"), option({ value: "pasteNotes" }, "Paste Pattern Notes (V)"), option({ value: "pasteNumbers" }, "Paste Pattern Numbers (" + EditorConfig.ctrlSymbol + "⇧V)"), option({ value: "pasteSelective" }, "Selective Instrument Paste (Alt + V)"), option({ value: "customizePasteSelective" }, "Customize Selective Paste (" + EditorConfig.ctrlSymbol + " + Alt + V)"), option({ value: "insertBars" }, "Insert Bar (⏎)"), option({ value: "deleteBars" }, "Delete Selected Bars (⌫)"), option({ value: "insertChannel" }, "Insert Channel (" + EditorConfig.ctrlSymbol + "⏎)"), option({ value: "deleteChannel" }, "Delete Selected Channels (" + EditorConfig.ctrlSymbol + "⌫)"), option({ value: "selectChannel" }, "Select Channel (⇧A)"), option({ value: "selectAll" }, "Select All (A)"), option({ value: "duplicatePatterns" }, "Duplicate Reused Patterns (D)"), option({ value: "transposeUp" }, "Move Notes Up (+ or ⇧+)"), option({ value: "transposeDown" }, "Move Notes Down (- or ⇧-)"), option({ value: "moveNotesSideways" }, "Move All Notes Sideways... (W)"), option({ value: "generateEuclideanRhythm" }, "Generate Euclidean Rhythm... (" + EditorConfig.ctrlSymbol + "E)"), option({ value: "beatsPerBar" }, "Change Beats Per Bar... (⇧B)"), option({ value: "barCount" }, "Change Song Length... (L)"), option({ value: "channelSettings" }, "Channel Settings... (Q)"), option({ value: "limiterSettings" }, "Limiter Settings... (⇧L)"), option({ value: "addExternal" }, "Add Custom Samples... (⇧Q)"));
             this._optionsMenu = select({ style: "width: 100%;" }, option({ selected: true, disabled: true, hidden: false }, "Preferences"), optgroup({ label: "Technical" }, option({ value: "autoPlay" }, "Auto Play on Load"), option({ value: "autoFollow" }, "Auto Follow Playhead"), option({ value: "enableNotePreview" }, "Hear Added Notes"), option({ value: "notesOutsideScale" }, "Place Notes Out of Scale"), option({ value: "setDefaultScale" }, "Set Current Scale as Default"), option({ value: "alwaysFineNoteVol" }, "Always Fine Note Volume"), option({ value: "enableChannelMuting" }, "Enable Channel Muting"), option({ value: "instrumentCopyPaste" }, "Enable Copy/Paste Buttons"), option({ value: "instrumentImportExport" }, "Enable Import/Export Buttons"), option({ value: "displayBrowserUrl" }, "Enable Song Data in URL"), option({ value: "closePromptByClickoff" }, "Close Prompts on Click Off"), option({ value: "recordingSetup" }, "Note Recording...")), optgroup({ label: "Appearance" }, option({ value: "showFifth" }, 'Highlight "Fifth" Note'), option({ value: "notesFlashWhenPlayed" }, "Notes Flash When Played"), option({ value: "instrumentButtonsAtTop" }, "Instrument Buttons at Top"), option({ value: "frostedGlassBackground" }, "Frosted Glass Prompt Backdrop"), option({ value: "showChannels" }, "Show All Channels"), option({ value: "showScrollBar" }, "Show Octave Scroll Bar"), option({ value: "showInstrumentScrollbars" }, "Show Intsrument Scrollbars"), option({ value: "showLetters" }, "Show Piano Keys"), option({ value: "displayVolumeBar" }, "Show Playback Volume"), option({ value: "showOscilloscope" }, "Show Oscilloscope"), option({ value: "showSampleLoadingStatus" }, "Show Sample Loading Status"), option({ value: "showDescription" }, "Show Description"), option({ value: "layout" }, "Set Layout..."), option({ value: "colorTheme" }, "Set Theme..."), option({ value: "customTheme" }, "Custom Theme...")));
             this._scaleSelect = buildOptions(select(), Config.scales.map(scale => scale.name));
             this._keySelect = buildOptions(select(), Config.keys.map(key => key.name).reverse());
@@ -50380,6 +50382,12 @@ You should be redirected to the song at:<br /><br />
                     case "pasteNumbers":
                         this.doc.selection.pasteNumbers();
                         break;
+                    case "pasteSelective":
+                        this._pasteInstrument(true);
+                        break;
+                    case "customizePasteSelective":
+                        this._openPrompt("selectivePaste");
+                        break;
                     case "transposeUp":
                         this.doc.selection.transpose(true, false);
                         break;
@@ -51497,7 +51505,7 @@ You should be redirected to the song at:<br /><br />
                     case "selectiveRandomGenerated":
                         this._randomGenerated(true);
                         break;
-                    case "customizeselectiveRandomGenerated":
+                    case "customizeSelectiveRandomGenerated":
                         this._openPrompt("selectiveRandom");
                 }
                 this.doc.notifier.changed();

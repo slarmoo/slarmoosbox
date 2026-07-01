@@ -23751,7 +23751,8 @@ var beepbox = (function (exports) {
     const defs = SVG.defs({}, gradient);
     const volumeBarContainer = SVG.svg({ style: `touch-action: none; overflow: hidden; margin: auto; width: 100%;`, width: "160px", height: "10px", preserveAspectRatio: "none" }, defs, outVolumeBarBg, outVolumeBar, outVolumeCap);
     const sampleLoadingBar = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleLoaded};` });
-    const sampleLoadingBarContainer = div({ style: `overflow: hidden; margin: auto; width: 90%; height: 5px; display: flex; background-color: ${ColorConfig.indicatorSecondary};` }, sampleLoadingBar);
+    const sampleFailedBar = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleFailed};` });
+    const sampleLoadingBarContainer = div({ style: `overflow: hidden; margin: auto; width: 90%; height: 5px; display: flex; background-color: ${ColorConfig.indicatorSecondary};` }, sampleLoadingBar, sampleFailedBar);
     document.body.appendChild(visualizationContainer);
     document.body.appendChild(div({ style: `flex-shrink: 0; height: 20vh; min-height: 22px; max-height: 70px; display: flex; align-items: center;` }, playButtonContainer, loopButton, volumeIcon, volumeSlider, zoomButton, div({ style: "display: flex; flex-direction: column; overflow: hidden; margin: auto" }, volumeBarContainer, sampleLoadingBarContainer), oscilloscope.canvas, titleText, editLink, copyLink, shareLink, fullscreenLink));
     function setLocalStorage(key, value) {
@@ -23872,6 +23873,7 @@ var beepbox = (function (exports) {
     }
     function updateSampleLoadingBar(e) {
         sampleLoadingBar.style.width = `${e.computeSamplesLoadedPercentage()}%`;
+        sampleFailedBar.style.width = `${e.computeSamplesFailedPercentage()}%`;
         sampleLoadingBarContainer.title = `Out of ${e.totalSamples} samples, ${e.samplesLoaded} loaded, and ${e.samplesFailed} did not load`;
     }
     function onTogglePlay() {
@@ -24245,7 +24247,7 @@ var beepbox = (function (exports) {
     copyLink.addEventListener("click", onCopyClicked);
     shareLink.addEventListener("click", onShareClicked);
     window.addEventListener("hashchange", hashUpdatedExternally);
-    sampleLoadEvents.addEventListener("sampleloaded", updateSampleLoadingBar.bind(exports));
+    sampleLoadEvents.addEventListener("sampleloaded", (event) => updateSampleLoadingBar(event));
 
     exports.Channel = Channel;
     exports.Config = Config;
