@@ -2,6 +2,7 @@
 
 import { Dictionary, DictionaryArray, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config, sampleLoadEvents, SampleLoadedEvent } from "../synth/SynthConfig";
 import { ColorConfig } from "../editor/ColorConfig";
+import { EditorConfig } from "../editor/EditorConfig";
 import { NotePin, Note, Pattern, Instrument, Channel, Synth } from "../synth/synth";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
@@ -326,6 +327,7 @@ function hashUpdatedExternally(): void {
 				case "song":
 					loadSong(value, true);
 					if (synth.song) {
+						document.title = synth.song.title + " - " + EditorConfig.versionDisplayName;
 						titleText.textContent = synth.song.title;
 					}
 					break;
