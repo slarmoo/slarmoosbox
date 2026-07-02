@@ -832,4 +832,4 @@ window.addEventListener("hashchange", hashUpdatedExternally);
 sampleLoadEvents.addEventListener("sampleloaded", (event) => updateSampleLoadingBar(event));
 
 // When compiling synth.ts as a standalone module named "beepbox", expose these classes as members to JavaScript:
-	export {Dictionary, DictionaryArray, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config, NotePin, Note, Pattern, Instrument, Channel, Synth as Synth};
+export {Dictionary, DictionaryArray, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config, NotePin, Note, Pattern, Instrument, Channel, Synth as Synth};

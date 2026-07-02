@@ -514,7 +514,7 @@ export class Piano {
                         }
 
                         secondRow += text;
-                    } 
+                    }
                 }
 
                 const firstLabel: SVGTextElement = this._modFirstLabels[j];
