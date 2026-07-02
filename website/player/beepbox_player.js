@@ -23806,6 +23806,7 @@ var beepbox = (function (exports) {
                     case "song":
                         loadSong(value);
                         if (synth.song) {
+                            document.title = synth.song.title + " - " + EditorConfig.versionDisplayName;
                             titleText.textContent = synth.song.title;
                         }
                         break;
