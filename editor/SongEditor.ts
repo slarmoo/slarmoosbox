@@ -4593,6 +4593,7 @@ export class SongEditor {
                 if ((event.ctrlKey || event.metaKey) && !needControlForShortcuts) {
                     if (event.shiftKey) this.doc.selection.pasteNumbers();
                     else if (event.altKey) this._openPrompt("selectivePaste");
+                    else this.doc.selection.pasteNotes(); //treat ctrl v like regular v
                 } else if (event.shiftKey) {
                     this._pasteInstrument();
                 } else if (event.altKey) {

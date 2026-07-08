@@ -49713,6 +49713,8 @@ You should be redirected to the song at:<br /><br />
                                 this.doc.selection.pasteNumbers();
                             else if (event.altKey)
                                 this._openPrompt("selectivePaste");
+                            else
+                                this.doc.selection.pasteNotes();
                         }
                         else if (event.shiftKey) {
                             this._pasteInstrument();
