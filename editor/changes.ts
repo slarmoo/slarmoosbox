@@ -3695,21 +3695,24 @@ export class ChangePasteInstrumentEditSelective extends ChangeGroup {
         }
         const channel: Channel = doc.song.channels[doc.channel];
 
+        const initialIndex: number = doc.getCurrentInstrument();
+
         //select how many / which instruments we should paste. If We're doing instrumentPatterns we should only paste instruments from those patterns
         //if we're doing all instruments then we can paste them all. Otherwise, just do the one we have highlighted
         const instrumentNumbers: number[] = selectivePaste.allInstruments && (doc.song.patternInstruments || doc.song.layeredInstruments) ?
             (selectivePaste.instrumentPatterns && doc.song.patternInstruments && savedInstrumentNumbers ?
             savedInstrumentNumbers :
             new Array(instrumentCopies.length).fill(0).map((_, i) => i)) :
-            [doc.getCurrentInstrument()];
+            [initialIndex];
         
         const instrumentPaste = new Instrument(instrumentCopy["isDrum"], instrumentCopy["isMod"])
         instrumentPaste.fromJsonObject(instrumentCopy, instrumentCopy["isDrum"], instrumentCopy["isMod"], false, false);
 
         for (const index of instrumentNumbers) {
             if (selectivePaste.allInstruments && (doc.song.patternInstruments || doc.song.layeredInstruments)) {
-                console.log(instrumentCopies[index], index);
                 instrumentPaste.fromJsonObject(instrumentCopies[index], instrumentCopies[index]["isDrum"], instrumentCopies[index]["isMod"], false, false);
+
+                doc.viewedInstrument[doc.channel] = index;
             }
             //if we're pasting more instruments than we have, just add it to the end of the list
             if (index >= channel.instruments.length) {
@@ -3798,7 +3801,7 @@ export class ChangePasteInstrumentEditSelective extends ChangeGroup {
             }
             if (selectivePaste.eqFilter) {
                 instrument.eqFilterType = instrumentPaste.eqFilterType;
-                this.append(new ChangeFilterSettings(doc, instrumentPaste.eqFilter, instrument.eqFilter, false, instrumentPaste.eqSubFilters, instrument.eqSubFilters));
+                instrument.eqFilter.fromJsonObject(instrumentPaste.eqFilter.toJsonObject());
                 instrument.eqFilterSimpleCut = instrumentPaste.eqFilterSimpleCut;
                 instrument.eqFilterSimplePeak = instrumentPaste.eqFilterSimplePeak;
             }
@@ -3821,7 +3824,7 @@ export class ChangePasteInstrumentEditSelective extends ChangeGroup {
                 instrument.echoSustain = instrumentPaste.echoSustain;
                 instrument.echoDelay = instrumentPaste.echoDelay;
                 instrument.noteFilterType = instrumentPaste.noteFilterType;
-                this.append(new ChangeFilterSettings(doc, instrumentPaste.noteFilter, instrument.noteFilter, true, instrumentPaste.noteSubFilters, instrument.noteSubFilters));
+                instrument.noteFilter.fromJsonObject(instrumentPaste.noteFilter.toJsonObject());
                 instrument.noteFilterSimpleCut = instrumentPaste.noteFilterSimpleCut;
                 instrument.noteFilterSimplePeak = instrumentPaste.noteFilterSimplePeak;
                 instrument.distortion = instrumentPaste.distortion;
@@ -3864,6 +3867,7 @@ export class ChangePasteInstrumentEditSelective extends ChangeGroup {
             }
             instrument.clearInvalidEnvelopeTargets();
         }
+        doc.viewedInstrument[doc.channel] = initialIndex;
         doc.notifier.changed();
         this._didSomething();
     }

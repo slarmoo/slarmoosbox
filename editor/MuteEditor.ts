@@ -257,12 +257,10 @@ export class MuteEditor {
         switch (event.keyCode) {
             case 27: // esc
                 this._channelDropDownOpen = false;
-                //console.log("close");
                 this._channelNameDisplay.style.setProperty("display", "none");
                 break;
             case 13: // enter
                 this._channelDropDownOpen = false;
-                //console.log("close");
                 this._channelNameDisplay.style.setProperty("display", "none");
                 break;
             default:
