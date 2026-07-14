@@ -44916,7 +44916,7 @@ You should be redirected to the song at:<br /><br />
                     break;
                 case "unisonSign":
                     {
-                        message = div$5(h2$4("Unison Sign"), p$1("This setting is a volume multiplier applied to every voice EXCEPT the first. This setting will only work correctly with more than one voices."));
+                        message = div$5(h2$4("Unison Sign"), p$1("This setting is a volume multiplier applied to every voice EXCEPT the first. This setting will only work correctly with two or more voices."));
                     }
                     break;
                 case "pitchRange":
@@ -49746,13 +49746,6 @@ You should be redirected to the song at:<br /><br />
                             const panningEffectIndex = instrumentObject["effects"].indexOf(Config.effectNames[2]);
                             if (panningEffectIndex != -1)
                                 instrumentObject["effects"].splice(panningEffectIndex, 1);
-                            for (let i = 0; i < instrumentObject["envelopes"].length; i++) {
-                                const envelope = instrumentObject["envelopes"][i];
-                                if (envelope["target"] == "panning" || envelope["target"] == "none" || envelope["envelope"] == "none") {
-                                    instrumentObject["envelopes"].splice(i, 1);
-                                    i--;
-                                }
-                            }
                             this._copyTextToClipboard(JSON.stringify(instrumentObject));
                             event.preventDefault();
                         }

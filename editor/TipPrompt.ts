@@ -561,7 +561,7 @@ export class TipPrompt implements Prompt {
 			case "unisonSign": {
 				message = div(
 					h2("Unison Sign"),
-					p("This setting is a volume multiplier applied to every voice EXCEPT the first. This setting will only work correctly with more than one voices."),
+					p("This setting is a volume multiplier applied to every voice EXCEPT the first. This setting will only work correctly with two or more voices."),
 				);
 			} break;
 			case "pitchRange": {

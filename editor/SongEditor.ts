@@ -4619,14 +4619,6 @@ export class SongEditor {
                     delete instrumentObject["pan"];
                     const panningEffectIndex: number = instrumentObject["effects"].indexOf(Config.effectNames[EffectType.panning]);
                     if (panningEffectIndex != -1) instrumentObject["effects"].splice(panningEffectIndex, 1);
-                    for (let i: number = 0; i < instrumentObject["envelopes"].length; i++) {
-                        const envelope: any = instrumentObject["envelopes"][i];
-                        // If there are any envelopes targeting panning or none, remove those too.
-                        if (envelope["target"] == "panning" || envelope["target"] == "none" || envelope["envelope"] == "none") {
-                            instrumentObject["envelopes"].splice(i, 1);
-                            i--;
-                        }
-                    }
                     this._copyTextToClipboard(JSON.stringify(instrumentObject));
                     event.preventDefault();
                 }
