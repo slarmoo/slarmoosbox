@@ -589,7 +589,7 @@ export class AddSamplesPrompt {
         const chipWaveLoopMode: number | null = entry.chipWaveLoopMode;
         const chipWavePlayBackwards: boolean = entry.chipWavePlayBackwards;
         const urlInLowerCase: string = url.toLowerCase();
-        const isBundledSamplePack: boolean = Object.keys(bundledSamplePacks).includes(urlInLowerCase);
+        const isBundledSamplePack: boolean = Object.values(bundledSamplePacks).includes(urlInLowerCase);
         const options: string[] = [];
         if (sampleRate !== 44100) options.push("s" + sampleRate);
         if (rootKey !== 60) options.push("r" + rootKey);
