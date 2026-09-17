@@ -5390,7 +5390,7 @@ export class SongEditor {
                         maxLength: Infinity,
                         altName: location.host + location.pathname + "shortener",
                         encode: (url: string) => "#title=" + this.doc.song.title + "&song=" + url, //add more info
-                        shortenerStrategy: "./shortener.html/"
+                        shortenerStrategy: "./shortener.html"
                     },
                     /*
                     "isgd": {
@@ -5409,7 +5409,7 @@ export class SongEditor {
                 }
                 const shortener = shorteners[(localShortenerStrategy as keyof typeof shorteners) || "wackybox"]
                 
-                const uri: string = shortener.encode(new URL("#" + this.doc.song.toBase64String(), location.href).href);
+                const uri: string = shortener.encode(new URL("#" + this.doc.song.toBase64String(), OFFLINE ? "https://box.slarmoo.com/website/" : location.href).href);
                 const uriLength: number = uri.length;
 
                 if (uriLength > shortener.maxLength) {

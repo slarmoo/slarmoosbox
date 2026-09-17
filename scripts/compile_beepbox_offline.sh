@@ -55,3 +55,4 @@ cp ./website/offline/select2.min.css to_deploy/
 cp ./website/offline/select2.min.js to_deploy/
 cp ./website/offline/index.html to_deploy/
 cp ./package.json to_deploy/
+cp ./website/shortener.html to_deploy/
