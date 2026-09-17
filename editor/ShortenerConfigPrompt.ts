@@ -6,8 +6,9 @@ const { button, div, h2, select, option } = HTML;
 
 export class ShortenerConfigPrompt implements Prompt {
     private readonly _shortenerStrategySelect: HTMLSelectElement = select({ style: "width: 100%;" },
+        option({ value: "wackyboxorg" }, "wackybox.org"),
         option({ value: "tinyurl" }, "tinyurl.com"),
-        option({ value: "isgd" }, "is.gd"),
+        // option({ value: "isgd" }, "is.gd"),
         // option({value: "beepboxnet"}, "beepbox.net"),
     );
     private readonly _cancelButton: HTMLButtonElement = button({ class: "cancelButton" });

@@ -1582,6 +1582,29 @@ li.select2-results__option[role=group] > strong:hover {
   background-color: #516fbb;
 }
 
+#popup {
+	position: fixed;
+	bottom: 20px;
+	left: 20px;
+	background-color: var(--ui-widget-background);
+	color: white;
+	margin-top: 15px;
+	padding: 10px 15px;
+	font-weight: bold;
+	border-radius: 4px;
+	opacity: 0;
+	transform: translateX(-100%); 
+	transition: all 0.5s ease;
+	pointer-events: none;
+	z-index: 1000;
+}
+
+#popup.show {
+	opacity: 1;
+	transform: translateX(0);
+	pointer-events: auto;
+}
+
 /* wide screen */
 @media (min-width: 711px) {
 	#beepboxEditorContainer {

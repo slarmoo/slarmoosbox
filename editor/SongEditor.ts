@@ -1313,6 +1313,9 @@ export class SongEditor {
         this._barScrollBar.container,
     );
 
+    private readonly _notifierPopup: HTMLDivElement = div({
+        style: "display: flex; flex-direction: row-reverse; align-items: center; gap: 10px;", id: "popup", onclick: this.closeNotif }, button({ type: "button", class: "delete-envelope", style: `flex: 1; background-color: ${ColorConfig.sampleFailed}` }), HTML.p());
+
     private readonly _menuArea: HTMLDivElement = div({ class: "menu-area" },
         div({ class: "selectContainer menu file" },
             this._fileMenu,
@@ -1419,6 +1422,7 @@ export class SongEditor {
         this._trackArea,
         this._settingsArea,
         this._promptContainer,
+        this._notifierPopup
     );
 
     private _wasPlaying: boolean = false;
@@ -5367,11 +5371,26 @@ export class SongEditor {
                 (<any>navigator).share({ url: new URL("#" + this.doc.song.toBase64String(), location.href).href });
                 break;
             case "shortenUrl":
-                let shortenerStrategy: string = "https://tinyurl.com/api-create.php?url=";
+                let shortenerStrategy: string = "https://wackybox.org/api-create.php?url=";
                 const localShortenerStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
 
+                const uri: string = encodeURIComponent(new URL("#" + this.doc.song.toBase64String(), location.href).href);
+                const uriLength: number = uri.length;
+                const shorteners = {
+                    // "isgd": 5000,
+                    "tinyurl": 12233,
+                    "wackyboxorg": 128000,
+                }
+
                 // if (localShortenerStrategy == "beepboxnet") shortenerStrategy = "https://www.beepbox.net/api-create.php?url=";
-                if (localShortenerStrategy == "isgd") shortenerStrategy = "https://is.gd/create.php?format=simple&url=";
+                // if (localShortenerStrategy == "isgd") shortenerStrategy = "https://is.gd/create.php?format=simple&url=";
+                if (localShortenerStrategy == "tinyurl") shortenerStrategy = "https://tinyurl.com/api-create.php?url=";
+                const associatedMaxUriLength: number = shorteners[(localShortenerStrategy as keyof typeof shorteners) || "wackyboxorg"]
+                if (uriLength > associatedMaxUriLength) {
+                    this.notify(`Unable to shorten url; Link is too large for ${localShortenerStrategy}\n Max size: ${associatedMaxUriLength}. Your song: ${uriLength}`);
+                    break;
+                }
+                this.closeNotif(); //no need to keep open on a successful shorten
 
                 window.open(shortenerStrategy + encodeURIComponent(new URL("#" + this.doc.song.toBase64String(), location.href).href));
                 break;
@@ -5559,6 +5578,15 @@ export class SongEditor {
         this._optionsMenu.selectedIndex = 0;
         this.doc.notifier.changed();
         this.doc.prefs.save();
+    }
+
+    public notify(message: string) {
+        (this._notifierPopup.lastElementChild! as HTMLParagraphElement).innerText = message;
+        this._notifierPopup.classList.add("show");
+    }
+
+    public closeNotif() {
+        this._notifierPopup.classList.remove("show");
     }
 
     private _customWavePresetHandler = (event: Event): void => {
