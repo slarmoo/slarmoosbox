@@ -109,7 +109,33 @@
         const linkElement = document.getElementById("link");
         const titleElement = document.getElementById("title");
         const s = "script";
-        const b = "body"
+        const b = "body";
+        loadSong();
+
+        function loadSong() {
+            let myHash = location.hash;
+            if (myHash.charAt(0) == "#") {
+                myHash = myHash.substring(1);
+            }
+            if(myHash == "") return;
+            for (const parameter of myHash.split(/&(?=[a-z]+=)/g)) {
+                let equalsIndex = parameter.indexOf("=");
+                if (equalsIndex != -1) {
+                    let paramName = parameter.substring(0, equalsIndex);
+                    let value = parameter.substring(equalsIndex + 1);
+                    switch (paramName) {
+                        case "song": {
+                            linkElement.value = value;
+                            break;
+                        }
+                        case "title": {
+                            titleElement.value = value;
+                        }
+                    }
+                }
+            }
+        }
+
 
         function download() {
             const a = document.createElement("a");
@@ -125,6 +151,7 @@
                 <${b}>
                     <${s}>
                         window.location.href = "${linkElement.value}";
+                        // location.assign("${linkElement.value}");
                     </${s}>
                 </${b}>
                 `

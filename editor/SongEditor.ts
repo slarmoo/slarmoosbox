@@ -1226,11 +1226,11 @@ export class SongEditor {
         this._aliasingRow,
         this._bitcrusherQuantizationRow,
         this._bitcrusherFreqRow,
+        this._ringModContainerRow,
         this._chorusRow,
         this._echoSustainRow,
         this._echoDelayRow,
         this._reverbRow,
-        this._ringModContainerRow,
         div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
             span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("envelopes") }, "Envelopes")),
             this._envelopeDropdown,
@@ -5371,28 +5371,54 @@ export class SongEditor {
                 (<any>navigator).share({ url: new URL("#" + this.doc.song.toBase64String(), location.href).href });
                 break;
             case "shortenUrl":
-                let shortenerStrategy: string = "https://wackybox.org/api-create.php?url=";
                 const localShortenerStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
 
-                const uri: string = encodeURIComponent(new URL("#" + this.doc.song.toBase64String(), location.href).href);
-                const uriLength: number = uri.length;
                 const shorteners = {
-                    // "isgd": 5000,
-                    "tinyurl": 12233,
-                    "wackyboxorg": 128000,
+                    "tinyurl": {
+                        maxLength: 12233, 
+                        altName: "tinyurl.com",
+                        encode: encodeURIComponent,
+                        shortenerStrategy: "https://tinyurl.com/api-create.php?url="
+                    },
+                    "wackybox": {
+                        maxLength: 128000,
+                        altName: "wackybox.org",
+                        encode: encodeURIComponent,
+                        shortenerStrategy: "https://wackybox.org/api-create.php?url="
+                    },
+                    "html": {
+                        maxLength: Infinity,
+                        altName: location.host + location.pathname + "shortener",
+                        encode: (url: string) => "#title=" + this.doc.song.title + "&song=" + url, //add more info
+                        shortenerStrategy: "./shortener.html/"
+                    },
+                    /*
+                    "isgd": {
+                        maxLength: 5000,
+                        altName: "is.gd",
+                        encode: encodeURIComponent
+                        shortenerStrategy: "https://is.gd/create.php?format=simple&url="
+                    },
+                    "beepboxnet": {
+                        maxLength: unknown,
+                        altName: "beepbox.net",
+                        encode: encodeURIComponent
+                        shortenerStrategy: "https://www.beepbox.net/api-create.php?url="
+                    }
+                    */
                 }
+                const shortener = shorteners[(localShortenerStrategy as keyof typeof shorteners) || "wackybox"]
+                
+                const uri: string = shortener.encode(new URL("#" + this.doc.song.toBase64String(), location.href).href);
+                const uriLength: number = uri.length;
 
-                // if (localShortenerStrategy == "beepboxnet") shortenerStrategy = "https://www.beepbox.net/api-create.php?url=";
-                // if (localShortenerStrategy == "isgd") shortenerStrategy = "https://is.gd/create.php?format=simple&url=";
-                if (localShortenerStrategy == "tinyurl") shortenerStrategy = "https://tinyurl.com/api-create.php?url=";
-                const associatedMaxUriLength: number = shorteners[(localShortenerStrategy as keyof typeof shorteners) || "wackyboxorg"]
-                if (uriLength > associatedMaxUriLength) {
-                    this.notify(`Unable to shorten url; Link is too large for ${localShortenerStrategy}\n Max size: ${associatedMaxUriLength}. Your song: ${uriLength}`);
+                if (uriLength > shortener.maxLength) {
+                    this.notify(`Unable to shorten url; Link is too large for ${shortener.altName}\n Max size: ${shortener.maxLength}. Your song: ${uriLength}`);
                     break;
                 }
                 this.closeNotif(); //no need to keep open on a successful shorten
 
-                window.open(shortenerStrategy + encodeURIComponent(new URL("#" + this.doc.song.toBase64String(), location.href).href));
+                window.open(shortener.shortenerStrategy + uri);
                 break;
             case "configureShortener":
                 this._openPrompt("configureShortener");

@@ -1214,8 +1214,7 @@ export class FilterSettings {
             lerpedFilter.controlPointCount = filterA.controlPointCount;
 
             return lerpedFilter;
-        }
-        else {
+        } else {
             // Not allowing morph of unmatching filters for now. It's a hornet's nest of problems, and I had it implemented and mostly working and it didn't sound very interesting since the shape becomes "mushy" in between
             return (pos >= 1) ? filterB : filterA;
         }

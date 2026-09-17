@@ -1,3 +1,6 @@
+<!-- This file is here so that if someone forgets the /website when converting a url from an older mod (like ultrabox) they 
+    can still properly be redirected to the song player -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -23,7 +26,7 @@
 </head>
 <body>
     <script>
-        window.location.href = "../website/" + removeURL(window.location.href);
+        window.location.href = "../website/player/#song=" + removeURL(window.location.href);
         function removeURL(string) {
                 return string.replace(/https?:\/\/[\w\.\:\/]*#song=/, "#"); // remove first instance of url
         }
