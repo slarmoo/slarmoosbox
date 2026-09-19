@@ -8,6 +8,7 @@
         "target": "es6",
         "module": "esnext",
         "moduleResolution": "bundler",
+        "types": ["jquery"],
         "sourceMap": true,
         "removeComments": true,
         "noImplicitAny": true,

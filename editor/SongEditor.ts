@@ -829,6 +829,7 @@ export class SongEditor {
         option({ value: "displayVolumeBar" }, "Show Playback Volume"),
         option({ value: "showOscilloscope" }, "Show Oscilloscope"),
         option({ value: "showSampleLoadingStatus" }, "Show Sample Loading Status"),
+        option({ value: "alwaysShowPlayhead"}, "Always Show Playhead"),
         option({ value: "showDescription" }, "Show Description"),
         option({ value: "layout" }, "Set Layout..."),
         option({ value: "colorTheme" }, "Set Theme..."),
@@ -2428,6 +2429,7 @@ export class SongEditor {
             (prefs.displayVolumeBar ? textOnIcon : textOffIcon) + "Show Playback Volume",
             (prefs.showOscilloscope ? textOnIcon : textOffIcon) + "Show Oscilloscope",
             (prefs.showSampleLoadingStatus ? textOnIcon : textOffIcon) + "Show Sample Loading Status",
+            (prefs.alwaysShowPlayhead ? textOnIcon : textOffIcon) + "Always Show Playhead",
             (prefs.showDescription ? textOnIcon : textOffIcon) + "Show Description",
             textSpacingIcon + "Set Layout...",
             textSpacingIcon + "Set Theme...",
@@ -4567,9 +4569,10 @@ export class SongEditor {
                     this.doc.prefs.instrumentImportExport = true;
                     this.doc.prefs.notesFlashWhenPlayed = true;
                     this.doc.prefs.showOscilloscope = true;
+                    this.doc.prefs.alwaysShowPlayhead = true;
                     this.doc.prefs.save();
                     event.preventDefault();
-                    location.reload();
+                    // location.reload();
                 } else if (event.ctrlKey || event.metaKey) {
                     this._openPrompt("export");
                     event.preventDefault();
@@ -5599,6 +5602,9 @@ export class SongEditor {
                 break;
             case "frostedGlassBackground":
                 this.doc.prefs.frostedGlassBackground = !this.doc.prefs.frostedGlassBackground;
+                break;
+            case "alwaysShowPlayhead":
+                this.doc.prefs.alwaysShowPlayhead = !this.doc.prefs.alwaysShowPlayhead;
                 break;
         }
         this._optionsMenu.selectedIndex = 0;

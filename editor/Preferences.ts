@@ -82,6 +82,7 @@ export class Preferences {
 	public showInstrumentScrollbars: boolean;
 	public closePromptByClickoff: boolean;
 	public frostedGlassBackground: boolean;
+	public alwaysShowPlayhead: boolean;
 	public selectiveRandom: SelectiveInstrumentSettings = new SelectiveInstrumentSettings();
 	public selectivePaste: SelectiveInstrumentSettings = new SelectiveInstrumentSettings();
 	
@@ -90,6 +91,7 @@ export class Preferences {
 	}
 	
 	public reload(): void {
+		// ==true means default to false, and !=false means default to true
 		this.autoPlay = window.localStorage.getItem("autoPlay") == "true";
 		this.autoFollow = window.localStorage.getItem("autoFollow") != "false";
 		this.enableNotePreview = window.localStorage.getItem("enableNotePreview") != "false";
@@ -129,6 +131,7 @@ export class Preferences {
 		this.visibleOctaves = ((<any>window.localStorage.getItem("visibleOctaves")) >>> 0) || Preferences.defaultVisibleOctaves;
 		this.selectiveRandom.fromJsonObject(JSON.parse(window.localStorage.getItem("selectiveRandom") || "{}"));
 		this.selectivePaste.fromJsonObject(JSON.parse(window.localStorage.getItem("selectivePaste") || "{}"));
+		this.alwaysShowPlayhead = window.localStorage.getItem("alwaysShowPlayhead") == "true";
 		
 		const defaultScale: Scale | undefined = Config.scales.dictionary[window.localStorage.getItem("defaultScale")!];
 		this.defaultScale = (defaultScale != undefined) ? defaultScale.index : 0;
@@ -185,6 +188,7 @@ export class Preferences {
 		window.localStorage.setItem("visibleOctaves", String(this.visibleOctaves));
 		window.localStorage.setItem("selectiveRandom", this.selectiveRandom.toJsonObject());
 		window.localStorage.setItem("selectivePaste", this.selectivePaste.toJsonObject());
-		
+		window.localStorage.setItem("alwaysShowPlayhead", this.alwaysShowPlayhead ? "true" : "false");
+
 	}
 }

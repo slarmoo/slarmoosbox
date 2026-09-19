@@ -635,9 +635,10 @@ export class PatternEditor {
         const playheadBar: number = Math.floor(this._doc.synth.playhead);
         const noteFlashElements: NodeListOf<SVGPathElement> = this._svgNoteContainer.querySelectorAll('.note-flash');
 
-        if (this._doc.synth.playing && ((this._pattern != null && this._doc.song.getPattern(this._doc.channel, Math.floor(this._doc.synth.playhead)) == this._pattern) || Math.floor(this._doc.synth.playhead) == this._doc.bar + this._barOffset)) {
+        const modPlayhead: number = this._doc.synth.playhead - playheadBar;
+        if (this._doc.synth.playing && ((!this._doc.prefs.alwaysShowPlayhead && this._pattern != null && this._doc.song.getPattern(this._doc.channel, Math.floor(this._doc.synth.playhead)) == this._pattern) || Math.floor(this._doc.synth.playhead) == this._doc.bar + this._barOffset)) {
             this._svgPlayhead.setAttribute("visibility", "visible");
-            const modPlayhead: number = this._doc.synth.playhead - playheadBar;
+            this._svgPlayhead.style.opacity = '1';
 
             // note flash
             for (var i = 0; i < noteFlashElements.length; i++) {
@@ -652,14 +653,12 @@ export class PatternEditor {
                 }
             }
 
-            if (Math.abs(modPlayhead - this._playheadX) > 0.1) {
-                this._playheadX = modPlayhead;
-            } else {
-                this._playheadX += (modPlayhead - this._playheadX) * 0.2;
-            }
-            this._svgPlayhead.setAttribute("x", "" + prettyNumber(this._playheadX * this._editorWidth - 2));
         } else {
-            this._svgPlayhead.setAttribute("visibility", "hidden");
+            if (this._doc.prefs.alwaysShowPlayhead && this._doc.synth.playing) {
+                this._svgPlayhead.style.opacity = '0.3';
+            } else {
+                this._svgPlayhead.setAttribute("visibility", "hidden");
+            }
 
             // dogeiscut: lazy fix boohoo
             for (var i = 0; i < noteFlashElements.length; i++) {
@@ -667,6 +666,13 @@ export class PatternEditor {
                 element.style.opacity = "0"
             }
         }
+        if (Math.abs(modPlayhead - this._playheadX) > 0.1) {
+            this._playheadX = modPlayhead;
+        } else {
+            this._playheadX += (modPlayhead - this._playheadX) * 0.2;
+        }
+        this._svgPlayhead.setAttribute("x", "" + prettyNumber(this._playheadX * this._editorWidth - 2));
+
 
         if (this._doc.synth.playing && (this._doc.synth.recording || this._doc.prefs.autoFollow) && this._followPlayheadBar != playheadBar) {
             // When autofollow is enabled, select the current bar (but don't record it in undo history).
