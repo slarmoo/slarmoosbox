@@ -910,7 +910,7 @@ export class HarmonicsWave {
 class HarmonicsWaveState {
     public wave: Float32Array | null = null;
     private _hash: number = -1;
-    private _generatedForType: InstrumentType;
+    private _generatedForType: InstrumentType | null = null;
 
     public getCustomWave(settings: HarmonicsWave, instrumentType: InstrumentType): Float32Array {
         if (this._hash == settings.hash && this._generatedForType == instrumentType) return this.wave!;
@@ -2310,15 +2310,24 @@ export class Instrument {
             this.volume = 0;
         }
 
-        //These can probably be condensed with ternary operators
         this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
 
+        let useInvertWave: boolean = false;
         if (Array.isArray(instrumentObject["effects"])) {
             let effects: number = 0;
             for (let i: number = 0; i < instrumentObject["effects"].length; i++) {
                 effects = effects | (1 << Config.effectNames.indexOf(instrumentObject["effects"][i]));
             }
             this.effects = (effects & ((1 << EffectType.length) - 1));
+
+            if (format == "abyssbox") {
+                if (instrumentObject["effects"].indexOf("ring modulation") >= 0) {
+                    this.effects = this.effects | (1 << EffectType.ringModulation);
+                }
+                if (instrumentObject["effects"].indexOf("invert wave") >= 0) {
+                    useInvertWave = true;
+                }
+            }
         } else {
             // The index of these names is reinterpreted as a bitfield, which relies on reverb and chorus being the first effects!
             const legacyEffectsNames: string[] = ["none", "reverb", "chorus", "chorus & reverb"];
@@ -2408,6 +2417,11 @@ export class Instrument {
         this.unisonExpression = (instrumentObject["unisonExpression"] == undefined) ? Config.unisons[this.unison].expression : instrumentObject["unisonExpression"];
         this.unisonSign = (instrumentObject["unisonSign"] == undefined) ? Config.unisons[this.unison].sign : instrumentObject["unisonSign"];
 
+        if (useInvertWave) {
+            this.unisonExpression = -this.unisonExpression;
+            this.unison = Config.unisons.dictionary["custom"].index;
+        }
+
         if (instrumentObject["chorus"] == "custom harmony") {
             // The original chorus setting had an option that now maps to two different settings. Override those if necessary.
             this.unison = Config.unisons.dictionary["hum"].index;
@@ -2494,8 +2508,7 @@ export class Instrument {
 
         if (instrumentObject["detune"] != undefined) {
             this.detune = clamp(Config.detuneMin, Config.detuneMax + 1, (instrumentObject["detune"] | 0));
-        }
-        else if (instrumentObject["detuneCents"] == undefined) {
+        } else if (instrumentObject["detuneCents"] == undefined) {
             this.detune = Config.detuneCenter;
         }
 
@@ -2504,12 +2517,17 @@ export class Instrument {
         }
         if (instrumentObject["ringModHz"] != undefined) {
             this.ringModulationHz = clamp(0, Config.ringModHzRange, Math.round((Config.ringModHzRange - 1) * (instrumentObject["ringModHz"] | 0) / 100));
+            if (format == "abyssbox" && this.ringModulationHz == 0) this.ringModulationHz = 1; 
         }
         if (instrumentObject["ringModWaveformIndex"] != undefined) {
             this.ringModWaveformIndex = clamp(0, Config.operatorWaves.length, instrumentObject["ringModWaveformIndex"]);
+        } else if (instrumentObject["rmWaveformIndex"] != undefined) {
+            this.ringModWaveformIndex = clamp(0, Config.operatorWaves.length, instrumentObject["rmWaveformIndex"]);
         }
         if (instrumentObject["ringModPulseWidth"] != undefined) {
             this.ringModPulseWidth = clamp(0, Config.pulseWidthRange, Math.round((Config.pulseWidthRange - 1) * (instrumentObject["ringModPulseWidth"] | 0) / 100));
+        } else if (instrumentObject["rmPulseWidth"] != undefined) {
+            this.ringModPulseWidth = clamp(0, Config.pulseWidthRange, Math.round((Config.pulseWidthRange - 1) * (instrumentObject["rmPulseWidth"] | 0) / 100));
         }
         if (instrumentObject["ringModHzOffset"] != undefined) {
             this.ringModHzOffset = clamp(0, Config.rmHzOffsetMax, Math.round((Config.rmHzOffsetMax - 1) * (instrumentObject["ringModHzOffset"] | 0) / 100));
