@@ -317,6 +317,7 @@ export class ImportPrompt implements Prompt {
                                     //midi tempo addition
                                     track.reader.skipBytes(length - 3);
                                 } else if (message == MidiMetaEventMessage.timeSignature) {
+                                    //@TODO support multiple time signature imports with next bar mods
                                     const numerator: number = track.reader.readUint8();
                                     let denominatorExponent: number = track.reader.readUint8();
 									/*const midiClocksPerMetronome: number =*/ track.reader.readUint8();

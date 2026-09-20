@@ -657,9 +657,14 @@ export class ExportPrompt implements Prompt {
         const beatsPerMinute: number = song.getBeatsPerMinute();
         const microsecondsPerBeat: number = Math.round(microsecondsPerMinute / beatsPerMinute);
         //const secondsPerMidiTick: number = secondsPerMinute / (midiTicksPerBeat * beatsPerMinute);
-        const midiTicksPerBar: number = midiTicksPerBeat * song.beatsPerBar;
+        // const midiTicksPerBar: number = midiTicksPerBeat * song.beatsPerBar;
         const pitchBendRange: number = 24;
         const defaultNoteVelocity: number = 90;
+
+        const findBarLength = (bar: number): number => {
+            let partsInBar: number = this._doc.synth.findPartsInBar(bar);
+            return partsInBar * midiTicksPerPart;
+        };
 
         const unrolledBars: number[] = [];
         if (this._enableIntro.checked) {
@@ -676,6 +681,11 @@ export class ExportPrompt implements Prompt {
             for (let bar: number = song.loopStart + song.loopLength; bar < song.barCount; bar++) {
                 unrolledBars.push(bar);
             }
+        }
+
+        const barLengths: number[] = [];
+        for (let bar: number = 0; bar < song.barCount; bar++) {
+            barLengths.push(findBarLength(bar));
         }
 
         const tracks = [{ isMeta: true, channel: -1, midiChannel: -1, isNoise: false, isDrumset: false }];
@@ -723,13 +733,28 @@ export class ExportPrompt implements Prompt {
                 writer.writeMidi7Bits(value | 0);
             }
 
+            // Doesn't seem to work?? Either that or every website I've tried just doesn't read time signature
+            let prevBeatsPerBar: number = song.beatsPerBar;
+            const writeTimeSignature = (beatsPerBar: number): void => {
+                if (beatsPerBar === prevBeatsPerBar) return;
+                writeEventTime(barStartTime);
+                writer.writeUint8(MidiEventType.meta);
+                writer.writeMidi7Bits(MidiMetaEventMessage.timeSignature);
+                writer.writeMidiVariableLength(4); // Time signature message length is 4 bytes.
+                writer.writeUint8(beatsPerBar); // numerator.
+                writer.writeUint8(2); // denominator exponent in 2^E. 2^2 = 4, and we will always use "quarter" notes.
+                writer.writeUint8(24); // MIDI Clocks per metronome tick (should match beats), standard is 24
+                writer.writeUint8(8); // number of 1/32 notes per 24 MIDI Clocks, standard is 8, meaning 24 clocks per "quarter" note.
+                prevBeatsPerBar = beatsPerBar;
+            };
+
             if (isMeta) {
                 // for first midi track, include tempo, time signature, and key signature information.
 
                 writeEventTime(0);
                 writer.writeUint8(MidiEventType.meta);
                 writer.writeMidi7Bits(MidiMetaEventMessage.text);
-                writer.writeMidiAscii("Composed with jummbus.bitbucket.io");
+                writer.writeMidiAscii("Composed with slarmoo.github.io/slarmoosbox");
 
                 writeEventTime(0);
                 writer.writeUint8(MidiEventType.meta);
@@ -760,23 +785,55 @@ export class ExportPrompt implements Prompt {
                 writer.writeInt8(numSharps); // See above calculation. Assumes scale is diatonic. :/
                 writer.writeUint8(isMinor ? 1 : 0); // 0: major, 1: minor
 
-                if (this._enableIntro.checked) barStartTime += midiTicksPerBar * song.loopStart;
+                // if (this._enableIntro.checked) barStartTime += midiTicksPerBar * song.loopStart;
+                if (this._enableIntro.checked) {
+                    for (let bar: number = 0; bar < song.loopStart; bar++) {
+                        let midiTicksPerBar: number = barLengths[bar];
+                        const beatsPerBar: number = midiTicksPerBar / midiTicksPerPart / Config.partsPerBeat;
+                        const beatsPerBarInt: number = Math.floor(beatsPerBar);
+                        writeTimeSignature(beatsPerBarInt);
+                        barStartTime += midiTicksPerBar;
+                    }
+                }
                 writeEventTime(barStartTime);
                 writer.writeUint8(MidiEventType.meta);
                 writer.writeMidi7Bits(MidiMetaEventMessage.marker);
                 writer.writeMidiAscii("Loop Start");
 
                 for (let loopIndex: number = 0; loopIndex < parseInt(this._loopDropDown.value); loopIndex++) {
-                    barStartTime += midiTicksPerBar * song.loopLength;
+                    // barStartTime += midiTicksPerBar * song.loopLength;
+                    for (let bar: number = song.loopStart; bar < song.loopStart + song.loopLength; bar++) {
+                        let midiTicksPerBar: number = barLengths[bar];
+                        const beatsPerBar: number = midiTicksPerBar / midiTicksPerPart / Config.partsPerBeat;
+                        const beatsPerBarInt: number = Math.floor(beatsPerBar);
+                        writeTimeSignature(beatsPerBarInt);
+                        barStartTime += midiTicksPerBar;
+                    }
                     writeEventTime(barStartTime);
                     writer.writeUint8(MidiEventType.meta);
                     writer.writeMidi7Bits(MidiMetaEventMessage.marker);
                     writer.writeMidiAscii(loopIndex < Number(this._loopDropDown.value) - 1 ? "Loop Repeat" : "Loop End");
                 }
 
-                if (this._enableOutro.checked) barStartTime += midiTicksPerBar * (song.barCount - song.loopStart - song.loopLength);
-                if (barStartTime != midiTicksPerBar * unrolledBars.length) throw new Error("Miscalculated number of bars.");
-
+                // if (this._enableOutro.checked) barStartTime += midiTicksPerBar * (song.barCount - song.loopStart - song.loopLength);
+                if (this._enableOutro.checked) {
+                    for (let bar: number = song.loopStart + song.loopLength; bar < song.barCount; bar++) {
+                        let midiTicksPerBar: number = barLengths[bar];
+                        const beatsPerBar: number = midiTicksPerBar / midiTicksPerPart / Config.partsPerBeat;
+                        const beatsPerBarInt: number = Math.floor(beatsPerBar);
+                        writeTimeSignature(beatsPerBarInt);
+                        barStartTime += midiTicksPerBar;
+                    }
+                }
+                // if (barStartTime != midiTicksPerBar * unrolledBars.length) throw new Error("Miscalculated number of bars.");
+                {
+                    let total: number = 0;
+                    for (const bar of unrolledBars) {
+                        let midiTicksPerBar: number = barLengths[bar];
+                        total += midiTicksPerBar;
+                    }
+                    if (barStartTime != total) throw new Error("Miscalculated number of bars.");
+                }
             } else {
                 // For remaining tracks, set up the instruments and write the notes:
 
@@ -871,6 +928,9 @@ export class ExportPrompt implements Prompt {
                 for (const bar of unrolledBars) {
                     const pattern: Pattern | null = song.getPattern(channel, bar);
 
+                    let midiTicksPerBar: number = barLengths[bar];
+                    const barEndTime: number = barStartTime + midiTicksPerBar;
+
                     if (pattern != null) {
 
                         const instrumentIndex: number = pattern.instruments[0]; // Don't bother trying to export multiple instruments per pattern to midi, just pick the first one.
@@ -894,7 +954,11 @@ export class ExportPrompt implements Prompt {
                         for (let noteIndex: number = 0; noteIndex < pattern.notes.length; noteIndex++) {
                             const note: Note = pattern.notes[noteIndex];
 
-                            const noteStartTime: number = barStartTime + note.start * midiTicksPerPart;
+                            let noteStartTime: number = barStartTime + note.start * midiTicksPerPart;
+                            if (noteStartTime > barEndTime) noteStartTime = barEndTime;
+                            let noteEndTime: number = barStartTime + note.end * midiTicksPerPart;
+                            if (noteEndTime > barEndTime) noteEndTime = barEndTime;
+                            if (noteStartTime >= noteEndTime) continue;
                             let pinTime: number = noteStartTime;
                             let pinSize: number = note.pins[0].size;
                             let pinInterval: number = note.pins[0].interval;
@@ -940,7 +1004,11 @@ export class ExportPrompt implements Prompt {
 
                                 const length: number = nextPinTime - pinTime;
                                 for (let midiTick: number = 0; midiTick < length; midiTick++) {
-                                    const midiTickTime: number = pinTime + midiTick;
+                                    let midiTickTime: number = pinTime + midiTick;
+                                    if (midiTickTime > barEndTime) {
+                                        midiTickTime = barEndTime;
+                                        pinIndex = note.pins.length;
+                                    }
                                     const linearSize: number = lerp(pinSize, nextPinSize, midiTick / length);
                                     const linearInterval: number = lerp(pinInterval, nextPinInterval, midiTick / length);
 
@@ -1028,7 +1096,7 @@ export class ExportPrompt implements Prompt {
                                 pinInterval = nextPinInterval;
                             }
 
-                            const noteEndTime: number = barStartTime + note.end * midiTicksPerPart;
+                            // const noteEndTime: number = barStartTime + note.end * midiTicksPerPart;
 
                             // End all tones.
                             for (let toneIndex: number = 0; toneIndex < toneCount; toneIndex++) {

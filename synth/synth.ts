@@ -9900,7 +9900,7 @@ export class Synth {
         return (this.beat * Config.partsPerBeat + this.part);
     }
 
-    private findPartsInBar(bar: number): number {
+    public findPartsInBar(bar: number): number {
         if (this.song == null) return 0;
         let partsInBar: number = Config.partsPerBeat * this.song.beatsPerBar;
         for (let channel: number = this.song.pitchChannelCount + this.song.noiseChannelCount; channel < this.song.getChannelCount(); channel++) {

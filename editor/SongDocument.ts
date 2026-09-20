@@ -427,6 +427,12 @@ export class SongDocument {
         return change != null && change == this._recentChange;
     }
 
+    //yay for hacky stuff. Double sliders weren't properly rendering when they were returned to the previous value 
+    //(ie, _oldValueLeft = 0, then set value to 0, ui displays 1 despite internally things being fine)
+    public renderChanges() {
+        this.notifier.changed();
+    }
+
     public goBackToStart(): void {
         this.bar = 0;
         this.channel = 0;

@@ -5663,12 +5663,11 @@ export class ChangeSetEnvelopeType extends Change {
 }
 
 export class ChangeEnvelopePitchStart extends Change {
-    constructor(doc: SongDocument, startNote: number, index: number) {
+    constructor(doc: SongDocument, oldNote: number, startNote: number, index: number) {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
-        const oldStartNote: number = instrument.envelopes[index].pitchEnvelopeStart;
         instrument.envelopes[index].pitchEnvelopeStart = startNote;
-        if (oldStartNote != startNote) {
+        if (oldNote != startNote && startNote <= instrument.envelopes[index].pitchEnvelopeEnd) {
             instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
@@ -5677,12 +5676,11 @@ export class ChangeEnvelopePitchStart extends Change {
 }
 
 export class ChangeEnvelopePitchEnd extends Change {
-    constructor(doc: SongDocument, endNote: number, index: number) {
+    constructor(doc: SongDocument, oldNote: number, endNote: number, index: number) {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
-        const oldEndNote: number = instrument.envelopes[index].pitchEnvelopeEnd;
         instrument.envelopes[index].pitchEnvelopeEnd = endNote;
-        if (oldEndNote != endNote) {
+        if (oldNote != endNote && endNote >= instrument.envelopes[index].pitchEnvelopeStart) {
             instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();

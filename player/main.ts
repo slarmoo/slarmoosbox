@@ -751,13 +751,54 @@ function onKeyPressed(event: KeyboardEvent): void {
 
 function shortenUrl() {
 	hashUpdatedExternally();
-	let shortenerStrategy: string = "https://tinyurl.com/api-create.php?url=";
 	const localShortenerStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
 
-	// if (localShortenerStrategy == "beepboxnet") shortenerStrategy = "https://www.beepbox.net/api-create.php?url=";
-	if (localShortenerStrategy == "isgd") shortenerStrategy = "https://is.gd/create.php?format=simple&url=";
+	const shorteners = {
+		"tinyurl": {
+			maxLength: 12233,
+			altName: "tinyurl.com",
+			encode: encodeURIComponent,
+			shortenerStrategy: "https://tinyurl.com/api-create.php?url="
+		},
+		"wackybox": {
+			maxLength: 128000,
+			altName: "wackybox.org",
+			encode: encodeURIComponent,
+			shortenerStrategy: "https://wackybox.org/api-create.php?url="
+		},
+		"html": {
+			maxLength: Infinity,
+			altName: location.host + location.pathname + "shortener",
+			encode: (url: string) => "#title=" + synth.song!.title + "&song=" + url, //add more info
+			shortenerStrategy: "./shortener.html"
+		},
+		/*
+		"isgd": {
+			maxLength: 5000,
+			altName: "is.gd",
+			encode: encodeURIComponent
+			shortenerStrategy: "https://is.gd/create.php?format=simple&url="
+		},
+		"beepboxnet": {
+			maxLength: unknown,
+			altName: "beepbox.net",
+			encode: encodeURIComponent
+			shortenerStrategy: "https://www.beepbox.net/api-create.php?url="
+		}
+		*/
+	}
+	const shortener = shorteners[(localShortenerStrategy as keyof typeof shorteners) || "wackybox"]
 
-	window.open(shortenerStrategy + encodeURIComponent(new URL("#" + synth.song!.toBase64String(), location.href).href));
+	const uri: string = shortener.encode(new URL("#" + synth.song!.toBase64String(), OFFLINE ? "https://box.slarmoo.com/website/" : location.href).href);
+	const uriLength: number = uri.length;
+
+	if (uriLength > shortener.maxLength) {
+		window.alert(`Unable to shorten url; Link is too large for ${shortener.altName}\n Max size: ${shortener.maxLength}. Your song: ${uriLength}`);
+		return;
+	}
+	// this.closeNotif(); //no need to keep open on a successful shorten
+
+	window.open(shortener.shortenerStrategy + uri);
 }
 
 function onCopyClicked(): void {
