@@ -65,9 +65,9 @@ export class ChangeGroup extends Change {
         super();
     }
 
-    public append(change: Change): void {
-        if (change.isNoop()) return;
-        this._didSomething();
+    public append(change: Change): ChangeGroup {
+        if (!change.isNoop()) this._didSomething();
+        return this;
     }
 }
 

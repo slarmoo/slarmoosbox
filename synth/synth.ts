@@ -1391,6 +1391,8 @@ export class EnvelopeSettings {
     public tempEnvelopeSpeed: number | null = null;
     public tempEnvelopeLowerBound: number | null = null;
     public tempEnvelopeUpperBound: number | null = null;
+    public tempPitchStart: number | null = null;
+    public tempPitchEnd: number | null = null;
     //pseudo random
     public steps: number = 2;
     public seed: number = 2;
@@ -3271,6 +3273,8 @@ export class Song {
                 let perEnvSpeedIndex: number = Config.modulators.dictionary["individual envelope speed"].index;
                 let perEnvLowerIndex: number = Config.modulators.dictionary["individual envelope lower bound"].index;
                 let perEnvUpperIndex: number = Config.modulators.dictionary["individual envelope upper bound"].index;
+                let pitchEnvStart: number = Config.modulators.dictionary["pitch envelope start"].index;
+                let pitchEnvEnd: number = Config.modulators.dictionary["pitch envelope end"].index;
                 let instrumentIndex: number = instrument.modInstruments[modCount];
 
                 switch (currentIndex) {
@@ -3349,6 +3353,12 @@ export class Song {
                     case perEnvUpperIndex:
                         vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeUpperBound * 10 - Config.modulators[perEnvUpperIndex].convertRealFactor;
                         break;
+                    case pitchEnvStart:
+                        this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].pitchEnvelopeStart - Config.modulators[pitchEnvStart].convertRealFactor;
+                        break;
+                    case pitchEnvEnd:
+                        this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].pitchEnvelopeEnd - Config.modulators[pitchEnvEnd].convertRealFactor;
+                        break;
                 }
             }
 
@@ -3382,6 +3392,12 @@ export class Song {
                         cap = Config.filterFreqRange;
                     } else if (instrument.modFilterTypes[modCount] > 0) {
                         cap = Config.filterGainRange;
+                    }
+                }
+                // for pitch envelopes, see whether the targetted channel is a noise channel
+                else if (modulator.name == "pitch envelope start" || modulator.name == "pitch envelope end") {
+                    if (this.getChannelIsNoise(instrument.modChannels[modCount])) {
+                        cap = Config.drumCount - 1;
                     }
                 }
                 return cap;
@@ -7902,7 +7918,8 @@ class EnvelopeComputer {
             let automationTarget: AutomationTarget;
             let targetIndex: number;
             let envelope: Envelope;
-
+            let startNote: number = 0;
+            let endNote: number = instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch;
             let inverse: boolean = false;
             let isDiscrete: boolean = false;
             let perEnvelopeSpeed: number = 1;
@@ -7933,6 +7950,15 @@ class EnvelopeComputer {
                 inverse = instrument.envelopes[envelopeIndex].inverse;
                 isDiscrete = instrument.envelopes[envelopeIndex].discrete;
                 perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
+
+                startNote = instrument.envelopes[envelopeIndex].pitchEnvelopeStart;
+                endNote = instrument.envelopes[envelopeIndex].pitchEnvelopeEnd;
+                if (synth.isModActive(Config.modulators.dictionary["pitch envelope start"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempPitchStart != null) { //modulation
+                    startNote = instrument.envelopes[envelopeIndex].tempPitchStart!;
+                }
+                if (synth.isModActive(Config.modulators.dictionary["pitch envelope end"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempPitchEnd != null) { //modulation
+                    endNote = instrument.envelopes[envelopeIndex].tempPitchEnd!;
+                }
                 if (synth.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) { //modulation
                     perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed!;
                 }
@@ -7980,7 +8006,7 @@ class EnvelopeComputer {
                 if (envelope.type == EnvelopeType.noteSize) usedNoteSize = true;
             }
             //only calculate pitch if needed
-            const pitch: number = (envelope.type == EnvelopeType.pitch) ? this.computePitchEnvelope(instrument, envelopeIndex, (this.startPinTickPitch || this.getPitchValue(instrument, tone, instrumentState, true))) : 0;
+            const pitch: number = (envelope.type == EnvelopeType.pitch) ? this.computePitchEnvelope(startNote, endNote, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, (this.startPinTickPitch || this.getPitchValue(instrument, tone, instrumentState, true))) : 0;
 
             //calculate envelope values if target isn't null or part of the other envelope computer's job
             if (automationTarget.computeIndex != null && automationTarget.perNote == perNote) {
@@ -8253,29 +8279,9 @@ class EnvelopeComputer {
         return 0;
     }
 
-    public computePitchEnvelope(instrument: Instrument, index: number, pitch: number = 0): number {
-        let startNote: number = 0;
-        let endNote: number = Config.maxPitch;
-        let inverse: boolean = false;
-        let envelopeLowerBound: number = 0;
-        let envelopeUpperBound: number = 1;
-
-        if (instrument.isNoiseInstrument) {
-            endNote = Config.drumCount - 1;
-        }
-
-
-        if (index < instrument.envelopeCount && index !== -2) {
-            startNote = instrument.envelopes[index].pitchEnvelopeStart;
-            endNote = instrument.envelopes[index].pitchEnvelopeEnd;
-            inverse = instrument.envelopes[index].inverse;
-            envelopeLowerBound = instrument.envelopes[index].perEnvelopeLowerBound;
-            envelopeUpperBound = instrument.envelopes[index].perEnvelopeUpperBound;
-        }
-
-        if (startNote > endNote) { //Reset if values are improper
-            startNote = 0;
-            endNote = instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch;
+    public computePitchEnvelope(startNote: number, endNote: number, inverse: boolean, envelopeLowerBound: number, envelopeUpperBound: number, pitch: number = 0): number {
+        if (startNote > endNote) { //Flip if values are improper
+            [startNote, endNote] = [endNote, startNote];
         }
         const range = endNote - startNote + 1; //TODO: fix range
         if (!inverse) {
@@ -10312,8 +10318,7 @@ export class Synth {
                 return false;
             if (instrument.tmpNoteFilterEnd != null)
                 return true;
-        }
-        else {
+        } else {
             if (forSong) {
                 if (this?.song?.tmpEqFilterEnd != null)
                     return true;
@@ -15460,10 +15465,11 @@ export class Synth {
                         }
                     }
                 }
-            } else if (setting == Config.modulators.dictionary["individual envelope speed"].index) {
-                const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
-                let envelopeTarget = instrument.modEnvelopeNumbers[mod];
-
+            }
+            //envelope mods
+            const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
+            let envelopeTarget = instrument.modEnvelopeNumbers[mod];
+            if(setting == Config.modulators.dictionary["individual envelope speed"].index) {
                 let speed: number = tone.expression + tone.expressionDelta;
                 if (tgtInstrument.envelopeCount > envelopeTarget) {
                     if (Number.isInteger(speed)) {
@@ -15475,20 +15481,24 @@ export class Synth {
                     }
                 }
             } else if (setting == Config.modulators.dictionary["individual envelope lower bound"].index) {
-                const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
-                let envelopeTarget = instrument.modEnvelopeNumbers[mod];
-
                 let bound: number = tone.expression + tone.expressionDelta;
                 if (tgtInstrument.envelopeCount > envelopeTarget) {
                     tgtInstrument.envelopes[envelopeTarget].tempEnvelopeLowerBound = bound / 10;
                 }
             } else if (setting == Config.modulators.dictionary["individual envelope upper bound"].index) {
-                const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
-                let envelopeTarget = instrument.modEnvelopeNumbers[mod];
-
                 let bound: number = tone.expression + tone.expressionDelta;
                 if (tgtInstrument.envelopeCount > envelopeTarget) {
                     tgtInstrument.envelopes[envelopeTarget].tempEnvelopeUpperBound = bound / 10;
+                }
+            } else if (setting == Config.modulators.dictionary["pitch envelope start"].index) {
+                let start: number = tone.expression + tone.expressionDelta;
+                if (tgtInstrument.envelopeCount > envelopeTarget) {
+                    tgtInstrument.envelopes[envelopeTarget].tempPitchStart = start;
+                }
+            } else if (setting == Config.modulators.dictionary["pitch envelope end"].index) {
+                let end: number = tone.expression + tone.expressionDelta;
+                if (tgtInstrument.envelopeCount > envelopeTarget) {
+                    tgtInstrument.envelopes[envelopeTarget].tempPitchEnd = end;
                 }
             }
         }

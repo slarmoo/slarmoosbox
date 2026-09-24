@@ -759,7 +759,9 @@ export class PatternEditor {
                                     return [instrumentIndex, mod];
                             } else if (modEnvIndex != undefined && applyToMod == Config.modulators.dictionary["individual envelope speed"].index ||
                                 applyToMod == Config.modulators.dictionary["individual envelope lower bound"].index ||
-                                applyToMod == Config.modulators.dictionary["individual envelope upper bound"].index
+                                applyToMod == Config.modulators.dictionary["individual envelope upper bound"].index ||
+                                applyToMod == Config.modulators.dictionary["pitch envelope start"].index ||
+                                applyToMod == Config.modulators.dictionary["pitch envelope end"].index
                              ) {
                                 if (instrument.modEnvelopeNumbers[mod] == modEnvIndex)
                                     return [instrumentIndex, mod];

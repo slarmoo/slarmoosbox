@@ -1,7 +1,7 @@
 // Copyright (C) 2020 John Nesky, distributed under the MIT license.
 // A few wrapper classes that add functionality onto existing HTML elements, namely binding some events to an implementation-specified change class
 
-import { Change } from "./Change";
+import { Change, ChangeGroup } from "./Change";
 import { ColorConfig } from "./ColorConfig";
 import { SongDocument } from "./SongDocument";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
@@ -116,7 +116,7 @@ export class DoubleSlider {
     }
 
     public updateLeft(value: number, render: boolean = false): DoubleSlider {
-        if (value <= this._valueRight) {
+        if (value <= this._valueRight && value >= this.min) {
             this._valueLeft = value;
             if (render) this.render();
         }
@@ -124,7 +124,7 @@ export class DoubleSlider {
     }
 
     public updateRight(value: number, render: boolean = false): DoubleSlider {
-        if (value >= this._valueLeft) {
+        if (value >= this._valueLeft && value <= this.max) {
             this._valueRight = value;
             if (render) this.render();
         }
@@ -135,10 +135,12 @@ export class DoubleSlider {
 
     private getValueFromMouse(eventX: number) {
         const boundingRect: ClientRect = this._svg.getBoundingClientRect();
-        let mouseX: number = (eventX - boundingRect.left) / (boundingRect.right - boundingRect.left);
+        let mouseX: number = (eventX - boundingRect.left - 5) / (boundingRect.right - boundingRect.left - 10);
         if (isNaN(mouseX)) return this.min;
         return Math.max(Math.min(Math.round(mouseX * this.max), this.max), this.min);
     }
+
+    private _initialPosition: number;
 
     private _mouseDown = (event: PointerEvent) => {
         if (this.mouseDown != DoubleSliderInputElements.none) return;
@@ -147,20 +149,31 @@ export class DoubleSlider {
         this._oldValueLeft = this._valueLeft;
         this._oldValueRight = this._valueRight;
 
-        const position: number = this.getValueFromMouse(event.clientX || event.pageX);
+        this._initialPosition = this.getValueFromMouse(event.clientX || event.pageX);
         const midpoint = (this._valueLeft + this._valueRight) / 2;
-        if (position < midpoint || position < this._valueLeft) {
+        const stepsFromPercent = (percent: number) => (this.max - this.min) * percent / 100; //to give a bit of wiggle room for grabbing thumbs / the center bar
+        if (this._valueLeft == this.min && this._valueRight == this.max && this._initialPosition > this.min && this._initialPosition < this.max) {
+            //special case: jump the closest thumb to mouse if they're both at the extremes
+            if (this._initialPosition < midpoint || this._initialPosition < this._valueLeft) {
+                this.mouseDown = DoubleSliderInputElements.leftThumb;
+            } else {
+                this.mouseDown = DoubleSliderInputElements.rightThumb;
+            }
+        }else if ((this._initialPosition > this._valueLeft + stepsFromPercent(4) && this._initialPosition < this._valueRight - stepsFromPercent(4)) ||
+            (this._valueRight - this._valueLeft < stepsFromPercent(10) && this._initialPosition > this._valueLeft - stepsFromPercent(4) && this._initialPosition < this._valueRight + stepsFromPercent(4))) {
+            this.mouseDown = DoubleSliderInputElements.bar;
+        } else if (this._initialPosition <= this._valueLeft + stepsFromPercent(4)) {
             this.mouseDown = DoubleSliderInputElements.leftThumb;
-        } else {
+        } else if (this._initialPosition >= this._valueRight - stepsFromPercent(4)) {
             this.mouseDown = DoubleSliderInputElements.rightThumb;
         }
 
-        this._handleChangeEvent(position);
+        this._handleChangeEvent(this._initialPosition);
     }
 
     private _mouseMove = (event: PointerEvent): void => {
+        // const isModRecording = event.shiftKey || event.ctrlKey;
         if (this.mouseDown == DoubleSliderInputElements.none) return;
-        
         this._handleChangeEvent(this.getValueFromMouse(event.clientX || event.pageX));
     };
 
@@ -175,17 +188,42 @@ export class DoubleSlider {
             this._change = this._getChangeRight(this._oldValueRight, this._valueRight);
             if (this._change.isNoop()) this._doc.renderChanges();
             this._doc.setProspectiveChange(this._change);
+        } else if (this.mouseDown == DoubleSliderInputElements.bar && this._getChangeLeft != null && this._getChangeRight != null) {
+            //move both, keeping the distance between
+            const delta: number = position - this._initialPosition;
+            if (delta < 0) {
+                const newLeft: number = Math.max(this._valueLeft + delta, this.min);
+                this._valueRight -= this._valueLeft - newLeft;
+                this._valueLeft = newLeft;
+            } else if (delta > 0) {
+                const newRight: number = Math.min(this._valueRight + delta, this.max);
+                this._valueLeft += newRight - this._valueRight;
+                this._valueRight = newRight;
+            }
+            this._initialPosition = position;
+            this._change = new ChangeGroup().append(this._getChangeLeft(this._oldValueLeft, this._valueLeft)).append(this._getChangeRight(this._oldValueRight, this._valueRight));
+            if (this._change.isNoop()) this._doc.renderChanges();
+            this._doc.setProspectiveChange(this._change);
         }
         this.render();
     }
 
-    public getLeftValueBeforeProspectiveChange(): number {
-        return this._oldValueLeft;
-    }
+    // // mod recording stuff. Mods should be side-agnostic
+    // public getValueBeforeProspectiveChange(): number {
+    //     return this.mouseDown == DoubleSliderInputElements.leftThumb ? this._oldValueLeft : this._oldValueRight;
+    // }
 
-    public getRightValueBeforeProspectiveChange(): number {
-        return this._oldValueRight;
-    }
+    // public getValueDuringProspectiveChange(): number {
+    //     return this.mouseDown == DoubleSliderInputElements.leftThumb ? this._valueLeft : this._valueRight;
+    // }
+
+    // public updateValue(value: number): void {
+    //     if (this.mouseDown == DoubleSliderInputElements.leftThumb) {
+    //         this._valueLeft = value;
+    //     } else {
+    //         this._valueRight = value;
+    //     }
+    // }
 
     private _mouseUp = (event: PointerEvent): void => {
         this.mouseDown = DoubleSliderInputElements.none;

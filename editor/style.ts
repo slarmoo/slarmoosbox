@@ -1531,6 +1531,26 @@ html {
 		border: 40%;
 		border-radius: var(--mod-border-radius);
 }
+.beepboxEditor span.modSlider2 {
+	--mod-position2: 20%;
+	--mod-color: ${ColorConfig.overwritingModSlider};
+  --mod-border-radius: 0%;
+}
+.beepboxEditor span.modSlider2:before {
+	content: "";
+    display:inline-block;
+    position: absolute;
+    background: var(--mod-color);
+    width: 4%;
+    left: var(--mod-position2);
+    height: 0.8em;
+    top: 28%;
+    z-index: 2;
+		transform: translate(-50%, 0%);
+		pointer-events: none;
+		border: 40%;
+		border-radius: var(--mod-border-radius);
+}
 .beepboxEditor input[type=range]::-webkit-slider-thumb {
 	height: var(--button-size);
 	width: 6px;

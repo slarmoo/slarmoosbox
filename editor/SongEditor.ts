@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 //import {Layout} from "./Layout";
-import { sampleLoadEvents, SampleLoadedEvent, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, effectsIncludeRingModulation, effectsIncludeGranular, DropdownID, calculateRingModHertz } from "../synth/SynthConfig";
+import { sampleLoadEvents, SampleLoadedEvent, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, effectsIncludeRingModulation, effectsIncludeGranular, DropdownID, calculateRingModHertz, EnvelopeType } from "../synth/SynthConfig";
 import { BarScrollBar } from "./BarScrollBar";
 import { BeatsPerBarPrompt } from "./BeatsPerBarPrompt";
 import { Change, ChangeGroup } from "./Change";
@@ -1932,7 +1932,6 @@ export class SongEditor {
                         
                         if (slider != null) {
                             slider.container.classList.remove("modSlider");
-
                         }
                     }
                 }
@@ -2003,8 +2002,7 @@ export class SongEditor {
                     }
                 }
 
-            }
-            else if (this._hasActiveModSliders) {
+            } else if (this._hasActiveModSliders) {
                 // Zero out show-mod-slider settings (since none are active) to kill active mod slider flag
                 for (let setting: number = 0; setting < Config.modulators.length; setting++) {
                     for (let index: number = 0; index <= Config.modulators[setting].maxIndex; index++) {
@@ -2028,8 +2026,7 @@ export class SongEditor {
 
                                 if (this._showModSliders[setting][index] == true) {
                                     slider.container.classList.add("modSlider");
-                                }
-                                else {
+                                } else {
                                     slider.container.classList.remove("modSlider");
                                 }
 
@@ -3223,7 +3220,8 @@ export class SongEditor {
                             anyInstrumentReverbs: boolean = false,
                             anyInstrumentRingMods: boolean = false,
                             anyInstrumentGranulars: boolean = false,
-                            anyInstrumentHasEnvelopes: boolean = false;
+                            anyInstrumentHasEnvelopes: boolean = false,
+                            anyInstrumentUsesPitchEnvelopes: boolean = false;
                         let allInstrumentPitchShifts: boolean = true,
                             allInstrumentNoteFilters: boolean = true,
                             allInstrumentDetunes: boolean = true,
@@ -3333,6 +3331,9 @@ export class SongEditor {
                             }
                             if (channel.instruments[instrumentIndex].envelopes.length > 0) {
                                 anyInstrumentHasEnvelopes = true;
+                            }
+                            if (!anyInstrumentUsesPitchEnvelopes && channel.instruments[instrumentIndex].envelopes.filter((env) => Config.newEnvelopes[env.envelope].type == EnvelopeType.pitch).length > 0) {
+                                anyInstrumentUsesPitchEnvelopes = true;
                             }
 
                         }
@@ -3478,6 +3479,10 @@ export class SongEditor {
                             settingList.push("individual envelope speed");
                             settingList.push("individual envelope lower bound");
                             settingList.push("individual envelope upper bound");
+                            if (anyInstrumentUsesPitchEnvelopes) {
+                                settingList.push("pitch envelope start");
+                                settingList.push("pitch envelope end");
+                            }
                             settingList.push("reset envelope");
                         }
 
@@ -4073,7 +4078,7 @@ export class SongEditor {
             return;
         }
 
-        // Defer to actively editing volume/pan rows
+        // Defer to actively editing input boxes
         if (
             document.activeElement == this._panSliderInputBox
             || document.activeElement == this._pwmSliderInputBox
