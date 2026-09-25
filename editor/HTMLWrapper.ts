@@ -103,7 +103,8 @@ export class DoubleSlider {
         rightInitial: number,
         public min: number,
         public max: number,
-        midTick: boolean
+        /**0 == none, 1 == single, 2 == octaves */
+        midTick: 0 | 1 | 2 
     ) {
         this._valueLeft = leftInitial;
         this._valueRight = rightInitial;
@@ -124,7 +125,7 @@ export class DoubleSlider {
 
         this.render();
         // A container is created around the input to allow for spec-compliant pseudo css classes (e.g ::before and ::after, which must be added to containers, not the input itself)
-        this.container = span((midTick) ? { class: "midTick", style: "position: sticky; width: 61.5%;" } : { style: "position: sticky; flex: 3" }, this._svg);
+        this.container = span((midTick == 1) ? { class: "midTick", style: "position: sticky; width: 61.5%;" } : { style: "position: sticky; flex: 3" }, this._svg);
         
         this.container.addEventListener("pointerdown", this._mouseDown);
         this.container.addEventListener("pointermove", this._mouseMove);
@@ -133,7 +134,6 @@ export class DoubleSlider {
     }
 
     public updateLeft(value: number): DoubleSlider {
-        // console.log(this.isModRecording)
         if (value <= this._valueRight && value >= this.min) {
             //delay the update
             this._futureValueLeft = value;
@@ -146,7 +146,11 @@ export class DoubleSlider {
 
     public updateRight(value: number): DoubleSlider {
         if (value >= this._valueLeft && value <= this.max) {
-            this._valueRight = value;
+            //delay the update
+            this._futureValueRight = value;
+            if (!this.isModRecording) {
+                this._valueRight = this._futureValueRight;
+            }
         }
         return this;
     }
@@ -158,7 +162,7 @@ export class DoubleSlider {
         const boundingRect: ClientRect = this._svg.getBoundingClientRect();
         let mouseX: number = (eventX - boundingRect.left - 5) / (boundingRect.right - boundingRect.left - 10);
         if (isNaN(mouseX)) return this.min;
-        return Math.max(Math.min(Math.round(mouseX * this.max), this.max), this.min);
+        return Math.round(mouseX * (this.max - this.min)) + this.min;
     }
 
     private _initialPosition: number;

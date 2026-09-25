@@ -1373,25 +1373,21 @@ export class PatternEditor {
                 applyToEnvelopeTargets.push(envelopeIndex);
             } else if (change instanceof ChangeEnvelopeLowerBound) {
                 var modulator = Config.modulators.dictionary["individual envelope lower bound"];
-                applyToMods.push(modulator.index);
                 const envelopeIndex: number = change.getIndex();
+                if (instrument.envelopes[envelopeIndex].perEnvelopeLowerBound == change.oldValue) return;
+                applyToMods.push(modulator.index);
                 if (toApply) applyValues.push(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound * 10 - modulator.convertRealFactor);
                 // Move the actual value back, since we just want to update the modulated value and not the base slider.
-                slider = songEditor.getSliderForModSetting(modulator.index, envelopeIndex);
-                if (slider != null) {
-                    instrument.envelopes[envelopeIndex].perEnvelopeLowerBound = slider.getValueBeforeProspectiveChange();
-                }
+                instrument.envelopes[envelopeIndex].perEnvelopeLowerBound = change.oldValue;
                 applyToEnvelopeTargets.push(envelopeIndex);
             } else if (change instanceof ChangeEnvelopeUpperBound) {
                 var modulator = Config.modulators.dictionary["individual envelope upper bound"];
-                applyToMods.push(modulator.index);
                 const envelopeIndex: number = change.getIndex();
+                if (instrument.envelopes[envelopeIndex].perEnvelopeUpperBound == change.oldValue) return;
+                applyToMods.push(modulator.index);
                 if (toApply) applyValues.push(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound * 10 - modulator.convertRealFactor);
                 // Move the actual value back, since we just want to update the modulated value and not the base slider.
-                slider = songEditor.getSliderForModSetting(modulator.index, envelopeIndex);
-                if (slider != null) {
-                    instrument.envelopes[envelopeIndex].perEnvelopeUpperBound = slider.getValueBeforeProspectiveChange();
-                }
+                instrument.envelopes[envelopeIndex].perEnvelopeUpperBound = change.oldValue;
                 applyToEnvelopeTargets.push(envelopeIndex);
             } else if (change instanceof ChangeEnvelopePitchStart) {
                 var modulator = Config.modulators.dictionary["pitch envelope start"];

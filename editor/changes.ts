@@ -5734,24 +5734,30 @@ export class ChangePerEnvelopeSpeed extends IndexableChange {
 }
 
 export class ChangeEnvelopeLowerBound extends IndexableChange {
-    constructor(doc: SongDocument, oldBound: number, bound: number, index: number) {
+    get oldValue(): number {
+        return this._oldBound;
+    }
+    constructor(doc: SongDocument, private _oldBound: number, bound: number, index: number) {
         super(index, doc);
         bound = bound > Config.perEnvelopeBoundMax ? Config.perEnvelopeBoundMax : bound < Config.perEnvelopeBoundMin ? Config.perEnvelopeBoundMin : Math.round(bound * 10) != bound * 10 ? Config.perEnvelopeBoundMin : bound;
         this._instrument.envelopes[index].perEnvelopeLowerBound = bound;
         doc.synth.unsetMod(Config.modulators.dictionary["individual envelope lower bound"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
-        if (oldBound != bound) this._didSomething();
+        if (this._oldBound != bound) this._didSomething();
     }
 }
 
 export class ChangeEnvelopeUpperBound extends IndexableChange {
-    constructor(doc: SongDocument, oldBound: number, bound: number, index: number) {
+    get oldValue(): number {
+        return this._oldBound;
+    }
+    constructor(doc: SongDocument, private _oldBound: number, bound: number, index: number) {
         super(index, doc);
         bound = bound > Config.perEnvelopeBoundMax ? Config.perEnvelopeBoundMax : bound < Config.perEnvelopeBoundMin ? Config.perEnvelopeBoundMin : Math.round(bound * 10) != bound * 10 ? Config.perEnvelopeBoundMin : bound;
         this._instrument.envelopes[index].perEnvelopeUpperBound = bound;
         doc.synth.unsetMod(Config.modulators.dictionary["individual envelope upper bound"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
-        if (oldBound != bound) this._didSomething();
+        if (this._oldBound != bound) this._didSomething();
     }
 }
 

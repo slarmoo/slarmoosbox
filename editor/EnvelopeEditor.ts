@@ -41,8 +41,8 @@ export class EnvelopeEditor {
 	//envelope bounds sliders/boxes
 	public readonly perEnvelopeLowerBoundBoxes: HTMLInputElement[] = [];
 	public readonly perEnvelopeUpperBoundBoxes: HTMLInputElement[] = [];
-	public readonly perEnvelopeLowerBoundSliders: Slider[] = [];
-	public readonly perEnvelopeUpperBoundSliders: Slider[] = [];
+	public readonly boundDoubleSliders: DoubleSlider[] = [];
+	// public readonly perEnvelopeUpperBoundSliders: Slider[] = [];
 	//random envelopes
 	public readonly randomStepsBoxes: HTMLInputElement[] = [];
 	public readonly randomSeedBoxes: HTMLInputElement[] = [];
@@ -151,10 +151,8 @@ export class EnvelopeEditor {
 		const LFOStepsSliderIndex: number = this._LFOStepsSliders.indexOf(<any>event.target);
 		const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
 		if (startBoxIndex != -1) {
-			const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
 			this._lastChange = new ChangeEnvelopePitchStart(this._doc, instrument.envelopes[startBoxIndex].pitchEnvelopeStart, parseInt(this.pitchStartBoxes[startBoxIndex].value), startBoxIndex);
 		} else if (endBoxIndex != -1) {
-			const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
 			this._lastChange = new ChangeEnvelopePitchEnd(this._doc, instrument.envelopes[endBoxIndex].pitchEnvelopeEnd, parseInt(this.pitchEndBoxes[endBoxIndex].value), endBoxIndex);
 		} else if (lowerBoundBoxIndex != -1) {
 			this._lastChange = new ChangeEnvelopeLowerBound(this._doc, instrument.envelopes[lowerBoundBoxIndex].perEnvelopeLowerBound, parseFloat(this.perEnvelopeLowerBoundBoxes[lowerBoundBoxIndex].value), lowerBoundBoxIndex);
@@ -325,8 +323,7 @@ export class EnvelopeEditor {
 
 				this.perEnvelopeLowerBoundBoxes[i].value = instrument.envelopes[i].perEnvelopeLowerBound.toString();
 				this.perEnvelopeUpperBoundBoxes[i].value = instrument.envelopes[i].perEnvelopeUpperBound.toString();
-				this.perEnvelopeLowerBoundSliders[i].updateValue(instrument.envelopes[i].perEnvelopeLowerBound);
-				this.perEnvelopeUpperBoundSliders[i].updateValue(instrument.envelopes[i].perEnvelopeUpperBound);
+				this.boundDoubleSliders[i].updateLeft(instrument.envelopes[i].perEnvelopeLowerBound * 10).updateRight(instrument.envelopes[i].perEnvelopeUpperBound * 10);
 			} else if (this.openExtraSettingsDropdowns[i] == false) {
 				this.extraSettingsDropdownGroups[i].style.display = "none";
 				this.extraPitchSettingsGroups[i].style.display = "none";
@@ -408,17 +405,23 @@ export class EnvelopeEditor {
 			//Create HTML structure for the dropdowns
 
 			//pitch settings
-			const pitchStartNoteSlider: DoubleSlider = new DoubleSlider(
+			const pitchDoubleSlider: DoubleSlider = new DoubleSlider(
 				this._doc,
 				(oldNote: number, newNote: number) => new ChangeEnvelopePitchStart(this._doc, oldNote, newNote, envelopeIndex),
 				(oldNote: number, newNote: number) => new ChangeEnvelopePitchEnd(this._doc, oldNote, newNote, envelopeIndex),
-				() => instrument.envelopes[envelopeIndex].tempPitchStart,
-				() => instrument.envelopes[envelopeIndex].tempPitchEnd,
+				() => {
+					const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+					return instrument.envelopes[envelopeIndex].tempPitchStart ?? null;
+				},
+				() => {
+					const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+					return instrument.envelopes[envelopeIndex].tempPitchEnd ?? null;
+				},
 				instrument.envelopes[envelopeIndex].pitchEnvelopeStart ?? 0,
 				instrument.envelopes[envelopeIndex].pitchEnvelopeEnd ?? 0,
 				0,
 				instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch,
-				false
+				2
 			);
 			
 			const pitchStartNoteBox: HTMLInputElement = HTML.input({ value: instrument.envelopes[envelopeIndex].pitchEnvelopeStart ? instrument.envelopes[envelopeIndex].pitchEnvelopeStart : 0, style: "width: 3em; font-size: 80%; ", id: "startNoteBox", type: "number", step: "1", min: "0", max: instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch });
@@ -430,9 +433,9 @@ export class EnvelopeEditor {
 			const pitchStartBoxWrapper: HTMLDivElement = HTML.div({ style: "flex: 1; display: flex; flex-direction: column; align-items: center;" }, pitchStartNoteDisplay, pitchStartNoteBox);
 			const pitchEndBoxWrapper: HTMLDivElement = HTML.div({ style: "flex: 1; display: flex; flex-direction: column; align-items: center;" }, pitchEndNoteDisplay, pitchEndNoteBox);
 			
-			const pitchStartNoteWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, pitchStartBoxWrapper, pitchStartNoteSlider.container, pitchEndBoxWrapper);
+			const pitchNoteWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, pitchStartBoxWrapper, pitchDoubleSlider.container, pitchEndBoxWrapper);
 
-			const extraPitchSettingsGroup: HTMLDivElement = HTML.div({ class: "editor-controls", style: "flex-direction:column; align-items:center;" }, pitchStartNoteWrapper);
+			const extraPitchSettingsGroup: HTMLDivElement = HTML.div({ class: "editor-controls", style: "flex-direction:column; align-items:center;" }, pitchNoteWrapper);
 			extraPitchSettingsGroup.style.display = "none";
 
 			//random settings
@@ -482,17 +485,38 @@ export class EnvelopeEditor {
 			const perEnvelopeSpeedGroup: HTMLDivElement = HTML.div({ class: "editor-controls", style: "flex-direction:column; align-items:center;" }, perEnvelopeSpeedWrapper);
 
 			//general settings (bounds and invert)
-			const lowerBoundBox: HTMLInputElement = HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeLowerBound, type: "number", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 4em; font-size: 80%; " });
-			const lowerBoundSlider: Slider = new Slider(HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeLowerBound, type: "range", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 113px; margin-left: 0px;" }), this._doc, (oldBound: number, newBound: number) => new ChangeEnvelopeLowerBound(this._doc, oldBound, newBound, envelopeIndex), false);
+			const lowerBoundBox: HTMLInputElement = HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeLowerBound, type: "number", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 3em; font-size: 80%; " });
+			const upperBoundBox: HTMLInputElement = HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeUpperBound, type: "number", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 3em; font-size: 80%; " });
 
-			const upperBoundBox: HTMLInputElement = HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeUpperBound, type: "number", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 4em; font-size: 80%; " });
-			const upperBoundSlider: Slider = new Slider(HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeUpperBound, type: "range", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 113px; margin-left: 0px;" }), this._doc, (oldBound: number, newBound: number) => new ChangeEnvelopeUpperBound(this._doc, oldBound, newBound, envelopeIndex), false);
+			const lowerBoundSlider: DoubleSlider = new DoubleSlider(
+				this._doc,
+				(oldBound: number, newBound: number) => new ChangeEnvelopeLowerBound(this._doc, oldBound / 10, newBound / 10, envelopeIndex),
+				(oldBound: number, newBound: number) => new ChangeEnvelopeUpperBound(this._doc, oldBound / 10, newBound / 10, envelopeIndex),
+				() => {
+					const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+					if (instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound == null || instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound == undefined) return null;
+					return instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound! * 10;				},
+				() => {
+					const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+					if (instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound == null || instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound  == undefined) return null;
+					return instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound! * 10;
+				},
+				(+instrument.envelopes[envelopeIndex].perEnvelopeLowerBound * 10),
+				(+instrument.envelopes[envelopeIndex].perEnvelopeUpperBound * 10),
+				Config.perEnvelopeBoundMin * 10,
+				Config.perEnvelopeBoundMax * 10,
+				0
+			);
 
-			const lowerBoundBoxWrapper: HTMLDivElement = HTML.div({ style: "flex: 1; display: flex; flex-direction: column; align-items: center;" }, HTML.span({ class: "tip", style: `width:68px; flex:1; height:1em; font-size: smaller;`, onclick: () => this._openPrompt("envelopeRange") }, "Lwr bnd: "), lowerBoundBox);
-			const upperBoundBoxWrapper: HTMLDivElement = HTML.div({ style: "flex: 1; display: flex; flex-direction: column; align-items: center;" }, HTML.span({ class: "tip", style: `width:68px; flex:1; height:1em; font-size: smaller;`, onclick: () => this._openPrompt("envelopeRange") }, "Upr bnd: "), upperBoundBox);
+			// const upperBoundSlider: Slider = new Slider(HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeUpperBound, type: "range", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 113px; margin-left: 0px;" }), this._doc, , false);
+
+			const lowerBoundBoxWrapper: HTMLDivElement = HTML.div({ style: "flex: 1; display: flex; flex-direction: column; align-items: center;" }, HTML.span({ class: "tip", style: `flex:1; height:1em; font-size: smaller;`, onclick: () => this._openPrompt("envelopeRange") }, "Lwr: "), lowerBoundBox);
+			const upperBoundBoxWrapper: HTMLDivElement = HTML.div({ style: "flex: 1; display: flex; flex-direction: column; align-items: center;" }, HTML.span({ class: "tip", style: `flex:1; height:1em; font-size: smaller;`, onclick: () => this._openPrompt("envelopeRange") }, "Upr: "), upperBoundBox);
 			
-			const lowerBoundWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, lowerBoundBoxWrapper, lowerBoundSlider.container);
-			const upperBoundWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, upperBoundBoxWrapper, upperBoundSlider.container);
+			// const lowerBoundWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, lowerBoundBoxWrapper, lowerBoundSlider.container);
+			// const upperBoundWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, upperBoundBoxWrapper, upperBoundSlider.container);
+			
+			const boundWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, lowerBoundBoxWrapper, lowerBoundSlider.container, upperBoundBoxWrapper);
 
 			const invertBox: HTMLInputElement = HTML.input({ "checked": instrument.envelopes[envelopeIndex].inverse, type: "checkbox", style: "width: 1em; padding: 0.5em;", id: "invertBox" });
 			const discreteEnvelopeBox: HTMLInputElement = HTML.input({ "checked": instrument.envelopes[envelopeIndex].discrete, type: "checkbox", style: "width: 1em; padding: 0.5em;" });
@@ -522,7 +546,7 @@ export class EnvelopeEditor {
 			const extraSettingsDropdown: HTMLButtonElement = HTML.button({ style: "margin-left:0em; margin-right: 0.3em; height:1.5em; align-self: center; width: 10px; padding: 0px; font-size: 8px;", onclick: () => { this._extraSettingsDropdown(DropdownID.EnvelopeSettings, envelopeIndex); } }, "▼");
 			extraSettingsDropdown.style.display = "inline";
 
-			const extraSettingsDropdownGroup: HTMLDivElement = HTML.div({ class: "editor-controls", style: "flex-direction:column; align-items:center;" }, extraRandomSettingsGroup, extraLFOSettingsGroup, extraPitchSettingsGroup, perEnvelopeSpeedGroup, lowerBoundWrapper, upperBoundWrapper, checkboxWrapper, copyPasteContainer);
+			const extraSettingsDropdownGroup: HTMLDivElement = HTML.div({ class: "editor-controls", style: "flex-direction:column; align-items:center;" }, extraRandomSettingsGroup, extraLFOSettingsGroup, extraPitchSettingsGroup, perEnvelopeSpeedGroup, boundWrapper, checkboxWrapper, copyPasteContainer);
 			extraSettingsDropdownGroup.style.display = "none";
 
 
@@ -546,8 +570,8 @@ export class EnvelopeEditor {
 			this._discreters[envelopeIndex] = discreteEnvelopeBox;
 			this.perEnvelopeLowerBoundBoxes[envelopeIndex] = lowerBoundBox;
 			this.perEnvelopeUpperBoundBoxes[envelopeIndex] = upperBoundBox;
-			this.perEnvelopeLowerBoundSliders[envelopeIndex] = lowerBoundSlider;
-			this.perEnvelopeUpperBoundSliders[envelopeIndex] = upperBoundSlider;
+			this.boundDoubleSliders[envelopeIndex] = lowerBoundSlider;
+			// this.perEnvelopeUpperBoundSliders[envelopeIndex] = upperBoundSlider;
 
 			this._perEnvelopeSpeedDisplays[envelopeIndex] = perEnvelopeSpeedDisplay;
 			this.perEnvelopeSpeedSliders[envelopeIndex] = perEnvelopeSpeedSlider;
@@ -555,9 +579,8 @@ export class EnvelopeEditor {
 			
 
 			this.extraPitchSettingsGroups[envelopeIndex] = extraPitchSettingsGroup;
-			this.pitchDoubleSliders[envelopeIndex] = pitchStartNoteSlider;
+			this.pitchDoubleSliders[envelopeIndex] = pitchDoubleSlider;
 			this.pitchStartBoxes[envelopeIndex] = pitchStartNoteBox;
-			// this._pitchEndSliders[envelopeIndex] = pitchEndNoteSlider;
 			this.pitchEndBoxes[envelopeIndex] = pitchEndNoteBox;
 			this._startNoteDisplays[envelopeIndex] = pitchStartNoteDisplay;
 			this._endNoteDisplays[envelopeIndex] = pitchEndNoteDisplay;
@@ -617,8 +640,8 @@ export class EnvelopeEditor {
 			this.updateSpeedDisplay(envelopeIndex);
 			this.perEnvelopeLowerBoundBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound);
 			this.perEnvelopeUpperBoundBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound);
-			this.perEnvelopeLowerBoundSliders[envelopeIndex].updateValue(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound);
-			this.perEnvelopeUpperBoundSliders[envelopeIndex].updateValue(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound);
+			this.boundDoubleSliders[envelopeIndex].updateLeft(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound * 10).updateRight(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound * 10);
+			// this.perEnvelopeUpperBoundSliders[envelopeIndex].updateValue(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound);
 			this.randomStepsBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].steps);
 			this.randomSeedBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].seed);
 			this._randomStepsSliders[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].steps);

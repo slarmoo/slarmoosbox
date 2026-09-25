@@ -2129,10 +2129,10 @@ export class SongEditor {
                 return this._supersawShapeSlider;
             case Config.modulators.dictionary["individual envelope speed"].index:
                 return this.envelopeEditor.perEnvelopeSpeedSliders[index];
-            case Config.modulators.dictionary["individual envelope lower bound"].index:
-                return this.envelopeEditor.perEnvelopeLowerBoundSliders[index];
-            case Config.modulators.dictionary["individual envelope upper bound"].index:
-                return this.envelopeEditor.perEnvelopeUpperBoundSliders[index];
+            // case Config.modulators.dictionary["individual envelope lower bound"].index:
+            //     return this.envelopeEditor.perEnvelopeLowerBoundSliders[index];
+            // case Config.modulators.dictionary["individual envelope upper bound"].index:
+            //     return this.envelopeEditor.perEnvelopeUpperBoundSliders[index];
             case Config.modulators.dictionary["ring modulation"].index:
                 return this._ringModSlider;
             case Config.modulators.dictionary["ring mod hertz"].index:
@@ -4895,6 +4895,7 @@ export class SongEditor {
             this._songEqFilterEditor.render(true, this._ctrlHeld || this._shiftHeld);
         }
         this.envelopeEditor.pitchDoubleSliders.forEach((doubleSlider: DoubleSlider) => doubleSlider.render());
+        this.envelopeEditor.boundDoubleSliders.forEach((doubleSlider: DoubleSlider) => doubleSlider.render());
 
         window.requestAnimationFrame(this._animate);
     }
