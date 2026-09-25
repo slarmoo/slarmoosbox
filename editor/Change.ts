@@ -65,8 +65,13 @@ export class ChangeGroup extends Change {
         super();
     }
 
+    public changes: Change[] = [];
+
     public append(change: Change): ChangeGroup {
-        if (!change.isNoop()) this._didSomething();
+        if (!change.isNoop()) {
+            this._didSomething();
+            this.changes.push(change);
+        }
         return this;
     }
 }

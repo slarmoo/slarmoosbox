@@ -81,9 +81,13 @@ export class DoubleSlider {
     private _oldValueLeft: number = 0;
     private _valueRight: number = 0;
     private _oldValueRight: number = 0;
-    public container: HTMLSpanElement;
-    private leftThumb: SVGGElement;
-    private rightThumb: SVGGElement;
+    private _futureValueLeft: number = 0;
+    private _futureValueRight: number = 0;
+    public readonly container: HTMLSpanElement;
+    private readonly leftThumb: SVGGElement;
+    private readonly rightThumb: SVGGElement;
+    private readonly leftThumbMod: SVGGElement;
+    private readonly rightThumbMod: SVGGElement;
     private bar: SVGRectElement;
     private _svg: SVGSVGElement;
 
@@ -93,6 +97,8 @@ export class DoubleSlider {
         private readonly _doc: SongDocument,
         private readonly _getChangeLeft: ((oldValue: number, newValue: number) => Change) | null,
         private readonly _getChangeRight: ((oldValue: number, newValue: number) => Change) | null,
+        private readonly _getModValueLeft: () => number | null,
+        private readonly _getModValueRight: () => number | null,
         leftInitial: number,
         rightInitial: number,
         public min: number,
@@ -101,10 +107,21 @@ export class DoubleSlider {
     ) {
         this._valueLeft = leftInitial;
         this._valueRight = rightInitial;
-        this._svg = SVG.svg({ style: `background-color: ${ColorConfig.editorBackground}; touch-action: none;`, width: "100%", height: "100%", viewBox: "0 -12 " + DoubleSlider.width + " 24", preserveAspectRatio: "none" });
+        this._futureValueLeft = leftInitial;
+        this._futureValueRight = rightInitial;
         this.bar = SVG.rect({ fill: ColorConfig.uiWidgetBackground, x: 0, y: -3, width: 113, height: 6 });
         this.leftThumb = SVG.g();
         this.rightThumb = SVG.g();
+        this.leftThumbMod = SVG.g();
+        this.rightThumbMod = SVG.g();
+        this._svg = SVG.svg({ style: `background-color: ${ColorConfig.editorBackground}; touch-action: none;`, width: "100%", height: "100%", viewBox: "0 -12 " + DoubleSlider.width + " 24", preserveAspectRatio: "none" },
+            this.bar, 
+            this.leftThumb, 
+            this.rightThumb,
+            this.leftThumbMod,
+            this.rightThumbMod
+        );
+
         this.render();
         // A container is created around the input to allow for spec-compliant pseudo css classes (e.g ::before and ::after, which must be added to containers, not the input itself)
         this.container = span((midTick) ? { class: "midTick", style: "position: sticky; width: 61.5%;" } : { style: "position: sticky; flex: 3" }, this._svg);
@@ -115,23 +132,27 @@ export class DoubleSlider {
         this.container.addEventListener("pointercancel", this._mouseUp);
     }
 
-    public updateLeft(value: number, render: boolean = false): DoubleSlider {
+    public updateLeft(value: number): DoubleSlider {
+        // console.log(this.isModRecording)
         if (value <= this._valueRight && value >= this.min) {
-            this._valueLeft = value;
-            if (render) this.render();
+            //delay the update
+            this._futureValueLeft = value;
+            if (!this.isModRecording) {
+                this._valueLeft = this._futureValueLeft;
+            }
         }
         return this;
     }
 
-    public updateRight(value: number, render: boolean = false): DoubleSlider {
+    public updateRight(value: number): DoubleSlider {
         if (value >= this._valueLeft && value <= this.max) {
             this._valueRight = value;
-            if (render) this.render();
         }
         return this;
     }
 
     private mouseDown: DoubleSliderInputElements = DoubleSliderInputElements.none; 
+    private isModRecording: boolean = false;
 
     private getValueFromMouse(eventX: number) {
         const boundingRect: ClientRect = this._svg.getBoundingClientRect();
@@ -146,6 +167,7 @@ export class DoubleSlider {
         if (this.mouseDown != DoubleSliderInputElements.none) return;
         this.mouseDown = DoubleSliderInputElements.bar;
         this.container.setPointerCapture(event.pointerId)
+        this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
         this._oldValueLeft = this._valueLeft;
         this._oldValueRight = this._valueRight;
 
@@ -172,8 +194,8 @@ export class DoubleSlider {
     }
 
     private _mouseMove = (event: PointerEvent): void => {
-        // const isModRecording = event.shiftKey || event.ctrlKey;
         if (this.mouseDown == DoubleSliderInputElements.none) return;
+        this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
         this._handleChangeEvent(this.getValueFromMouse(event.clientX || event.pageX));
     };
 
@@ -208,26 +230,14 @@ export class DoubleSlider {
         this.render();
     }
 
-    // // mod recording stuff. Mods should be side-agnostic
-    // public getValueBeforeProspectiveChange(): number {
-    //     return this.mouseDown == DoubleSliderInputElements.leftThumb ? this._oldValueLeft : this._oldValueRight;
-    // }
-
-    // public getValueDuringProspectiveChange(): number {
-    //     return this.mouseDown == DoubleSliderInputElements.leftThumb ? this._valueLeft : this._valueRight;
-    // }
-
-    // public updateValue(value: number): void {
-    //     if (this.mouseDown == DoubleSliderInputElements.leftThumb) {
-    //         this._valueLeft = value;
-    //     } else {
-    //         this._valueRight = value;
-    //     }
-    // }
-
     private _mouseUp = (event: PointerEvent): void => {
         this.mouseDown = DoubleSliderInputElements.none;
         this.container.releasePointerCapture(event.pointerId);
+        if (this.isModRecording) {
+            this._valueLeft = this._futureValueLeft;
+            this._valueRight = this._futureValueRight;
+        }
+        this.isModRecording = false;
         if ((this._getChangeLeft != null || this._getChangeRight != null) && this._change != null) {
             if (this._change.isNoop()) this._doc.renderChanges();
             this._doc.record(this._change);
@@ -235,23 +245,23 @@ export class DoubleSlider {
         }
     };
 
-    private render() {
+    public render() {
         this.leftThumb.innerHTML = "";
         this.rightThumb.innerHTML = "";
-        this.leftThumb.appendChild(this._thumb(this._valueLeft, true));
-        this.rightThumb.appendChild(this._thumb(this._valueRight, false));
-        this._svg.innerHTML = "";
-        this._svg.appendChild(this.bar);
-        this._svg.appendChild(this.leftThumb);
-        this._svg.appendChild(this.rightThumb);
+        this.leftThumb.appendChild(this._thumb(this.isModRecording ? this._oldValueLeft : this._valueLeft, true, false));
+        this.rightThumb.appendChild(this._thumb(this.isModRecording ? this._oldValueRight : this._valueRight, false, false));
+        this.leftThumbMod.innerHTML = "";
+        this.rightThumbMod.innerHTML = "";
+        if (this._doc.synth.playing) {
+            if (this._getModValueLeft() != null) this.leftThumbMod.appendChild(this._thumb(this._getModValueLeft()!, true, true));
+            if (this._getModValueRight() != null) this.rightThumbMod.appendChild(this._thumb(this._getModValueRight()!, false, true));
+        }
     }
 
-    private _thumb(x: number, isLeft: boolean): SVGPathElement {
+    private _thumb(x: number, isLeft: boolean, isMod: boolean): SVGPathElement {
         const ratio: number = Math.floor(x / (this.max - this.min) * (DoubleSlider.width - 10)) + (isLeft ? 4.5 : 5.5);
-        return SVG.path({ d: `M ${ratio} -12 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio + (isLeft ? -4 : 4)} -8 L ${ratio + (isLeft ? -4 : 4)} 8 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio} 12 `, "fill": "currentColor" })
-            // SVG.circle({ cx: ratio, cy: -9, r: 3, "fill": "currentColor" }),
-            // SVG.rect({ x: ratio - 3, y: -9, width: 6, height: 18, "fill": "currentColor" }),
-            // SVG.circle({ cx: ratio, cy: 9, r: 3, "fill": "currentColor" }),
+        if (isMod) return SVG.path({ d: `M ${ratio} -8 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio + (isLeft ? -4 : 4)} -4 L ${ratio + (isLeft ? -4 : 4)} 4 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio} 8 `, "fill": `${ColorConfig.overwritingModSlider}` });
+        return SVG.path({ d: `M ${ratio} -12 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio + (isLeft ? -4 : 4)} -8 L ${ratio + (isLeft ? -4 : 4)} 8 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio} 12 `, "fill": "currentColor" });
     }
 }
 

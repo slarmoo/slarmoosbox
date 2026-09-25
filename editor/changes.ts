@@ -5663,11 +5663,14 @@ export class ChangeSetEnvelopeType extends Change {
 }
 
 export class ChangeEnvelopePitchStart extends IndexableChange {
-    constructor(doc: SongDocument, oldNote: number, startNote: number, index: number) {
+    get oldValue(): number {
+        return this._oldNote;
+    }
+    constructor(doc: SongDocument, private _oldNote: number, startNote: number, index: number) {
         super(index, doc);
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         instrument.envelopes[index].pitchEnvelopeStart = startNote;
-        if (oldNote != startNote && startNote <= instrument.envelopes[index].pitchEnvelopeEnd) {
+        if (this._oldNote != startNote){// && startNote <= instrument.envelopes[index].pitchEnvelopeEnd) {
             instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
@@ -5676,11 +5679,14 @@ export class ChangeEnvelopePitchStart extends IndexableChange {
 }
 
 export class ChangeEnvelopePitchEnd extends IndexableChange {
-    constructor(doc: SongDocument, oldNote: number, endNote: number, index: number) {
+    get oldValue(): number {
+        return this._oldNote;
+    }
+    constructor(doc: SongDocument, private _oldNote: number, endNote: number, index: number) {
         super(index, doc);
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         instrument.envelopes[index].pitchEnvelopeEnd = endNote;
-        if (oldNote != endNote && endNote >= instrument.envelopes[index].pitchEnvelopeStart) {
+        if (this._oldNote != endNote){// && endNote >= instrument.envelopes[index].pitchEnvelopeStart) {
             instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();

@@ -7955,9 +7955,13 @@ class EnvelopeComputer {
                 endNote = instrument.envelopes[envelopeIndex].pitchEnvelopeEnd;
                 if (synth.isModActive(Config.modulators.dictionary["pitch envelope start"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempPitchStart != null) { //modulation
                     startNote = instrument.envelopes[envelopeIndex].tempPitchStart!;
+                } else {
+                    instrument.envelopes[envelopeIndex].tempPitchStart = null;
                 }
                 if (synth.isModActive(Config.modulators.dictionary["pitch envelope end"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempPitchEnd != null) { //modulation
                     endNote = instrument.envelopes[envelopeIndex].tempPitchEnd!;
+                } else {
+                    instrument.envelopes[envelopeIndex].tempPitchEnd = null;
                 }
                 if (synth.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) { //modulation
                     perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed!;
@@ -7973,9 +7977,13 @@ class EnvelopeComputer {
                 perEnvelopeUpperBound = instrument.envelopes[envelopeIndex].perEnvelopeUpperBound;
                 if (synth.isModActive(Config.modulators.dictionary["individual envelope lower bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound != null) { //modulation
                     perEnvelopeLowerBound = instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound!;
+                } else {
+                    instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound = null;
                 }
                 if (synth.isModActive(Config.modulators.dictionary["individual envelope upper bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound != null) { //modulation
                     perEnvelopeUpperBound = instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound!;
+                } else {
+                    instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound = null;
                 }
                 if (!(perEnvelopeLowerBound <= perEnvelopeUpperBound)) { //reset bounds if incorrect
                     perEnvelopeLowerBound = 0;

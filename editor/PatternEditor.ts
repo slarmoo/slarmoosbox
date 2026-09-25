@@ -7,8 +7,8 @@ import { SongDocument } from "./SongDocument";
 import { Slider } from "./HTMLWrapper";
 import { SongEditor } from "./SongEditor";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
-import { ChangeSequence, UndoableChange } from "./Change";
-import { ChangeVolume, FilterMoveData, ChangeTempo, ChangePan, ChangeReverb, ChangeDistortion, ChangeOperatorAmplitude, ChangeFeedbackAmplitude, ChangePulseWidth, ChangeDetune, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangePanDelay, ChangeChorus, ChangeEQFilterSimplePeak, ChangeNoteFilterSimplePeak, ChangeStringSustain, ChangeEnvelopeSpeed, ChangeSupersawDynamism, ChangeSupersawShape, ChangeSupersawSpread, ChangePitchShift, ChangeChannelBar, ChangeDragSelectedNotes, ChangeEnsurePatternExists, ChangeNoteTruncate, ChangeNoteAdded, ChangePatternSelection, ChangePinTime, ChangeSizeBend, ChangePitchBend, ChangePitchAdded, ChangeArpeggioSpeed, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEchoSustain, ChangeEQFilterSimpleCut, ChangeNoteFilterSimpleCut, ChangeFilterMovePoint, ChangeDuplicateSelectedReusedPatterns, ChangeHoldingModRecording, ChangeDecimalOffset, ChangePerEnvelopeSpeed, ChangeSongFilterMovePoint, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeEnvelopeLowerBound, ChangeEnvelopeUpperBound, ChangeGrainAmounts, ChangeGrainRange } from "./changes";
+import { Change, ChangeGroup, ChangeSequence, UndoableChange } from "./Change";
+import { ChangeVolume, FilterMoveData, ChangeTempo, ChangePan, ChangeReverb, ChangeDistortion, ChangeOperatorAmplitude, ChangeFeedbackAmplitude, ChangePulseWidth, ChangeDetune, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangePanDelay, ChangeChorus, ChangeEQFilterSimplePeak, ChangeNoteFilterSimplePeak, ChangeStringSustain, ChangeEnvelopeSpeed, ChangeSupersawDynamism, ChangeSupersawShape, ChangeSupersawSpread, ChangePitchShift, ChangeChannelBar, ChangeDragSelectedNotes, ChangeEnsurePatternExists, ChangeNoteTruncate, ChangeNoteAdded, ChangePatternSelection, ChangePinTime, ChangeSizeBend, ChangePitchBend, ChangePitchAdded, ChangeArpeggioSpeed, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEchoSustain, ChangeEQFilterSimpleCut, ChangeNoteFilterSimpleCut, ChangeFilterMovePoint, ChangeDuplicateSelectedReusedPatterns, ChangeHoldingModRecording, ChangeDecimalOffset, ChangePerEnvelopeSpeed, ChangeSongFilterMovePoint, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeEnvelopeLowerBound, ChangeEnvelopeUpperBound, ChangeGrainAmounts, ChangeGrainRange, ChangeEnvelopePitchStart, ChangeEnvelopePitchEnd } from "./changes";
 import { prettyNumber } from "./EditorConfig";
 import { EnvelopeEditor } from "./EnvelopeEditor";
 
@@ -872,530 +872,554 @@ export class PatternEditor {
         let toApply: boolean = true;
         let slider: Slider | null = null;
 
-        // Special case, treat null change as Song volume.
-        if (change == null) {
-            var modulator = Config.modulators.dictionary["song volume"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(this._doc.prefs.volume - modulator.convertRealFactor);
-        }
-        // Also for song volume, when holding the slider at a single value.
-        else if (this._doc.continuingModRecordingChange != null && this._doc.continuingModRecordingChange.storedChange == null && this._doc.continuingModRecordingChange.storedSlider == null) {
-            var modulator = Config.modulators.dictionary["song volume"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(this._doc.continuingModRecordingChange.storedValues![0]);
-        }
-        else if (change instanceof ChangeTempo) {
-            var modulator = Config.modulators.dictionary["tempo"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(this._doc.song.tempo - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                this._doc.song.tempo = slider.getValueBeforeProspectiveChange();
+        const updateWithChange = (change: Change) => {
+            // Special case, treat null change as Song volume.
+            if (change == null) {
+                var modulator = Config.modulators.dictionary["song volume"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(this._doc.prefs.volume - modulator.convertRealFactor);
             }
-        }
-        else if (change instanceof ChangeSequence && change.checkFirst() instanceof ChangeSongFilterMovePoint && !change.isCommitted()) {
-            // Pushes some pieces of data in each array, to be handled individually down below.
-            //   applyToMods:
-            //     mod index for songFilter
-            //     mod index for songFilter
-            //   applyValues:
-            //     new freq
-            //     new gain
-            //   applyToFilterTargets:
-            //     modFilterTarget freq index (X)
-            //     modFilterTarget gain index (Y)
-            //
-            const useChange: ChangeSongFilterMovePoint = change.checkFirst() as ChangeSongFilterMovePoint;
-            const preMoveData: FilterMoveData = useChange.getMoveData(true);
-            const postMoveData: FilterMoveData = useChange.getMoveData(false);
-            const song = this._doc.song;
-            let useFilter: FilterSettings = song.eqFilter;
-            var modulatorIndex = Config.modulators.dictionary["song eq"].index;
-
-            if (song.tmpEqFilterEnd == null) {
-                song.tmpEqFilterStart = new FilterSettings();
-                song.tmpEqFilterStart.fromJsonObject(song.eqFilter.toJsonObject());
-                song.tmpEqFilterEnd = song.tmpEqFilterStart;
+            // Also for song volume, when holding the slider at a single value.
+            else if (this._doc.continuingModRecordingChange != null && this._doc.continuingModRecordingChange.storedChange == null && this._doc.continuingModRecordingChange.storedSlider == null) {
+                var modulator = Config.modulators.dictionary["song volume"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(this._doc.continuingModRecordingChange.storedValues![0]);
             }
-
-            const modifyPoint: FilterControlPoint | null = song.tmpEqFilterEnd.controlPoints[useChange.pointIndex];
-            if (modifyPoint != null && modifyPoint.type == useChange.pointType) {
-                modifyPoint.freq = postMoveData.freq;
-                modifyPoint.gain = postMoveData.gain;
-            }
-
-            applyToMods.push(modulatorIndex);
-            applyToMods.push(modulatorIndex);
-            if (toApply) applyValues.push(postMoveData.freq);
-            if (toApply) applyValues.push(postMoveData.gain);
-
-            // ModFilterTypes indices, one each for X/Y.
-            applyToFilterTargets.push(1 + useChange.pointIndex * 2);
-            applyToFilterTargets.push(1 + useChange.pointIndex * 2 + 1);
-
-            // Reset the original point, if it was the instrument's default eq/note filter.
-            for (let i: number = 0; i < useFilter.controlPointCount; i++) {
-                var point = useFilter.controlPoints[i];
-                if (Object.is(point, preMoveData.point)) {
-                    // Reset the filter point to its previous value, as just the mods are being changed.
-                    point.freq = preMoveData.freq;
-                    point.gain = preMoveData.gain;
+            else if (change instanceof ChangeTempo) {
+                var modulator = Config.modulators.dictionary["tempo"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(this._doc.song.tempo - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    this._doc.song.tempo = slider.getValueBeforeProspectiveChange();
                 }
             }
+            else if (change instanceof ChangeSequence && change.checkFirst() instanceof ChangeSongFilterMovePoint && !change.isCommitted()) {
+                // Pushes some pieces of data in each array, to be handled individually down below.
+                //   applyToMods:
+                //     mod index for songFilter
+                //     mod index for songFilter
+                //   applyValues:
+                //     new freq
+                //     new gain
+                //   applyToFilterTargets:
+                //     modFilterTarget freq index (X)
+                //     modFilterTarget gain index (Y)
+                //
+                const useChange: ChangeSongFilterMovePoint = change.checkFirst() as ChangeSongFilterMovePoint;
+                const preMoveData: FilterMoveData = useChange.getMoveData(true);
+                const postMoveData: FilterMoveData = useChange.getMoveData(false);
+                const song = this._doc.song;
+                let useFilter: FilterSettings = song.eqFilter;
+                var modulatorIndex = Config.modulators.dictionary["song eq"].index;
 
-        }
-        /* Song reverb - a casualty of splitting to reverb per instrument, it's not modulate-able via slider!
-        else if (change instanceof ChangeSongReverb) { } */
-        else if (change instanceof ChangeVolume) {
-            var modulator = Config.modulators.dictionary["mix volume"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.volume - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null)
-                instrument.volume = slider.getValueBeforeProspectiveChange();
-        }
-        else if (change instanceof ChangePan) {
-            var modulator = Config.modulators.dictionary["pan"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.pan - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.pan = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeReverb) {
-            var modulator = Config.modulators.dictionary["reverb"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.reverb - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.reverb = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeDistortion) {
-            var modulator = Config.modulators.dictionary["distortion"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.distortion - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.distortion = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeRingMod) {
-            var modulator = Config.modulators.dictionary["ring modulation"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.ringModulation - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.ringModulation = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeRingModHz) {
-            var modulator = Config.modulators.dictionary["ring mod hertz"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.ringModulationHz - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.ringModulationHz = slider.getValueBeforeProspectiveChange();
-                songEditor.ringModHzNum.innerHTML = "(" + instrument.ringModulationHz + ")";
-            }
-        }
-        else if (change instanceof ChangeGranular) {
-            var modulator = Config.modulators.dictionary["granular"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.granular - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.granular = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeGrainAmounts) {
-            var modulator = Config.modulators.dictionary["grain freq"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.grainAmounts - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.grainAmounts = slider.getValueBeforeProspectiveChange();                
-            }
-        }
-        else if (change instanceof ChangeGrainSize) {
-            var modulator = Config.modulators.dictionary["grain size"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.grainSize - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.grainSize = slider.getValueBeforeProspectiveChange();
-                songEditor.grainSizeNum.innerHTML = "(" + (instrument.grainSize * Config.grainSizeStep) + ")";
-            }
-        }
-        else if (change instanceof ChangeGrainRange) {
-            var modulator = Config.modulators.dictionary["grain range"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.grainRange - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.grainRange = slider.getValueBeforeProspectiveChange();
-                songEditor.grainRangeNum.innerHTML = "(" + (instrument.grainRange * Config.grainSizeStep) + ")";
-            }
-        }
-        else if (change instanceof ChangeOperatorAmplitude) {
-            var modulator = Config.modulators.dictionary["fm slider " + (change.operatorIndex + 1)];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.operators[change.operatorIndex].amplitude - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.operators[change.operatorIndex].amplitude = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeFeedbackAmplitude) {
-            var modulator = Config.modulators.dictionary["fm feedback"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.feedbackAmplitude - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.feedbackAmplitude = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangePulseWidth) {
-            var modulator = Config.modulators.dictionary["pulse width"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.pulseWidth - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.pulseWidth = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        // PWM decimal offset code for UB, DOUBLE-CHECK THAT THIS IS CORRECT
-        else if (change instanceof ChangeDecimalOffset) {
-            var modulator = Config.modulators.dictionary["decimal offset"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.decimalOffset - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.decimalOffset = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeDetune) {
-            var modulator = Config.modulators.dictionary["detune"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.detune - modulator.convertRealFactor - Config.detuneCenter);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.detune = slider.getValueBeforeProspectiveChange() + Config.detuneCenter;
-            }
-        }
-        else if (change instanceof ChangeVibratoDepth) {
-            var modulator = Config.modulators.dictionary["vibrato depth"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.vibratoDepth * 25 - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.vibratoDepth = slider.getValueBeforeProspectiveChange() / 25;
-            }
-        }
-        else if (change instanceof ChangeVibratoSpeed) {
-            var modulator = Config.modulators.dictionary["vibrato speed"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.vibratoSpeed - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.vibratoSpeed = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeVibratoDelay) {
-            var modulator = Config.modulators.dictionary["vibrato delay"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.vibratoDelay - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.vibratoDelay = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeArpeggioSpeed) {
-            var modulator = Config.modulators.dictionary["arp speed"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.arpeggioSpeed - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.arpeggioSpeed = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangePanDelay) {
-            var modulator = Config.modulators.dictionary["pan delay"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.panDelay - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.panDelay = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeSequence && change.checkFirst() instanceof ChangeFilterMovePoint && !change.isCommitted()) {
-            // Pushes some pieces of data in each array, to be handled individually down below.
-            //   applyToMods:
-            //     mod index for eqFilter||noteFilter
-            //     mod index for eqFilter||noteFilter
-            //   applyValues:
-            //     new freq
-            //     new gain
-            //   applyToFilterTargets:
-            //     modFilterTarget freq index (X)
-            //     modFilterTarget gain index (Y)
-            //
-            const useChange: ChangeFilterMovePoint = change.checkFirst() as ChangeFilterMovePoint;
-            const preMoveData: FilterMoveData = useChange.getMoveData(true);
-            const postMoveData: FilterMoveData = useChange.getMoveData(false);
-            let useFilter: FilterSettings = instrument.eqFilter;
-            let modulatorIndex;
-
-            if (useChange.useNoteFilter) {
-                modulatorIndex = Config.modulators.dictionary["note filter"].index;
-                useFilter = instrument.noteFilter;
-
-                if (instrument.tmpNoteFilterEnd == null) {
-                    instrument.tmpNoteFilterStart = new FilterSettings();
-                    instrument.tmpNoteFilterStart.fromJsonObject(instrument.noteFilter.toJsonObject());
-                    instrument.tmpNoteFilterEnd = instrument.tmpNoteFilterStart;
+                if (song.tmpEqFilterEnd == null) {
+                    song.tmpEqFilterStart = new FilterSettings();
+                    song.tmpEqFilterStart.fromJsonObject(song.eqFilter.toJsonObject());
+                    song.tmpEqFilterEnd = song.tmpEqFilterStart;
                 }
 
-                const modifyPoint: FilterControlPoint | null = instrument.tmpNoteFilterEnd.controlPoints[useChange.pointIndex];
+                const modifyPoint: FilterControlPoint | null = song.tmpEqFilterEnd.controlPoints[useChange.pointIndex];
                 if (modifyPoint != null && modifyPoint.type == useChange.pointType) {
                     modifyPoint.freq = postMoveData.freq;
                     modifyPoint.gain = postMoveData.gain;
                 }
-            }
-            else {
-                modulatorIndex = Config.modulators.dictionary["eq filter"].index;
 
-                if (instrument.tmpEqFilterEnd == null) {
-                    instrument.tmpEqFilterStart = new FilterSettings();
-                    instrument.tmpEqFilterStart.fromJsonObject(instrument.eqFilter.toJsonObject());
-                    instrument.tmpEqFilterEnd = instrument.tmpEqFilterStart;
+                applyToMods.push(modulatorIndex);
+                applyToMods.push(modulatorIndex);
+                if (toApply) applyValues.push(postMoveData.freq);
+                if (toApply) applyValues.push(postMoveData.gain);
+
+                // ModFilterTypes indices, one each for X/Y.
+                applyToFilterTargets.push(1 + useChange.pointIndex * 2);
+                applyToFilterTargets.push(1 + useChange.pointIndex * 2 + 1);
+
+                // Reset the original point, if it was the instrument's default eq/note filter.
+                for (let i: number = 0; i < useFilter.controlPointCount; i++) {
+                    var point = useFilter.controlPoints[i];
+                    if (Object.is(point, preMoveData.point)) {
+                        // Reset the filter point to its previous value, as just the mods are being changed.
+                        point.freq = preMoveData.freq;
+                        point.gain = preMoveData.gain;
+                    }
                 }
 
-                const modifyPoint: FilterControlPoint | null = instrument.tmpEqFilterEnd.controlPoints[useChange.pointIndex];
-                if (modifyPoint != null && modifyPoint.type == useChange.pointType) {
-                    modifyPoint.freq = postMoveData.freq;
-                    modifyPoint.gain = postMoveData.gain;
+            }
+            /* Song reverb - a casualty of splitting to reverb per instrument, it's not modulate-able via slider!
+            else if (change instanceof ChangeSongReverb) { } */
+            else if (change instanceof ChangeVolume) {
+                var modulator = Config.modulators.dictionary["mix volume"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.volume - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null)
+                    instrument.volume = slider.getValueBeforeProspectiveChange();
+            }
+            else if (change instanceof ChangePan) {
+                var modulator = Config.modulators.dictionary["pan"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.pan - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.pan = slider.getValueBeforeProspectiveChange();
                 }
             }
-
-            applyToMods.push(modulatorIndex);
-            applyToMods.push(modulatorIndex);
-            if (toApply) applyValues.push(postMoveData.freq);
-            if (toApply) applyValues.push(postMoveData.gain);
-
-            // ModFilterTypes indices, one each for X/Y.
-            applyToFilterTargets.push(1 + useChange.pointIndex * 2);
-            applyToFilterTargets.push(1 + useChange.pointIndex * 2 + 1);
-
-            // Reset the original point, if it was the instrument's default eq/note filter.
-            for (let i: number = 0; i < useFilter.controlPointCount; i++) {
-                var point = useFilter.controlPoints[i];
-                if (Object.is(point, preMoveData.point)) {
-                    // Reset the filter point to its previous value, as just the mods are being changed.
-                    point.freq = preMoveData.freq;
-                    point.gain = preMoveData.gain;
+            else if (change instanceof ChangeReverb) {
+                var modulator = Config.modulators.dictionary["reverb"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.reverb - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.reverb = slider.getValueBeforeProspectiveChange();
                 }
             }
+            else if (change instanceof ChangeDistortion) {
+                var modulator = Config.modulators.dictionary["distortion"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.distortion - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.distortion = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeRingMod) {
+                var modulator = Config.modulators.dictionary["ring modulation"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.ringModulation - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.ringModulation = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeRingModHz) {
+                var modulator = Config.modulators.dictionary["ring mod hertz"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.ringModulationHz - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.ringModulationHz = slider.getValueBeforeProspectiveChange();
+                    songEditor.ringModHzNum.innerHTML = "(" + instrument.ringModulationHz + ")";
+                }
+            }
+            else if (change instanceof ChangeGranular) {
+                var modulator = Config.modulators.dictionary["granular"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.granular - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.granular = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeGrainAmounts) {
+                var modulator = Config.modulators.dictionary["grain freq"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.grainAmounts - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.grainAmounts = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeGrainSize) {
+                var modulator = Config.modulators.dictionary["grain size"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.grainSize - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.grainSize = slider.getValueBeforeProspectiveChange();
+                    songEditor.grainSizeNum.innerHTML = "(" + (instrument.grainSize * Config.grainSizeStep) + ")";
+                }
+            }
+            else if (change instanceof ChangeGrainRange) {
+                var modulator = Config.modulators.dictionary["grain range"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.grainRange - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.grainRange = slider.getValueBeforeProspectiveChange();
+                    songEditor.grainRangeNum.innerHTML = "(" + (instrument.grainRange * Config.grainSizeStep) + ")";
+                }
+            }
+            else if (change instanceof ChangeOperatorAmplitude) {
+                var modulator = Config.modulators.dictionary["fm slider " + (change.operatorIndex + 1)];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.operators[change.operatorIndex].amplitude - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.operators[change.operatorIndex].amplitude = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeFeedbackAmplitude) {
+                var modulator = Config.modulators.dictionary["fm feedback"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.feedbackAmplitude - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.feedbackAmplitude = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangePulseWidth) {
+                var modulator = Config.modulators.dictionary["pulse width"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.pulseWidth - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.pulseWidth = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            // PWM decimal offset code for UB, DOUBLE-CHECK THAT THIS IS CORRECT
+            else if (change instanceof ChangeDecimalOffset) {
+                var modulator = Config.modulators.dictionary["decimal offset"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.decimalOffset - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.decimalOffset = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeDetune) {
+                var modulator = Config.modulators.dictionary["detune"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.detune - modulator.convertRealFactor - Config.detuneCenter);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.detune = slider.getValueBeforeProspectiveChange() + Config.detuneCenter;
+                }
+            }
+            else if (change instanceof ChangeVibratoDepth) {
+                var modulator = Config.modulators.dictionary["vibrato depth"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.vibratoDepth * 25 - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.vibratoDepth = slider.getValueBeforeProspectiveChange() / 25;
+                }
+            }
+            else if (change instanceof ChangeVibratoSpeed) {
+                var modulator = Config.modulators.dictionary["vibrato speed"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.vibratoSpeed - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.vibratoSpeed = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeVibratoDelay) {
+                var modulator = Config.modulators.dictionary["vibrato delay"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.vibratoDelay - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.vibratoDelay = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeArpeggioSpeed) {
+                var modulator = Config.modulators.dictionary["arp speed"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.arpeggioSpeed - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.arpeggioSpeed = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangePanDelay) {
+                var modulator = Config.modulators.dictionary["pan delay"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.panDelay - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.panDelay = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeSequence && change.checkFirst() instanceof ChangeFilterMovePoint && !change.isCommitted()) {
+                // Pushes some pieces of data in each array, to be handled individually down below.
+                //   applyToMods:
+                //     mod index for eqFilter||noteFilter
+                //     mod index for eqFilter||noteFilter
+                //   applyValues:
+                //     new freq
+                //     new gain
+                //   applyToFilterTargets:
+                //     modFilterTarget freq index (X)
+                //     modFilterTarget gain index (Y)
+                //
+                const useChange: ChangeFilterMovePoint = change.checkFirst() as ChangeFilterMovePoint;
+                const preMoveData: FilterMoveData = useChange.getMoveData(true);
+                const postMoveData: FilterMoveData = useChange.getMoveData(false);
+                let useFilter: FilterSettings = instrument.eqFilter;
+                let modulatorIndex;
 
-        }
-        else if (change instanceof ChangeBitcrusherQuantization) {
-            var modulator = Config.modulators.dictionary["bit crush"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.bitcrusherQuantization - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.bitcrusherQuantization = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeBitcrusherFreq) {
-            var modulator = Config.modulators.dictionary["freq crush"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.bitcrusherFreq - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.bitcrusherFreq = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeEchoSustain) {
-            var modulator = Config.modulators.dictionary["echo"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.echoSustain - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.echoSustain = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeChorus) {
-            var modulator = Config.modulators.dictionary["chorus"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.chorus - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.chorus = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeEQFilterSimpleCut) {
-            var modulator = Config.modulators.dictionary["eq filt cut"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.eqFilterSimpleCut - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.eqFilterSimpleCut = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeEQFilterSimplePeak) {
-            var modulator = Config.modulators.dictionary["eq filt peak"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.eqFilterSimplePeak - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.eqFilterSimplePeak = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeNoteFilterSimpleCut) {
-            var modulator = Config.modulators.dictionary["note filt cut"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.noteFilterSimpleCut - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.noteFilterSimpleCut = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeNoteFilterSimplePeak) {
-            var modulator = Config.modulators.dictionary["note filt peak"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.noteFilterSimplePeak - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.noteFilterSimplePeak = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangePitchShift) {
-            var modulator = Config.modulators.dictionary["pitch shift"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.pitchShift - Config.pitchShiftCenter - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.pitchShift = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeStringSustain) {
-            var modulator = Config.modulators.dictionary["sustain"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.stringSustain - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.stringSustain = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeEnvelopeSpeed) {
-            var modulator = Config.modulators.dictionary["envelope speed"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.envelopeSpeed - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.envelopeSpeed = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeSupersawDynamism) {
-            var modulator = Config.modulators.dictionary["dynamism"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.supersawDynamism - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.supersawDynamism = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeSupersawSpread) {
-            var modulator = Config.modulators.dictionary["spread"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.supersawSpread - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.supersawSpread = slider.getValueBeforeProspectiveChange();
-            }
-        }
-        else if (change instanceof ChangeSupersawShape) {
-            var modulator = Config.modulators.dictionary["saw shape"];
-            applyToMods.push(modulator.index);
-            if (toApply) applyValues.push(instrument.supersawShape - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index);
-            if (slider != null) {
-                instrument.supersawShape = slider.getValueBeforeProspectiveChange();
-            }
-        } else if (change instanceof ChangePerEnvelopeSpeed) {
-            var modulator = Config.modulators.dictionary["individual envelope speed"];
-            applyToMods.push(modulator.index);
-            const envelopeIndex: number = change.getIndex();
-            if (toApply) applyValues.push(EnvelopeEditor.convertIndexSpeed(instrument.envelopes[envelopeIndex].perEnvelopeSpeed, "index") - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index, envelopeIndex);
-            if (slider != null) {
-                instrument.envelopes[envelopeIndex].perEnvelopeSpeed = EnvelopeEditor.convertIndexSpeed(slider.getValueBeforeProspectiveChange(), "speed");
-            }
-            applyToEnvelopeTargets.push(envelopeIndex);
+                if (useChange.useNoteFilter) {
+                    modulatorIndex = Config.modulators.dictionary["note filter"].index;
+                    useFilter = instrument.noteFilter;
 
-        } else if (change instanceof ChangeEnvelopeLowerBound) {
-            var modulator = Config.modulators.dictionary["individual envelope lower bound"];
-            applyToMods.push(modulator.index);
-            const envelopeIndex: number = change.getIndex();
-            if (toApply) applyValues.push(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound*10 - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index, envelopeIndex);
-            if (slider != null) {
-                instrument.envelopes[envelopeIndex].perEnvelopeLowerBound = slider.getValueBeforeProspectiveChange();
-            }
-            applyToEnvelopeTargets.push(envelopeIndex);
+                    if (instrument.tmpNoteFilterEnd == null) {
+                        instrument.tmpNoteFilterStart = new FilterSettings();
+                        instrument.tmpNoteFilterStart.fromJsonObject(instrument.noteFilter.toJsonObject());
+                        instrument.tmpNoteFilterEnd = instrument.tmpNoteFilterStart;
+                    }
 
-        } else if (change instanceof ChangeEnvelopeUpperBound) {
-            var modulator = Config.modulators.dictionary["individual envelope upper bound"];
-            applyToMods.push(modulator.index);
-            const envelopeIndex: number = change.getIndex();
-            if (toApply) applyValues.push(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound*10 - modulator.convertRealFactor);
-            // Move the actual value back, since we just want to update the modulated value and not the base slider.
-            slider = songEditor.getSliderForModSetting(modulator.index, envelopeIndex);
-            if (slider != null) {
-                instrument.envelopes[envelopeIndex].perEnvelopeUpperBound = slider.getValueBeforeProspectiveChange();
-            }
-            applyToEnvelopeTargets.push(envelopeIndex);
+                    const modifyPoint: FilterControlPoint | null = instrument.tmpNoteFilterEnd.controlPoints[useChange.pointIndex];
+                    if (modifyPoint != null && modifyPoint.type == useChange.pointType) {
+                        modifyPoint.freq = postMoveData.freq;
+                        modifyPoint.gain = postMoveData.gain;
+                    }
+                }
+                else {
+                    modulatorIndex = Config.modulators.dictionary["eq filter"].index;
 
+                    if (instrument.tmpEqFilterEnd == null) {
+                        instrument.tmpEqFilterStart = new FilterSettings();
+                        instrument.tmpEqFilterStart.fromJsonObject(instrument.eqFilter.toJsonObject());
+                        instrument.tmpEqFilterEnd = instrument.tmpEqFilterStart;
+                    }
+
+                    const modifyPoint: FilterControlPoint | null = instrument.tmpEqFilterEnd.controlPoints[useChange.pointIndex];
+                    if (modifyPoint != null && modifyPoint.type == useChange.pointType) {
+                        modifyPoint.freq = postMoveData.freq;
+                        modifyPoint.gain = postMoveData.gain;
+                    }
+                }
+
+                applyToMods.push(modulatorIndex);
+                applyToMods.push(modulatorIndex);
+                if (toApply) applyValues.push(postMoveData.freq);
+                if (toApply) applyValues.push(postMoveData.gain);
+
+                // ModFilterTypes indices, one each for X/Y.
+                applyToFilterTargets.push(1 + useChange.pointIndex * 2);
+                applyToFilterTargets.push(1 + useChange.pointIndex * 2 + 1);
+
+                // Reset the original point, if it was the instrument's default eq/note filter.
+                for (let i: number = 0; i < useFilter.controlPointCount; i++) {
+                    var point = useFilter.controlPoints[i];
+                    if (Object.is(point, preMoveData.point)) {
+                        // Reset the filter point to its previous value, as just the mods are being changed.
+                        point.freq = preMoveData.freq;
+                        point.gain = preMoveData.gain;
+                    }
+                }
+
+            }
+            else if (change instanceof ChangeBitcrusherQuantization) {
+                var modulator = Config.modulators.dictionary["bit crush"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.bitcrusherQuantization - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.bitcrusherQuantization = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeBitcrusherFreq) {
+                var modulator = Config.modulators.dictionary["freq crush"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.bitcrusherFreq - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.bitcrusherFreq = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeEchoSustain) {
+                var modulator = Config.modulators.dictionary["echo"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.echoSustain - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.echoSustain = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeChorus) {
+                var modulator = Config.modulators.dictionary["chorus"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.chorus - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.chorus = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeEQFilterSimpleCut) {
+                var modulator = Config.modulators.dictionary["eq filt cut"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.eqFilterSimpleCut - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.eqFilterSimpleCut = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeEQFilterSimplePeak) {
+                var modulator = Config.modulators.dictionary["eq filt peak"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.eqFilterSimplePeak - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.eqFilterSimplePeak = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeNoteFilterSimpleCut) {
+                var modulator = Config.modulators.dictionary["note filt cut"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.noteFilterSimpleCut - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.noteFilterSimpleCut = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeNoteFilterSimplePeak) {
+                var modulator = Config.modulators.dictionary["note filt peak"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.noteFilterSimplePeak - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.noteFilterSimplePeak = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangePitchShift) {
+                var modulator = Config.modulators.dictionary["pitch shift"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.pitchShift - Config.pitchShiftCenter - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.pitchShift = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeStringSustain) {
+                var modulator = Config.modulators.dictionary["sustain"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.stringSustain - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.stringSustain = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeEnvelopeSpeed) {
+                var modulator = Config.modulators.dictionary["envelope speed"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.envelopeSpeed - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.envelopeSpeed = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeSupersawDynamism) {
+                var modulator = Config.modulators.dictionary["dynamism"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.supersawDynamism - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.supersawDynamism = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeSupersawSpread) {
+                var modulator = Config.modulators.dictionary["spread"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.supersawSpread - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.supersawSpread = slider.getValueBeforeProspectiveChange();
+                }
+            }
+            else if (change instanceof ChangeSupersawShape) {
+                var modulator = Config.modulators.dictionary["saw shape"];
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.supersawShape - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index);
+                if (slider != null) {
+                    instrument.supersawShape = slider.getValueBeforeProspectiveChange();
+                }
+            } else if (change instanceof ChangePerEnvelopeSpeed) {
+                var modulator = Config.modulators.dictionary["individual envelope speed"];
+                applyToMods.push(modulator.index);
+                const envelopeIndex: number = change.getIndex();
+                if (toApply) applyValues.push(EnvelopeEditor.convertIndexSpeed(instrument.envelopes[envelopeIndex].perEnvelopeSpeed, "index") - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index, envelopeIndex);
+                if (slider != null) {
+                    instrument.envelopes[envelopeIndex].perEnvelopeSpeed = EnvelopeEditor.convertIndexSpeed(slider.getValueBeforeProspectiveChange(), "speed");
+                }
+                applyToEnvelopeTargets.push(envelopeIndex);
+            } else if (change instanceof ChangeEnvelopeLowerBound) {
+                var modulator = Config.modulators.dictionary["individual envelope lower bound"];
+                applyToMods.push(modulator.index);
+                const envelopeIndex: number = change.getIndex();
+                if (toApply) applyValues.push(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound * 10 - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index, envelopeIndex);
+                if (slider != null) {
+                    instrument.envelopes[envelopeIndex].perEnvelopeLowerBound = slider.getValueBeforeProspectiveChange();
+                }
+                applyToEnvelopeTargets.push(envelopeIndex);
+            } else if (change instanceof ChangeEnvelopeUpperBound) {
+                var modulator = Config.modulators.dictionary["individual envelope upper bound"];
+                applyToMods.push(modulator.index);
+                const envelopeIndex: number = change.getIndex();
+                if (toApply) applyValues.push(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound * 10 - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                slider = songEditor.getSliderForModSetting(modulator.index, envelopeIndex);
+                if (slider != null) {
+                    instrument.envelopes[envelopeIndex].perEnvelopeUpperBound = slider.getValueBeforeProspectiveChange();
+                }
+                applyToEnvelopeTargets.push(envelopeIndex);
+            } else if (change instanceof ChangeEnvelopePitchStart) {
+                var modulator = Config.modulators.dictionary["pitch envelope start"];
+                const envelopeIndex: number = change.getIndex();
+                if (instrument.envelopes[envelopeIndex].pitchEnvelopeStart == change.oldValue) return;
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.envelopes[envelopeIndex].pitchEnvelopeStart - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                instrument.envelopes[envelopeIndex].pitchEnvelopeStart = change.oldValue;
+                applyToEnvelopeTargets.push(envelopeIndex);
+            } else if (change instanceof ChangeEnvelopePitchEnd) {
+                var modulator = Config.modulators.dictionary["pitch envelope end"];
+                const envelopeIndex: number = change.getIndex();
+                if (instrument.envelopes[envelopeIndex].pitchEnvelopeEnd == change.oldValue) return;
+                applyToMods.push(modulator.index);
+                if (toApply) applyValues.push(instrument.envelopes[envelopeIndex].pitchEnvelopeEnd - modulator.convertRealFactor);
+                // Move the actual value back, since we just want to update the modulated value and not the base slider.
+                instrument.envelopes[envelopeIndex].pitchEnvelopeEnd = change.oldValue;
+                applyToEnvelopeTargets.push(envelopeIndex);
+            }
+            //apply for every change in the change group
+            else if (change instanceof ChangeGroup) {
+                change.changes.forEach((change: Change) => {
+                    updateWithChange(change);
+                });
+            }
         }
+        updateWithChange(change);
 
         for (let applyIndex: number = 0; applyIndex < applyValues.length; applyIndex++) {
             applyValues[applyIndex] = Math.round(applyValues[applyIndex]);

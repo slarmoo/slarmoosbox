@@ -19,7 +19,7 @@ import { Instrument, Channel, Synth } from "../synth/synth";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { Preferences } from "./Preferences";
 import { HarmonicsEditor, HarmonicsEditorPrompt } from "./HarmonicsEditor";
-import { InputBox, Slider } from "./HTMLWrapper";
+import { DoubleSlider, InputBox, Slider } from "./HTMLWrapper";
 import { ImportPrompt } from "./ImportPrompt";
 import { ChannelRow } from "./ChannelRow";
 import { LayoutPrompt } from "./LayoutPrompt";
@@ -4894,7 +4894,7 @@ export class SongEditor {
         if (this.doc.synth.isFilterModActive(false, 0, 0, true)) {
             this._songEqFilterEditor.render(true, this._ctrlHeld || this._shiftHeld);
         }
-
+        this.envelopeEditor.pitchDoubleSliders.forEach((doubleSlider: DoubleSlider) => doubleSlider.render());
 
         window.requestAnimationFrame(this._animate);
     }
