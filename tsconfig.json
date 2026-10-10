@@ -6,7 +6,7 @@
 		"target": "es6",
 		"module": "esnext",
 		"moduleResolution": "bundler",
-		"types": ["jquery"],
+		"types": ["jquery", "select2"],
 		"sourceMap": true,
 		"removeComments": true,
 		"noImplicitAny": true,

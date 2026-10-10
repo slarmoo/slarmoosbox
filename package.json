@@ -55,6 +55,6 @@
 		"imperative-html": "^0.1.1",
 		"js-xxhash": "^4.0.0",
 		"libflacjs": "^5.6.0",
-		"select2": "^4.0.13"
+		"select2": "^4.1.0"
 	}
 }

@@ -3,6 +3,7 @@
 
 import { Change, ChangeGroup } from "./Change";
 import { ColorConfig } from "./ColorConfig";
+import { Config } from "../synth/SynthConfig";
 import { SongDocument } from "./SongDocument";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 
@@ -122,10 +123,20 @@ export class DoubleSlider {
             this.leftThumbMod,
             this.rightThumbMod
         );
+        //TODO: I'm not really a fan of how either of these look
+        if (midTick == 2 && (this.max - this.min) >= Config.pitchesPerOctave) {
+            const octaves: SVGGElement = SVG.g();
+            for (let oc: number = this.min; oc <= this.max + 1; oc += Config.pitchesPerOctave) {
+                octaves.appendChild(SVG.rect({ x: oc / (this.max - this.min) * (DoubleSlider.width - 10)+4, y: -11, width: 2, height: 22, rx: 1, ry: 1, "fill": `${ColorConfig.tonic}`}))
+            }
+            this._svg.insertBefore(octaves, this.leftThumbMod);
+        } else if (midTick == 1) {
+            this._svg.insertBefore(SVG.rect({ x: 0.5 * (DoubleSlider.width - 10) + 4, y: -8, width: 2, height: 16, rx: 1, ry: 1, "fill": `${ColorConfig.tonic}` }), this.leftThumbMod);
+        }
 
         this.render();
         // A container is created around the input to allow for spec-compliant pseudo css classes (e.g ::before and ::after, which must be added to containers, not the input itself)
-        this.container = span((midTick == 1) ? { class: "midTick", style: "position: sticky; width: 61.5%;" } : { style: "position: sticky; flex: 3" }, this._svg);
+        this.container = span((false) ? { class: "midTick", style: "position: sticky; width: 61.5%;" } : { style: "position: sticky; flex: 3" }, this._svg);
         
         this.container.addEventListener("pointerdown", this._mouseDown);
         this.container.addEventListener("pointermove", this._mouseMove);
@@ -171,21 +182,35 @@ export class DoubleSlider {
         if (this.mouseDown != DoubleSliderInputElements.none) return;
         this.mouseDown = DoubleSliderInputElements.bar;
         this.container.setPointerCapture(event.pointerId)
-        this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
+        // this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
         this._oldValueLeft = this._valueLeft;
         this._oldValueRight = this._valueRight;
 
         this._initialPosition = this.getValueFromMouse(event.clientX || event.pageX);
         const midpoint = (this._valueLeft + this._valueRight) / 2;
         const stepsFromPercent = (percent: number) => (this.max - this.min) * percent / 100; //to give a bit of wiggle room for grabbing thumbs / the center bar
-        if (this._valueLeft == this.min && this._valueRight == this.max && this._initialPosition > this.min && this._initialPosition < this.max) {
+        // const renderedLeft: number = this._getModValueLeft() ?? this._valueLeft;
+        // const renderedRight: number = this._getModValueRight() ?? this._valueRight;
+        // if (this.isModRecording && //this is so unreadable sorry :skull:
+        //     ((this._initialPosition > renderedLeft + stepsFromPercent(4) && this._initialPosition < renderedRight - stepsFromPercent(4)) ||
+        //     (renderedRight - renderedLeft < stepsFromPercent(10) && this._initialPosition > renderedLeft - stepsFromPercent(4) && this._initialPosition < renderedRight + stepsFromPercent(4)))) {
+        //     //treat as a bar command for mods
+        //     this.mouseDown = DoubleSliderInputElements.bar;
+        // } else if (this.isModRecording && this._getModValueLeft() != null && this._initialPosition <= this._getModValueLeft()! + stepsFromPercent(4)) {
+        //     //mod left
+        //     this.mouseDown = DoubleSliderInputElements.leftThumb;
+        // } else if (this.isModRecording && this._getModValueRight() != null && this._initialPosition >= this._getModValueRight()! - stepsFromPercent(4)) {
+        //     //mod right
+        //     this.mouseDown = DoubleSliderInputElements.rightThumb;
+        // } else
+            if(this._valueLeft == this.min && this._valueRight == this.max && this._initialPosition > this.min && this._initialPosition < this.max) {
             //special case: jump the closest thumb to mouse if they're both at the extremes
             if (this._initialPosition < midpoint || this._initialPosition < this._valueLeft) {
                 this.mouseDown = DoubleSliderInputElements.leftThumb;
             } else {
                 this.mouseDown = DoubleSliderInputElements.rightThumb;
             }
-        }else if ((this._initialPosition > this._valueLeft + stepsFromPercent(4) && this._initialPosition < this._valueRight - stepsFromPercent(4)) ||
+        } else if ((this._initialPosition > this._valueLeft + stepsFromPercent(4) && this._initialPosition < this._valueRight - stepsFromPercent(4)) ||
             (this._valueRight - this._valueLeft < stepsFromPercent(10) && this._initialPosition > this._valueLeft - stepsFromPercent(4) && this._initialPosition < this._valueRight + stepsFromPercent(4))) {
             this.mouseDown = DoubleSliderInputElements.bar;
         } else if (this._initialPosition <= this._valueLeft + stepsFromPercent(4)) {
@@ -199,31 +224,34 @@ export class DoubleSlider {
 
     private _mouseMove = (event: PointerEvent): void => {
         if (this.mouseDown == DoubleSliderInputElements.none) return;
-        this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
+        // this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
         this._handleChangeEvent(this.getValueFromMouse(event.clientX || event.pageX));
     };
 
     private _handleChangeEvent(position: number) {
         if (this.mouseDown == DoubleSliderInputElements.leftThumb && this._getChangeLeft != null) {
-            this.updateLeft(position);
+            if ((this.isModRecording || position <= this._valueRight) && position >= this.min) this._valueLeft = position;
             this._change = this._getChangeLeft(this._oldValueLeft, this._valueLeft);
             if (this._change.isNoop()) this._doc.renderChanges();
             this._doc.setProspectiveChange(this._change);
         } else if (this.mouseDown == DoubleSliderInputElements.rightThumb && this._getChangeRight != null) {
-            this.updateRight(position);
+            if ((this.isModRecording || position >= this._valueLeft) && position <= this.max) this._valueRight = position;
             this._change = this._getChangeRight(this._oldValueRight, this._valueRight);
             if (this._change.isNoop()) this._doc.renderChanges();
             this._doc.setProspectiveChange(this._change);
         } else if (this.mouseDown == DoubleSliderInputElements.bar && this._getChangeLeft != null && this._getChangeRight != null) {
             //move both, keeping the distance between
             const delta: number = position - this._initialPosition;
+            const renderedLeft: number = this._getModValueLeft() != null && this.isModRecording ? this._getModValueLeft()! :  this._valueLeft;
+            const renderedRight: number = this._getModValueRight() !== null && this.isModRecording ? this._getModValueRight()! : this._valueRight;
+
             if (delta < 0) {
-                const newLeft: number = Math.max(this._valueLeft + delta, this.min);
-                this._valueRight -= this._valueLeft - newLeft;
+                const newLeft: number = Math.max(renderedLeft + delta, this.min);
+                this._valueRight = renderedRight - renderedLeft + newLeft;
                 this._valueLeft = newLeft;
             } else if (delta > 0) {
-                const newRight: number = Math.min(this._valueRight + delta, this.max);
-                this._valueLeft += newRight - this._valueRight;
+                const newRight: number = Math.min(renderedRight + delta, this.max);
+                this._valueLeft = renderedLeft + newRight - renderedRight;
                 this._valueRight = newRight;
             }
             this._initialPosition = position;
@@ -263,7 +291,7 @@ export class DoubleSlider {
     }
 
     private _thumb(x: number, isLeft: boolean, isMod: boolean): SVGPathElement {
-        const ratio: number = Math.floor(x / (this.max - this.min) * (DoubleSlider.width - 10)) + (isLeft ? 4.5 : 5.5);
+        const ratio: number = x / (this.max - this.min) * (DoubleSlider.width - 10) + (isLeft ? 4.5 : 5.5);
         if (isMod) return SVG.path({ d: `M ${ratio} -8 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio + (isLeft ? -4 : 4)} -4 L ${ratio + (isLeft ? -4 : 4)} 4 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio} 8 `, "fill": `${ColorConfig.overwritingModSlider}` });
         return SVG.path({ d: `M ${ratio} -12 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio + (isLeft ? -4 : 4)} -8 L ${ratio + (isLeft ? -4 : 4)} 8 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio} 12 `, "fill": "currentColor" });
     }

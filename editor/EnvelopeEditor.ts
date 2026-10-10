@@ -42,7 +42,6 @@ export class EnvelopeEditor {
 	public readonly perEnvelopeLowerBoundBoxes: HTMLInputElement[] = [];
 	public readonly perEnvelopeUpperBoundBoxes: HTMLInputElement[] = [];
 	public readonly boundDoubleSliders: DoubleSlider[] = [];
-	// public readonly perEnvelopeUpperBoundSliders: Slider[] = [];
 	//random envelopes
 	public readonly randomStepsBoxes: HTMLInputElement[] = [];
 	public readonly randomSeedBoxes: HTMLInputElement[] = [];
@@ -421,7 +420,7 @@ export class EnvelopeEditor {
 				instrument.envelopes[envelopeIndex].pitchEnvelopeEnd ?? 0,
 				0,
 				instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch,
-				2
+				0
 			);
 			
 			const pitchStartNoteBox: HTMLInputElement = HTML.input({ value: instrument.envelopes[envelopeIndex].pitchEnvelopeStart ? instrument.envelopes[envelopeIndex].pitchEnvelopeStart : 0, style: "width: 3em; font-size: 80%; ", id: "startNoteBox", type: "number", step: "1", min: "0", max: instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch });
@@ -508,14 +507,9 @@ export class EnvelopeEditor {
 				0
 			);
 
-			// const upperBoundSlider: Slider = new Slider(HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeUpperBound, type: "range", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 113px; margin-left: 0px;" }), this._doc, , false);
-
 			const lowerBoundBoxWrapper: HTMLDivElement = HTML.div({ style: "flex: 1; display: flex; flex-direction: column; align-items: center;" }, HTML.span({ class: "tip", style: `flex:1; height:1em; font-size: smaller;`, onclick: () => this._openPrompt("envelopeRange") }, "Lwr: "), lowerBoundBox);
 			const upperBoundBoxWrapper: HTMLDivElement = HTML.div({ style: "flex: 1; display: flex; flex-direction: column; align-items: center;" }, HTML.span({ class: "tip", style: `flex:1; height:1em; font-size: smaller;`, onclick: () => this._openPrompt("envelopeRange") }, "Upr: "), upperBoundBox);
-			
-			// const lowerBoundWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, lowerBoundBoxWrapper, lowerBoundSlider.container);
-			// const upperBoundWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, upperBoundBoxWrapper, upperBoundSlider.container);
-			
+						
 			const boundWrapper: HTMLDivElement = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, lowerBoundBoxWrapper, lowerBoundSlider.container, upperBoundBoxWrapper);
 
 			const invertBox: HTMLInputElement = HTML.input({ "checked": instrument.envelopes[envelopeIndex].inverse, type: "checkbox", style: "width: 1em; padding: 0.5em;", id: "invertBox" });
@@ -641,7 +635,6 @@ export class EnvelopeEditor {
 			this.perEnvelopeLowerBoundBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound);
 			this.perEnvelopeUpperBoundBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound);
 			this.boundDoubleSliders[envelopeIndex].updateLeft(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound * 10).updateRight(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound * 10);
-			// this.perEnvelopeUpperBoundSliders[envelopeIndex].updateValue(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound);
 			this.randomStepsBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].steps);
 			this.randomSeedBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].seed);
 			this._randomStepsSliders[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].steps);
