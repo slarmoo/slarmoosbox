@@ -144,26 +144,21 @@ export class DoubleSlider {
         this.container.addEventListener("pointercancel", this._mouseUp);
     }
 
-    public updateLeft(value: number): DoubleSlider {
-        if (value <= this._valueRight && value >= this.min) {
+    public updateValues(left: number, right: number): void {
+        if (left <= this._valueRight && left >= this.min) {
             //delay the update
-            this._futureValueLeft = value;
+            this._futureValueLeft = left;
             if (!this.isModRecording) {
                 this._valueLeft = this._futureValueLeft;
             }
         }
-        return this;
-    }
-
-    public updateRight(value: number): DoubleSlider {
-        if (value >= this._valueLeft && value <= this.max) {
+        if (right >= this._valueLeft && right <= this.max) {
             //delay the update
-            this._futureValueRight = value;
+            this._futureValueRight = right;
             if (!this.isModRecording) {
                 this._valueRight = this._futureValueRight;
             }
         }
-        return this;
     }
 
     private mouseDown: DoubleSliderInputElements = DoubleSliderInputElements.none; 
@@ -182,29 +177,29 @@ export class DoubleSlider {
         if (this.mouseDown != DoubleSliderInputElements.none) return;
         this.mouseDown = DoubleSliderInputElements.bar;
         this.container.setPointerCapture(event.pointerId)
-        // this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
+        this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
         this._oldValueLeft = this._valueLeft;
         this._oldValueRight = this._valueRight;
 
         this._initialPosition = this.getValueFromMouse(event.clientX || event.pageX);
         const midpoint = (this._valueLeft + this._valueRight) / 2;
         const stepsFromPercent = (percent: number) => (this.max - this.min) * percent / 100; //to give a bit of wiggle room for grabbing thumbs / the center bar
-        // const renderedLeft: number = this._getModValueLeft() ?? this._valueLeft;
-        // const renderedRight: number = this._getModValueRight() ?? this._valueRight;
-        // if (this.isModRecording && //this is so unreadable sorry :skull:
-        //     ((this._initialPosition > renderedLeft + stepsFromPercent(4) && this._initialPosition < renderedRight - stepsFromPercent(4)) ||
-        //     (renderedRight - renderedLeft < stepsFromPercent(10) && this._initialPosition > renderedLeft - stepsFromPercent(4) && this._initialPosition < renderedRight + stepsFromPercent(4)))) {
-        //     //treat as a bar command for mods
-        //     this.mouseDown = DoubleSliderInputElements.bar;
-        // } else if (this.isModRecording && this._getModValueLeft() != null && this._initialPosition <= this._getModValueLeft()! + stepsFromPercent(4)) {
-        //     //mod left
-        //     this.mouseDown = DoubleSliderInputElements.leftThumb;
-        // } else if (this.isModRecording && this._getModValueRight() != null && this._initialPosition >= this._getModValueRight()! - stepsFromPercent(4)) {
-        //     //mod right
-        //     this.mouseDown = DoubleSliderInputElements.rightThumb;
-        // } else
-            if(this._valueLeft == this.min && this._valueRight == this.max && this._initialPosition > this.min && this._initialPosition < this.max) {
-            //special case: jump the closest thumb to mouse if they're both at the extremes
+        const renderedLeft: number = this._getModValueLeft() ?? this._valueLeft;
+        const renderedRight: number = this._getModValueRight() ?? this._valueRight;
+        if (this.isModRecording && //this is so unreadable sorry :skull:
+            ((this._initialPosition > renderedLeft + stepsFromPercent(4) && this._initialPosition < renderedRight - stepsFromPercent(4)) ||
+            (renderedRight - renderedLeft < stepsFromPercent(10) && this._initialPosition > renderedLeft - stepsFromPercent(4) && this._initialPosition < renderedRight + stepsFromPercent(4)))) {
+            //treat as a bar command for mods
+            this.mouseDown = DoubleSliderInputElements.bar;
+        } else if (this.isModRecording && this._getModValueLeft() != null && this._initialPosition <= this._getModValueLeft()! + stepsFromPercent(4)) {
+            //mod left
+            this.mouseDown = DoubleSliderInputElements.leftThumb;
+        } else if (this.isModRecording && this._getModValueRight() != null && this._initialPosition >= this._getModValueRight()! - stepsFromPercent(4)) {
+            //mod right
+            this.mouseDown = DoubleSliderInputElements.rightThumb;
+        }
+        //special case: jump the closest thumb to mouse if they're both at the extremes
+        else if(this._valueLeft == this.min && this._valueRight == this.max && this._initialPosition > this.min && this._initialPosition < this.max) {
             if (this._initialPosition < midpoint || this._initialPosition < this._valueLeft) {
                 this.mouseDown = DoubleSliderInputElements.leftThumb;
             } else {
@@ -224,7 +219,7 @@ export class DoubleSlider {
 
     private _mouseMove = (event: PointerEvent): void => {
         if (this.mouseDown == DoubleSliderInputElements.none) return;
-        // this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
+        this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
         this._handleChangeEvent(this.getValueFromMouse(event.clientX || event.pageX));
     };
 
@@ -242,16 +237,17 @@ export class DoubleSlider {
         } else if (this.mouseDown == DoubleSliderInputElements.bar && this._getChangeLeft != null && this._getChangeRight != null) {
             //move both, keeping the distance between
             const delta: number = position - this._initialPosition;
-            const renderedLeft: number = this._getModValueLeft() != null && this.isModRecording ? this._getModValueLeft()! :  this._valueLeft;
-            const renderedRight: number = this._getModValueRight() !== null && this.isModRecording ? this._getModValueRight()! : this._valueRight;
+            const useModValues: boolean = this._getModValueLeft() !== null && this._getModValueRight() !== null && this.isModRecording;
+            const renderedLeft: number = useModValues ? this._getModValueLeft()! :  this._valueLeft;
+            const renderedRight: number = useModValues ? this._getModValueRight()! : this._valueRight;
 
             if (delta < 0) {
-                const newLeft: number = Math.max(renderedLeft + delta, this.min);
-                this._valueRight = renderedRight - renderedLeft + newLeft;
+                const newLeft: number = Math.round(Math.max(renderedLeft + delta, this.min));
+                this._valueRight = Math.round(renderedRight - renderedLeft + newLeft);
                 this._valueLeft = newLeft;
             } else if (delta > 0) {
-                const newRight: number = Math.min(renderedRight + delta, this.max);
-                this._valueLeft = renderedLeft + newRight - renderedRight;
+                const newRight: number = Math.round(Math.min(renderedRight + delta, this.max));
+                this._valueLeft = Math.round(renderedLeft + newRight - renderedRight);
                 this._valueRight = newRight;
             }
             this._initialPosition = position;
@@ -285,6 +281,7 @@ export class DoubleSlider {
         this.leftThumbMod.innerHTML = "";
         this.rightThumbMod.innerHTML = "";
         if (this._doc.synth.playing) {
+            //TODO: rendering doesn't
             if (this._getModValueLeft() != null) this.leftThumbMod.appendChild(this._thumb(this._getModValueLeft()!, true, true));
             if (this._getModValueRight() != null) this.rightThumbMod.appendChild(this._thumb(this._getModValueRight()!, false, true));
         }

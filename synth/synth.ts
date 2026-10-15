@@ -9496,6 +9496,15 @@ export class Synth {
                     instrument.tmpEqFilterEnd = null;
                     instrument.tmpNoteFilterStart = instrument.noteFilter;
                     instrument.tmpNoteFilterEnd = null;
+
+                    //not quite filters but this is the best place for it
+                    instrument.envelopes.forEach((envelope) => {
+                        envelope.tempEnvelopeSpeed = null;
+                        envelope.tempEnvelopeLowerBound = null;
+                        envelope.tempEnvelopeUpperBound = null;
+                        envelope.tempPitchStart = null;
+                        envelope.tempPitchEnd = null;
+                    })
                 }
             }
         }
@@ -9663,9 +9672,18 @@ export class Synth {
 
                                             if (latestModInsTimes[instrument.modChannels[mod]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
                                                 || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod]][usedInstruments[instrumentIndex]][modulatorAdjust]!) {
-
+                                            
+                                                const tgtInstrument: Instrument = this.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
+                                                const envIndex = instrument.modEnvelopeNumbers[mod];
+                                                switch (instrument.modulators[mod]) {
+                                                    case Config.modulators.dictionary["individual envelope speed"].index: tgtInstrument.envelopes[envIndex].tempEnvelopeSpeed = latestPinValues[mod]; break;
+                                                    case Config.modulators.dictionary["individual envelope lower bound"].index: tgtInstrument.envelopes[envIndex].tempEnvelopeLowerBound = latestPinValues[mod] / 10; break;
+                                                    case Config.modulators.dictionary["individual envelope upper bound"].index: tgtInstrument.envelopes[envIndex].tempEnvelopeUpperBound = latestPinValues[mod] / 10; break;
+                                                    case Config.modulators.dictionary["pitch envelope start"].index: tgtInstrument.envelopes[envIndex].tempPitchStart = latestPinValues[mod]; break;
+                                                    case Config.modulators.dictionary["pitch envelope end"].index: tgtInstrument.envelopes[envIndex].tempPitchEnd = latestPinValues[mod]; break;
+                                                }
+                                                
                                                 if (eqFilterParam) {
-                                                    let tgtInstrument: Instrument = this.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
                                                     if (instrument.modFilterTypes[mod] == 0) {
                                                         tgtInstrument.tmpEqFilterStart = tgtInstrument.eqSubFilters[latestPinValues[mod]];
                                                     } else {
@@ -9685,7 +9703,6 @@ export class Synth {
                                                     }
                                                     tgtInstrument.tmpEqFilterEnd = tgtInstrument.tmpEqFilterStart;
                                                 } else if (noteFilterParam) {
-                                                    let tgtInstrument: Instrument = this.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
                                                     if (instrument.modFilterTypes[mod] == 0) {
                                                         tgtInstrument.tmpNoteFilterStart = tgtInstrument.noteSubFilters[latestPinValues[mod]];
                                                     } else {

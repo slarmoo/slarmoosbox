@@ -25,6 +25,3 @@ offline/node_modules
 /build
 /scripts/build/
 /to_deploy/
-#for deployment
-deployFiles.sh
-pm2handler.cjs

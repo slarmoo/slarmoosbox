@@ -253,7 +253,7 @@ export class EnvelopeEditor {
 					if (instrument.isNoiseInstrument && parseInt(this.pitchEndBoxes[i].value) > Config.drumCount - 1) {
 						this.pitchEndBoxes[i].value = (Config.drumCount - 1).toString();
 					}
-					this.pitchDoubleSliders[i].updateLeft(parseInt(this.pitchStartBoxes[i].value)).updateRight(parseInt(this.pitchEndBoxes[i].value));
+					this.pitchDoubleSliders[i].updateValues(parseInt(this.pitchStartBoxes[i].value), parseInt(this.pitchEndBoxes[i].value));
 					this.pitchDoubleSliders[i].render();
 					//update note displays
 					this._startNoteDisplays[i].textContent = "" + this._pitchToNote(parseInt(this.pitchStartBoxes[i].value), instrument.isNoiseInstrument) + "";
@@ -322,7 +322,7 @@ export class EnvelopeEditor {
 
 				this.perEnvelopeLowerBoundBoxes[i].value = instrument.envelopes[i].perEnvelopeLowerBound.toString();
 				this.perEnvelopeUpperBoundBoxes[i].value = instrument.envelopes[i].perEnvelopeUpperBound.toString();
-				this.boundDoubleSliders[i].updateLeft(instrument.envelopes[i].perEnvelopeLowerBound * 10).updateRight(instrument.envelopes[i].perEnvelopeUpperBound * 10);
+				this.boundDoubleSliders[i].updateValues(instrument.envelopes[i].perEnvelopeLowerBound * 10, instrument.envelopes[i].perEnvelopeUpperBound * 10);
 			} else if (this.openExtraSettingsDropdowns[i] == false) {
 				this.extraSettingsDropdownGroups[i].style.display = "none";
 				this.extraPitchSettingsGroups[i].style.display = "none";
@@ -410,11 +410,11 @@ export class EnvelopeEditor {
 				(oldNote: number, newNote: number) => new ChangeEnvelopePitchEnd(this._doc, oldNote, newNote, envelopeIndex),
 				() => {
 					const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-					return instrument.envelopes[envelopeIndex].tempPitchStart ?? null;
+					return instrument.envelopes[envelopeIndex]?.tempPitchStart ?? null;
 				},
 				() => {
 					const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-					return instrument.envelopes[envelopeIndex].tempPitchEnd ?? null;
+					return instrument.envelopes[envelopeIndex]?.tempPitchEnd ?? null;
 				},
 				instrument.envelopes[envelopeIndex].pitchEnvelopeStart ?? 0,
 				instrument.envelopes[envelopeIndex].pitchEnvelopeEnd ?? 0,
@@ -493,11 +493,12 @@ export class EnvelopeEditor {
 				(oldBound: number, newBound: number) => new ChangeEnvelopeUpperBound(this._doc, oldBound / 10, newBound / 10, envelopeIndex),
 				() => {
 					const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-					if (instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound == null || instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound == undefined) return null;
-					return instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound! * 10;				},
+					if (!instrument.envelopes[envelopeIndex] || instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound == null || instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound == undefined) return null;
+					return instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound! * 10;
+				},
 				() => {
 					const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-					if (instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound == null || instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound  == undefined) return null;
+					if (!instrument.envelopes[envelopeIndex] || instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound == null || instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound  == undefined) return null;
 					return instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound! * 10;
 				},
 				(+instrument.envelopes[envelopeIndex].perEnvelopeLowerBound * 10),
@@ -626,7 +627,7 @@ export class EnvelopeEditor {
 			this._envelopeSelects[envelopeIndex].selectedIndex = instrument.envelopes[envelopeIndex].envelope;
 			this.pitchStartBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].pitchEnvelopeStart);
 			this.pitchEndBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].pitchEnvelopeEnd);
-			this.pitchDoubleSliders[envelopeIndex].updateLeft(instrument.envelopes[envelopeIndex].pitchEnvelopeStart).updateRight(instrument.envelopes[envelopeIndex].pitchEnvelopeEnd);
+			this.pitchDoubleSliders[envelopeIndex].updateValues(instrument.envelopes[envelopeIndex].pitchEnvelopeStart, instrument.envelopes[envelopeIndex].pitchEnvelopeEnd);
 			this.pitchDoubleSliders[envelopeIndex].render()
 			this._inverters[envelopeIndex].checked = instrument.envelopes[envelopeIndex].inverse;
 			this._discreters[envelopeIndex].checked = instrument.envelopes[envelopeIndex].discrete;
@@ -634,7 +635,7 @@ export class EnvelopeEditor {
 			this.updateSpeedDisplay(envelopeIndex);
 			this.perEnvelopeLowerBoundBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound);
 			this.perEnvelopeUpperBoundBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound);
-			this.boundDoubleSliders[envelopeIndex].updateLeft(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound * 10).updateRight(instrument.envelopes[envelopeIndex].perEnvelopeUpperBound * 10);
+			this.boundDoubleSliders[envelopeIndex].updateValues(instrument.envelopes[envelopeIndex].perEnvelopeLowerBound * 10, instrument.envelopes[envelopeIndex].perEnvelopeUpperBound * 10);
 			this.randomStepsBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].steps);
 			this.randomSeedBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].seed);
 			this._randomStepsSliders[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].steps);
