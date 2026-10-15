@@ -163,6 +163,7 @@ export class DoubleSlider {
 
     private mouseDown: DoubleSliderInputElements = DoubleSliderInputElements.none; 
     private isModRecording: boolean = false;
+    private _initialPosition: number;
 
     private getValueFromMouse(eventX: number) {
         const boundingRect: ClientRect = this._svg.getBoundingClientRect();
@@ -170,8 +171,6 @@ export class DoubleSlider {
         if (isNaN(mouseX)) return this.min;
         return Math.round(mouseX * (this.max - this.min)) + this.min;
     }
-
-    private _initialPosition: number;
 
     private _mouseDown = (event: PointerEvent) => {
         if (this.mouseDown != DoubleSliderInputElements.none) return;
@@ -281,13 +280,14 @@ export class DoubleSlider {
         this.leftThumbMod.innerHTML = "";
         this.rightThumbMod.innerHTML = "";
         if (this._doc.synth.playing) {
-            //TODO: rendering doesn't
+            //TODO: rendering doesn't happen for envelope double sliders until a different change command (like changing bars) happens?
             if (this._getModValueLeft() != null) this.leftThumbMod.appendChild(this._thumb(this._getModValueLeft()!, true, true));
             if (this._getModValueRight() != null) this.rightThumbMod.appendChild(this._thumb(this._getModValueRight()!, false, true));
         }
     }
 
     private _thumb(x: number, isLeft: boolean, isMod: boolean): SVGPathElement {
+        x = Math.max(Math.min(x, this.max), this.min);
         const ratio: number = x / (this.max - this.min) * (DoubleSlider.width - 10) + (isLeft ? 4.5 : 5.5);
         if (isMod) return SVG.path({ d: `M ${ratio} -8 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio + (isLeft ? -4 : 4)} -4 L ${ratio + (isLeft ? -4 : 4)} 4 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio} 8 `, "fill": `${ColorConfig.overwritingModSlider}` });
         return SVG.path({ d: `M ${ratio} -12 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio + (isLeft ? -4 : 4)} -8 L ${ratio + (isLeft ? -4 : 4)} 8 A 4 4 0 0 ${isLeft ? 0 : 1} ${ratio} 12 `, "fill": "currentColor" });

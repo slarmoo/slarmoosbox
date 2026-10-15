@@ -1372,9 +1372,9 @@ export class ChangeRandomGeneratedInstrument extends Change {
                 if (Math.random() < 0.1) {
                     instrument.effects |= 1 << EffectType.granular;
                     instrument.granular = selectCurvedDistribution(1, Config.granularRange - 1, Config.granularRange / 2, Config.granularRange / 3);
-                    instrument.grainAmounts = selectCurvedDistribution(1, Config.grainAmountsMax - 1, Config.grainAmountsMax - 2, 3);
+                    instrument.grainFreq = selectCurvedDistribution(1, Config.grainFreqMax - 1, Config.grainFreqMax - 2, 3);
                     instrument.grainSize = selectCurvedDistribution(Config.grainSizeMin / Config.grainSizeStep, Config.grainSizeMax / Config.grainSizeStep, Config.grainSizeMax / Config.grainSizeStep, Config.grainSizeMax / Config.grainSizeStep / 2);
-                    instrument.grainRange = selectCurvedDistribution(0, Config.grainRangeMax / Config.grainSizeStep, Config.grainRangeMax / Config.grainSizeStep / 2, Config.grainSizeMax / Config.grainSizeStep / 2);
+                    instrument.grainRange = selectCurvedDistribution(0, Config.grainRangeMax / Config.grainSizeStep, Config.grainRangeMax / Config.grainSizeStep / 2, Config.grainSizeMax / Config.grainSizeStep / 2) + instrument.grainSize;
                 
                     if (selectiveRandom.envelopes && Math.random() < 0.2) {
                         let envelopeLowerBound = selectCurvedDistribution(0, 20, 8, 5) / 10;
@@ -2727,7 +2727,7 @@ export class ChangeGranular extends ChangeInstrumentSlider {
 }
 
 export class ChangeGrainSize extends ChangeInstrumentSlider {
-    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+    constructor(doc: SongDocument, public oldValue: number, newValue: number) {
         super(doc);
         this._instrument.grainSize = newValue;
         doc.notifier.changed();
@@ -2736,10 +2736,10 @@ export class ChangeGrainSize extends ChangeInstrumentSlider {
     }
 }
 
-export class ChangeGrainAmounts extends ChangeInstrumentSlider {
+export class ChangeGrainFreq extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
-        this._instrument.grainAmounts = newValue;
+        this._instrument.grainFreq = newValue;
         doc.notifier.changed();
         // doc.synth.unsetMod(Config.modulators.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
         if (oldValue != newValue) this._didSomething();
@@ -2747,7 +2747,7 @@ export class ChangeGrainAmounts extends ChangeInstrumentSlider {
 }
 
 export class ChangeGrainRange extends ChangeInstrumentSlider {
-    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+    constructor(doc: SongDocument, public oldValue: number, newValue: number) {
         super(doc);
         this._instrument.grainRange = newValue;
         doc.notifier.changed();
@@ -3836,7 +3836,7 @@ export class ChangePasteInstrumentEditSelective extends ChangeGroup {
                 instrument.ringModPulseWidth = instrumentPaste.ringModPulseWidth;
                 instrument.granular = instrumentPaste.granular;
                 instrument.grainSize = instrumentPaste.grainSize;
-                instrument.grainAmounts = instrumentPaste.grainAmounts;
+                instrument.grainFreq = instrumentPaste.grainFreq;
                 instrument.grainRange = instrumentPaste.grainRange;
                 instrument.pan = instrumentPaste.pan;
                 instrument.panDelay = instrumentPaste.panDelay;

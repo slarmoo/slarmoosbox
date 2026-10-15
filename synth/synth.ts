@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, InstrumentType, EffectType, EnvelopeComputeIndex, Transition, Unison, Chord, Vibrato, Envelope, AutomationTarget, Config, getDrumWave, drawNoiseSpectrum, getArpeggioPitchIndex, performIntegralOld, getPulseWidthRatio, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, /*effectsIncludeNoteRange,*/ effectsIncludeRingModulation, effectsIncludeGranular, OperatorWave, LFOEnvelopeTypes, RandomEnvelopeTypes, GranularEnvelopeType, calculateRingModHertz, bundledSamplePacks } from "./SynthConfig";
+import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, InstrumentType, EffectType, EnvelopeComputeIndex, Transition, Unison, Chord, Vibrato, Envelope, AutomationTarget, Config, getDrumWave, drawNoiseSpectrum, getArpeggioPitchIndex, performIntegralOld, getPulseWidthRatio, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, /*effectsIncludeNoteRange,*/ effectsIncludeRingModulation, effectsIncludeGranular, OperatorWave, LFOEnvelopeTypes, RandomEnvelopeTypes, GranularEnvelopeType, calculateRingModHertz, bundledSamplePacks, Modulator } from "./SynthConfig";
 import { Preset, EditorConfig } from "../editor/EditorConfig";
 import { scaleElementsByFactor, inverseRealFourierTransform } from "./FFT";
 import { Deque } from "./Deque";
@@ -1665,8 +1665,8 @@ export class Instrument {
     public ringModHzOffset: number = 200;
     public granular: number = 4;
     public grainSize: number = (Config.grainSizeMax - Config.grainSizeMin) / Config.grainSizeStep;
-    public grainAmounts: number = Config.grainAmountsMax;
-    public grainRange: number = 40;
+    public grainFreq: number = Config.grainFreqMax;
+    public grainRange: number = this.grainSize + (Config.grainRangeMax / Config.grainSizeStep);
     public chorus: number = 0;
     public reverb: number = 0;
     public echoSustain: number = 0;
@@ -1791,8 +1791,8 @@ export class Instrument {
         this.ringModHzOffset = 200;
         this.granular = 4;
         this.grainSize = (Config.grainSizeMax - Config.grainSizeMin) / Config.grainSizeStep;
-        this.grainAmounts = Config.grainAmountsMax;
-        this.grainRange = 40;
+        this.grainFreq = Config.grainFreqMax;
+        this.grainRange = this.grainSize + (Config.grainRangeMax / Config.grainSizeStep);
         this.pan = Config.panCenter;
         this.panDelay = 0;
         this.pitchShift = Config.pitchShiftCenter;
@@ -2108,8 +2108,8 @@ export class Instrument {
         if (effectsIncludeGranular(this.effects)) {
             instrumentObject["granular"] = this.granular;
             instrumentObject["grainSize"] = this.grainSize;
-            instrumentObject["grainAmounts"] = this.grainAmounts;
-            instrumentObject["grainRange"] = this.grainRange;
+            instrumentObject["grainFreq"] = this.grainFreq;
+            instrumentObject["grainRange"] = this.grainRange - this.grainSize;
         }
         if (effectsIncludeRingModulation(this.effects)) {
             instrumentObject["ringMod"] = Math.round(100 * this.ringModulation / (Config.ringModRange - 1));
@@ -2541,11 +2541,15 @@ export class Instrument {
         if (instrumentObject["grainSize"] != undefined) {
             this.grainSize = instrumentObject["grainSize"];
         }
+
         if (instrumentObject["grainAmounts"] != undefined) {
-            this.grainAmounts = instrumentObject["grainAmounts"];
+            this.grainFreq = instrumentObject["grainAmounts"];
+        } else if (instrumentObject["grainFreq"] != undefined) {
+            this.grainFreq = instrumentObject["grainFreq"];
         }
         if (instrumentObject["grainRange"] != undefined) {
             this.grainRange = clamp(0, Config.grainRangeMax / Config.grainSizeStep + 1, instrumentObject["grainRange"]);
+            this.grainRange += this.grainSize;
         }
 
         if (instrumentObject["distortion"] != undefined) {
@@ -3248,116 +3252,116 @@ export class Song {
             if (currentIndex == tempoIndex) vol = this.tempo - Config.modulators[tempoIndex].convertRealFactor;
             //for effects and envelopes, use the user defined value of the selected instrument (or the default value if all or active is selected)
             if (!Config.modulators[currentIndex].forSong && instrument.modInstruments[modCount] < this.channels[instrument.modChannels[modCount]].instruments.length) {
-                let chorusIndex: number = Config.modulators.dictionary["chorus"].index;
-                let reverbIndex: number = Config.modulators.dictionary["reverb"].index;
-                let panningIndex: number = Config.modulators.dictionary["pan"].index;
-                let panDelayIndex: number = Config.modulators.dictionary["pan delay"].index;
-                let distortionIndex: number = Config.modulators.dictionary["distortion"].index;
-                let detuneIndex: number = Config.modulators.dictionary["detune"].index;
-                let vibratoDepthIndex: number = Config.modulators.dictionary["vibrato depth"].index;
-                let vibratoSpeedIndex: number = Config.modulators.dictionary["vibrato speed"].index;
-                let vibratoDelayIndex: number = Config.modulators.dictionary["vibrato delay"].index;
-                let arpSpeedIndex: number = Config.modulators.dictionary["arp speed"].index;
-                let bitCrushIndex: number = Config.modulators.dictionary["bit crush"].index;
-                let freqCrushIndex: number = Config.modulators.dictionary["freq crush"].index;
-                let echoIndex: number = Config.modulators.dictionary["echo"].index;
-                let echoDelayIndex: number = Config.modulators.dictionary["echo delay"].index;
-                let pitchShiftIndex: number = Config.modulators.dictionary["pitch shift"].index;
-                let ringModIndex: number = Config.modulators.dictionary["ring modulation"].index;
-                let ringModHertzIndex: number = Config.modulators.dictionary["ring mod hertz"].index;
-                let granularIndex: number = Config.modulators.dictionary["granular"].index;
-                let grainAmountIndex: number = Config.modulators.dictionary["grain freq"].index;
-                let grainSizeIndex: number = Config.modulators.dictionary["grain size"].index;
-                let grainRangeIndex: number = Config.modulators.dictionary["grain range"].index;
-                let envSpeedIndex: number = Config.modulators.dictionary["envelope speed"].index;
-                let perEnvSpeedIndex: number = Config.modulators.dictionary["individual envelope speed"].index;
-                let perEnvLowerIndex: number = Config.modulators.dictionary["individual envelope lower bound"].index;
-                let perEnvUpperIndex: number = Config.modulators.dictionary["individual envelope upper bound"].index;
-                let pitchEnvStart: number = Config.modulators.dictionary["pitch envelope start"].index;
-                let pitchEnvEnd: number = Config.modulators.dictionary["pitch envelope end"].index;
-                let instrumentIndex: number = instrument.modInstruments[modCount];
+                const chorusMod: Modulator = Config.modulators.dictionary["chorus"];
+                const reverbMod: Modulator = Config.modulators.dictionary["reverb"];
+                const panningMod: Modulator = Config.modulators.dictionary["pan"];
+                const panDelayMod: Modulator = Config.modulators.dictionary["pan delay"];
+                const distortionMod: Modulator = Config.modulators.dictionary["distortion"];
+                const detuneMod: Modulator = Config.modulators.dictionary["detune"];
+                const vibratoDepthMod: Modulator = Config.modulators.dictionary["vibrato depth"];
+                const vibratoSpeedMod: Modulator = Config.modulators.dictionary["vibrato speed"];
+                const vibratoDelayMod: Modulator = Config.modulators.dictionary["vibrato delay"];
+                const arpSpeedMod: Modulator = Config.modulators.dictionary["arp speed"];
+                const bitCrushMod: Modulator = Config.modulators.dictionary["bit crush"];
+                const freqCrushMod: Modulator = Config.modulators.dictionary["freq crush"];
+                const echoMod: Modulator = Config.modulators.dictionary["echo"];
+                const echoDelayMod: Modulator = Config.modulators.dictionary["echo delay"];
+                const pitchShiftMod: Modulator = Config.modulators.dictionary["pitch shift"];
+                const ringModMod: Modulator = Config.modulators.dictionary["ring modulation"];
+                const ringModHertzMod: Modulator = Config.modulators.dictionary["ring mod hertz"];
+                const granularMod: Modulator = Config.modulators.dictionary["granular"];
+                const grainAmountMod: Modulator = Config.modulators.dictionary["grain freq"];
+                const grainSizeMod: Modulator = Config.modulators.dictionary["grain size"];
+                const grainRangeMod: Modulator = Config.modulators.dictionary["grain range"];
+                const envSpeedMod: Modulator = Config.modulators.dictionary["envelope speed"];
+                const perEnvSpeedMod: Modulator = Config.modulators.dictionary["individual envelope speed"];
+                const perEnvLowerMod: Modulator = Config.modulators.dictionary["individual envelope lower bound"];
+                const perEnvUpperMod: Modulator = Config.modulators.dictionary["individual envelope upper bound"];
+                const pitchEnvStartMod: Modulator = Config.modulators.dictionary["pitch envelope start"];
+                const pitchEnvEndMod: Modulator = Config.modulators.dictionary["pitch envelope end"];
+                const tgtinstrument: Instrument = this.channels[instrument.modChannels[modCount]].instruments[instrument.modInstruments[modCount]];
 
                 switch (currentIndex) {
-                    case chorusIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].chorus - Config.modulators[chorusIndex].convertRealFactor;
+                    case chorusMod.index:
+                        vol = tgtinstrument.chorus - chorusMod.convertRealFactor;
                         break;
-                    case reverbIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].reverb - Config.modulators[reverbIndex].convertRealFactor;
+                    case reverbMod.index:
+                        vol = tgtinstrument.reverb - reverbMod.convertRealFactor;
                         break;
-                    case panningIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].pan - Config.modulators[panningIndex].convertRealFactor;
+                    case panningMod.index:
+                        vol = tgtinstrument.pan - panningMod.convertRealFactor;
                         break;
-                    case panDelayIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].panDelay - Config.modulators[panDelayIndex].convertRealFactor;
+                    case panDelayMod.index:
+                        vol = tgtinstrument.panDelay - panDelayMod.convertRealFactor;
                         break;
-                    case distortionIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].distortion - Config.modulators[distortionIndex].convertRealFactor;
+                    case distortionMod.index:
+                        vol = tgtinstrument.distortion - distortionMod.convertRealFactor;
                         break;
-                    case detuneIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].detune;
+                    case detuneMod.index:
+                        vol = tgtinstrument.detune;
                         break;
-                    case vibratoDepthIndex:
-                        vol = Math.round(this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].vibratoDepth * 25 - Config.modulators[vibratoDepthIndex].convertRealFactor);
+                    case vibratoDepthMod.index:
+                        vol = Math.round(tgtinstrument.vibratoDepth * 25 - vibratoDepthMod.convertRealFactor);
                         break;
-                    case vibratoSpeedIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].vibratoSpeed - Config.modulators[vibratoSpeedIndex].convertRealFactor;
+                    case vibratoSpeedMod.index:
+                        vol = tgtinstrument.vibratoSpeed - vibratoSpeedMod.convertRealFactor;
                         break;
-                    case vibratoDelayIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].vibratoDelay - Config.modulators[vibratoDelayIndex].convertRealFactor;
+                    case vibratoDelayMod.index:
+                        vol = tgtinstrument.vibratoDelay - vibratoDelayMod.convertRealFactor;
                         break;
-                    case arpSpeedIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].arpeggioSpeed - Config.modulators[arpSpeedIndex].convertRealFactor;
+                    case arpSpeedMod.index:
+                        vol = tgtinstrument.arpeggioSpeed - arpSpeedMod.convertRealFactor;
                         break;
-                    case bitCrushIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].bitcrusherQuantization - Config.modulators[bitCrushIndex].convertRealFactor;
+                    case bitCrushMod.index:
+                        vol = tgtinstrument.bitcrusherQuantization - bitCrushMod.convertRealFactor;
                         break;
-                    case freqCrushIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].bitcrusherFreq - Config.modulators[freqCrushIndex].convertRealFactor;
+                    case freqCrushMod.index:
+                        vol = tgtinstrument.bitcrusherFreq - freqCrushMod.convertRealFactor;
                         break;
-                    case echoIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].echoSustain - Config.modulators[echoIndex].convertRealFactor;
+                    case echoMod.index:
+                        vol = tgtinstrument.echoSustain - echoMod.convertRealFactor;
                         break;
-                    case echoDelayIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].echoDelay - Config.modulators[echoDelayIndex].convertRealFactor;
+                    case echoDelayMod.index:
+                        vol = tgtinstrument.echoDelay - echoDelayMod.convertRealFactor;
                         break;
-                    case pitchShiftIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].pitchShift;
+                    case pitchShiftMod.index:
+                        vol = tgtinstrument.pitchShift;
                         break;
-                    case ringModIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].ringModulation - Config.modulators[ringModIndex].convertRealFactor;
+                    case ringModMod.index:
+                        vol = tgtinstrument.ringModulation - ringModMod.convertRealFactor;
                         break;
-                    case ringModHertzIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].ringModulationHz - Config.modulators[ringModHertzIndex].convertRealFactor;
+                    case ringModHertzMod.index:
+                        vol = tgtinstrument.ringModulationHz - ringModHertzMod.convertRealFactor;
                         break;
-                    case granularIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].granular - Config.modulators[granularIndex].convertRealFactor;
+                    case granularMod.index:
+                        vol = tgtinstrument.granular - granularMod.convertRealFactor;
                         break;
-                    case grainAmountIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].grainAmounts - Config.modulators[grainAmountIndex].convertRealFactor;
+                    case grainAmountMod.index:
+                        vol = tgtinstrument.grainFreq - grainAmountMod.convertRealFactor;
                         break;
-                    case grainSizeIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].grainSize - Config.modulators[grainSizeIndex].convertRealFactor;
+                    case grainSizeMod.index:
+                        vol = tgtinstrument.grainSize - grainSizeMod.convertRealFactor;
                         break;
-                    case grainRangeIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].grainRange - Config.modulators[grainRangeIndex].convertRealFactor;
+                    case grainRangeMod.index:
+                        vol = tgtinstrument.grainRange - grainRangeMod.convertRealFactor;
                         break;
-                    case envSpeedIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopeSpeed - Config.modulators[envSpeedIndex].convertRealFactor;
+                    case envSpeedMod.index:
+                        vol = tgtinstrument.envelopeSpeed - envSpeedMod.convertRealFactor;
                         break;
-                    case perEnvSpeedIndex:
-                        vol = Config.perEnvelopeSpeedToIndices[this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeSpeed] - Config.modulators[perEnvSpeedIndex].convertRealFactor;
+                    case perEnvSpeedMod.index:
+                        vol = Config.perEnvelopeSpeedToIndices[tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeSpeed] - perEnvSpeedMod.convertRealFactor;
                         break;
-                    case perEnvLowerIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeLowerBound * 10 - Config.modulators[perEnvLowerIndex].convertRealFactor;
+                    case perEnvLowerMod.index:
+                        vol = tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeLowerBound * 10 - perEnvLowerMod.convertRealFactor;
                         break;
-                    case perEnvUpperIndex:
-                        vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeUpperBound * 10 - Config.modulators[perEnvUpperIndex].convertRealFactor;
+                    case perEnvUpperMod.index:
+                        vol = tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeUpperBound * 10 - perEnvUpperMod.convertRealFactor;
                         break;
-                    case pitchEnvStart:
-                        this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].pitchEnvelopeStart - Config.modulators[pitchEnvStart].convertRealFactor;
+                    case pitchEnvStartMod.index:
+                        tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].pitchEnvelopeStart - pitchEnvStartMod.convertRealFactor;
                         break;
-                    case pitchEnvEnd:
-                        this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].pitchEnvelopeEnd - Config.modulators[pitchEnvEnd].convertRealFactor;
+                    case pitchEnvEndMod.index:
+                        tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].pitchEnvelopeEnd - pitchEnvEndMod.convertRealFactor;
                         break;
                 }
             }
@@ -3780,9 +3784,12 @@ export class Song {
                 // }
                 if (effectsIncludeGranular(instrument.effects)) {
                     buffer.push(base64IntToCharCode[instrument.granular]);
-                    buffer.push(base64IntToCharCode[instrument.grainSize]);
-                    buffer.push(base64IntToCharCode[instrument.grainAmounts]);
-                    buffer.push(base64IntToCharCode[instrument.grainRange]);
+                    buffer.push(base64IntToCharCode[Math.min(instrument.grainSize, 63)]);
+                    if (instrument.grainSize >= 63) buffer.push(base64IntToCharCode[instrument.grainSize - 63]);
+                    buffer.push(base64IntToCharCode[instrument.grainFreq]);
+                    const grainRange: number = instrument.grainRange - instrument.grainSize;
+                    buffer.push(base64IntToCharCode[Math.min(grainRange, 63)]);
+                    if (grainRange >= 63) buffer.push(base64IntToCharCode[grainRange - 63]);
                 }
                 if (effectsIncludeRingModulation(instrument.effects)) {
                     buffer.push(base64IntToCharCode[instrument.ringModulation]);
@@ -5547,8 +5554,11 @@ export class Song {
                     if (effectsIncludeGranular(instrument.effects)) {
                         instrument.granular = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                         instrument.grainSize = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                        instrument.grainAmounts = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        if (instrument.grainSize >= 63) instrument.grainSize += base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        instrument.grainFreq = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                         instrument.grainRange = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        if (instrument.grainRange >= 63) instrument.grainRange += base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        instrument.grainRange += instrument.grainSize;
                     }
                     if (effectsIncludeRingModulation(instrument.effects)) {
                         instrument.ringModulation = clamp(0, Config.ringModRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
@@ -8862,8 +8872,8 @@ class InstrumentState {
 
         let granularChance: number = 0;
         if (usesGranular) { //has to happen before buffer allocation
-            granularChance = (instrument.grainAmounts + 1);
-            this.granularMaximumGrains = instrument.grainAmounts;
+            granularChance = (instrument.grainFreq + 1);
+            this.granularMaximumGrains = instrument.grainFreq;
             if (synth.isModActive(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex)) {
                 this.granularMaximumGrains = synth.getModValue(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, false);
                 granularChance = (synth.getModValue(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, false) + 1);
@@ -8894,7 +8904,7 @@ class InstrumentState {
                         granularMinGrainSizeInMilliseconds = synth.getModValue(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex, false);
                     }
                     granularMinGrainSizeInMilliseconds *= envelopeStarts[EnvelopeComputeIndex.grainSize];
-                    let grainRange = instrument.grainRange;
+                    let grainRange = instrument.grainRange - instrument.grainSize;
                     if (synth.isModActive(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex)) {
                         grainRange = synth.getModValue(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex, false);
                     }

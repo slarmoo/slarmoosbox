@@ -47,7 +47,7 @@ import { SpectrumEditor, SpectrumEditorPrompt } from "./SpectrumEditor";
 import { CustomThemePrompt } from "./CustomThemePrompt";
 import { ThemePrompt } from "./ThemePrompt";
 import { TipPrompt } from "./TipPrompt";
-import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback, ChangeRingMod, ChangeRingModHz, ChangeRingModChipWave, ChangeRingModPulseWidth, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeMonophonicTone, ChangeLoop, ChangeChannelBar, ChangePasteInstrumentEditSelective, ChangeSwapInstrumentOrder } from "./changes";
+import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback, ChangeRingMod, ChangeRingModHz, ChangeRingModChipWave, ChangeRingModPulseWidth, ChangeGranular, ChangeGrainSize, ChangeGrainFreq, ChangeGrainRange, ChangeMonophonicTone, ChangeLoop, ChangeChannelBar, ChangePasteInstrumentEditSelective, ChangeSwapInstrumentOrder } from "./changes";
 
 import { TrackEditor } from "./TrackEditor";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
@@ -866,25 +866,49 @@ export class SongEditor {
         this._ringModWaveSelectRow);
     private readonly _granularSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.granularRange, value: "0", step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeGranular(this.doc, oldValue, newValue), false);
     private readonly _granularRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("granular") }, "Granular:"), this._granularSlider.container);
-    private readonly _grainSizeSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: Config.grainSizeMin / Config.grainSizeStep, max: Config.grainSizeMax / Config.grainSizeStep, value: Config.grainSizeMin / Config.grainSizeStep, step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeGrainSize(this.doc, oldValue, newValue), false);
+    private readonly _grainSizeDoubleSlider: DoubleSlider = new DoubleSlider(
+        this.doc,
+        (oldValue: number, newValue: number) => new ChangeGrainSize(this.doc, oldValue, newValue),
+        (oldValue: number, newValue: number) => new ChangeGrainRange(this.doc, oldValue, newValue),
+        () => {
+            if (!this.doc.synth.isModActive(Config.modulators.dictionary["grain size"].index, this.doc.channel, this.doc.getCurrentInstrument())) return null;
+            const v = this.doc.synth.getModValue(Config.modulators.dictionary["grain size"].index, this.doc.channel, this.doc.getCurrentInstrument());
+            if (v == -1) return null;
+            return v;
+        },
+        () => {
+            if (!this.doc.synth.isModActive(Config.modulators.dictionary["grain range"].index, this.doc.channel, this.doc.getCurrentInstrument())) return null;
+            const offset = this.doc.synth.isModActive(Config.modulators.dictionary["grain size"].index, this.doc.channel, this.doc.getCurrentInstrument()) ? 
+                this.doc.synth.getModValue(Config.modulators.dictionary["grain size"].index, this.doc.channel, this.doc.getCurrentInstrument()) : this.doc.song.channels[this.doc.channel].instruments[this.doc.getCurrentInstrument()].grainSize;
+            const v = this.doc.synth.getModValue(Config.modulators.dictionary["grain range"].index, this.doc.channel, this.doc.getCurrentInstrument());
+            if (v == -1) return null;
+            return v + offset;
+        },
+        (Config.grainSizeMax - Config.grainSizeMin) / Config.grainSizeStep,
+        (Config.grainSizeMax - Config.grainSizeMin + Config.grainRangeMax) / Config.grainSizeStep,
+        Config.grainSizeMin / Config.grainSizeStep,
+        (Config.grainSizeMax + Config.grainRangeMax) / Config.grainSizeStep,
+        0
+    )
     public readonly grainSizeNum: HTMLParagraphElement = div({ style: "font-size: 80%; ", id: "grainSizeNum" });
-    private readonly _grainSizeSliderRow: HTMLDivElement = div({ class: "selectRow", style: "width:100%;" }, div({ style: "display:flex; flex-direction:column; align-items:center;" },
-        span({ class: "tip", style: "font-size: smaller;", onclick: () => this._openPrompt("grainSize") }, "Grain: "),
-        div({ style: `color: ${ColorConfig.secondaryText}; ` }, this.grainSizeNum),
-    ), this._grainSizeSlider.container);
-    private readonly _grainAmountsSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.grainAmountsMax, value: 8, step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeGrainAmounts(this.doc, oldValue, newValue), false);
-    private readonly _grainAmountsRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("grainAmount") }, "Grain Freq:"), this._grainAmountsSlider.container);
-    private readonly _grainRangeSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.grainRangeMax / Config.grainSizeStep, value: "0", step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeGrainRange(this.doc, oldValue, newValue), false);
     public readonly grainRangeNum: HTMLParagraphElement = div({ style: "font-size: 80%; ", id: "grainRangeNum" });
-    private readonly _grainRangeSliderRow: HTMLDivElement = div({ class: "selectRow", style: "width:100%;" }, div({ style: "display:flex; flex-direction:column; align-items:center;" },
-        span({ class: "tip", style: "font-size: smaller;", onclick: () => this._openPrompt("grainRange") }, "Range: "),
-        div({ style: `color: ${ColorConfig.secondaryText}; ` }, this.grainRangeNum),
-    ), this._grainRangeSlider.container);
+    private readonly _grainSizeSliderRow: HTMLDivElement = div({ class: "selectRow", style: "width:100%; display: flex; flex-direction: row; " },
+        div({ style: "flex: 1; display:flex; flex-direction:column; align-items:center;" },
+            span({ class: "tip", style: "font-size: smaller;", onclick: () => this._openPrompt("grainSize") }, "Grain: "),
+            div({ style: `color: ${ColorConfig.secondaryText}; ` }, this.grainSizeNum),
+        ),
+        this._grainSizeDoubleSlider.container,
+        div({ style: "flex: 1; display:flex; flex-direction:column; align-items:center;" },
+            span({ class: "tip", style: "font-size: smaller;", onclick: () => this._openPrompt("grainRange") }, "Range: "),
+            div({ style: `color: ${ColorConfig.secondaryText}; ` }, this.grainRangeNum),
+        ),
+    );
+    private readonly _grainFreqSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.grainFreqMax, value: 8, step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeGrainFreq(this.doc, oldValue, newValue), false);
+    private readonly _grainFreqRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("grainAmount") }, "Grain Freq:"), this._grainFreqSlider.container);
     private readonly _granularContainerRow: HTMLDivElement = div({ class: "", style: "display:flex; flex-direction:column;" },
         this._granularRow,
-        this._grainAmountsRow,
+        this._grainFreqRow,
         this._grainSizeSliderRow,
-        this._grainRangeSliderRow
     );
     private readonly _echoSustainSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.echoSustainRange - 1, value: "0", step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeEchoSustain(this.doc, oldValue, newValue), false);
     private readonly _echoSustainRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("echoSustain") }, "Echo:"), this._echoSustainSlider.container);
@@ -2129,10 +2153,6 @@ export class SongEditor {
                 return this._supersawShapeSlider;
             case Config.modulators.dictionary["individual envelope speed"].index:
                 return this.envelopeEditor.perEnvelopeSpeedSliders[index];
-            // case Config.modulators.dictionary["individual envelope lower bound"].index:
-            //     return this.envelopeEditor.perEnvelopeLowerBoundSliders[index];
-            // case Config.modulators.dictionary["individual envelope upper bound"].index:
-            //     return this.envelopeEditor.perEnvelopeUpperBoundSliders[index];
             case Config.modulators.dictionary["ring modulation"].index:
                 return this._ringModSlider;
             case Config.modulators.dictionary["ring mod hertz"].index:
@@ -2140,11 +2160,7 @@ export class SongEditor {
             case Config.modulators.dictionary["granular"].index:
                 return this._granularSlider;
             case Config.modulators.dictionary["grain freq"].index:
-                return this._grainAmountsSlider;
-            case Config.modulators.dictionary["grain size"].index:
-                return this._grainSizeSlider;
-            case Config.modulators.dictionary["grain range"].index:
-                return this._grainRangeSlider;
+                return this._grainFreqSlider;
             default:
                 return null;
         }
@@ -2940,9 +2956,8 @@ export class SongEditor {
             if (effectsIncludeGranular(instrument.effects)) {
                 this._granularContainerRow.style.display = "";
                 this._granularSlider.updateValue(instrument.granular);
-                this._grainSizeSlider.updateValue(instrument.grainSize);
-                this._grainAmountsSlider.updateValue(instrument.grainAmounts);
-                this._grainRangeSlider.updateValue(instrument.grainRange);
+                this._grainFreqSlider.updateValue(instrument.grainFreq);
+                this._grainSizeDoubleSlider.updateValues(instrument.grainSize, instrument.grainRange);
             } else {
                 this._granularContainerRow.style.display = "none";
             }
@@ -2992,7 +3007,7 @@ export class SongEditor {
             this._detuneSliderInputBox.value = (instrument.detune - Config.detuneCenter) + "";
             this.ringModHzNum.innerHTML = " (" + calculateRingModHertz(instrument.ringModulationHz / (Config.ringModHzRange - 1)) + ")";
             this.grainSizeNum.innerHTML = " (" + instrument.grainSize * Config.grainSizeStep + ")";
-            this.grainRangeNum.innerHTML = " (" + instrument.grainRange * Config.grainSizeStep + ")";
+            this.grainRangeNum.innerHTML = " (" + (instrument.grainRange - instrument.grainSize) * Config.grainSizeStep + ")";
             this._instrumentVolumeSlider.updateValue(instrument.volume);
             this._instrumentVolumeSliderInputBox.value = "" + (instrument.volume);
             this._vibratoDepthSlider.updateValue(Math.round(instrument.vibratoDepth * 25));
@@ -4896,6 +4911,7 @@ export class SongEditor {
         }
         this.envelopeEditor.pitchDoubleSliders.forEach((doubleSlider: DoubleSlider) => doubleSlider.render());
         this.envelopeEditor.boundDoubleSliders.forEach((doubleSlider: DoubleSlider) => doubleSlider.render());
+        this._grainSizeDoubleSlider.render();
 
         window.requestAnimationFrame(this._animate);
     }

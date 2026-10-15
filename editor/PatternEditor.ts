@@ -8,7 +8,7 @@ import { Slider } from "./HTMLWrapper";
 import { SongEditor } from "./SongEditor";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { Change, ChangeGroup, ChangeSequence, UndoableChange } from "./Change";
-import { ChangeVolume, FilterMoveData, ChangeTempo, ChangePan, ChangeReverb, ChangeDistortion, ChangeOperatorAmplitude, ChangeFeedbackAmplitude, ChangePulseWidth, ChangeDetune, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangePanDelay, ChangeChorus, ChangeEQFilterSimplePeak, ChangeNoteFilterSimplePeak, ChangeStringSustain, ChangeEnvelopeSpeed, ChangeSupersawDynamism, ChangeSupersawShape, ChangeSupersawSpread, ChangePitchShift, ChangeChannelBar, ChangeDragSelectedNotes, ChangeEnsurePatternExists, ChangeNoteTruncate, ChangeNoteAdded, ChangePatternSelection, ChangePinTime, ChangeSizeBend, ChangePitchBend, ChangePitchAdded, ChangeArpeggioSpeed, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEchoSustain, ChangeEQFilterSimpleCut, ChangeNoteFilterSimpleCut, ChangeFilterMovePoint, ChangeDuplicateSelectedReusedPatterns, ChangeHoldingModRecording, ChangeDecimalOffset, ChangePerEnvelopeSpeed, ChangeSongFilterMovePoint, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeEnvelopeLowerBound, ChangeEnvelopeUpperBound, ChangeGrainAmounts, ChangeGrainRange, ChangeEnvelopePitchStart, ChangeEnvelopePitchEnd } from "./changes";
+import { ChangeVolume, FilterMoveData, ChangeTempo, ChangePan, ChangeReverb, ChangeDistortion, ChangeOperatorAmplitude, ChangeFeedbackAmplitude, ChangePulseWidth, ChangeDetune, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangePanDelay, ChangeChorus, ChangeEQFilterSimplePeak, ChangeNoteFilterSimplePeak, ChangeStringSustain, ChangeEnvelopeSpeed, ChangeSupersawDynamism, ChangeSupersawShape, ChangeSupersawSpread, ChangePitchShift, ChangeChannelBar, ChangeDragSelectedNotes, ChangeEnsurePatternExists, ChangeNoteTruncate, ChangeNoteAdded, ChangePatternSelection, ChangePinTime, ChangeSizeBend, ChangePitchBend, ChangePitchAdded, ChangeArpeggioSpeed, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEchoSustain, ChangeEQFilterSimpleCut, ChangeNoteFilterSimpleCut, ChangeFilterMovePoint, ChangeDuplicateSelectedReusedPatterns, ChangeHoldingModRecording, ChangeDecimalOffset, ChangePerEnvelopeSpeed, ChangeSongFilterMovePoint, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeEnvelopeLowerBound, ChangeEnvelopeUpperBound, ChangeGrainFreq, ChangeGrainRange, ChangeEnvelopePitchStart, ChangeEnvelopePitchEnd } from "./changes";
 import { prettyNumber } from "./EditorConfig";
 import { EnvelopeEditor } from "./EnvelopeEditor";
 
@@ -871,6 +871,7 @@ export class PatternEditor {
         let applyValues: number[] = [];
         let toApply: boolean = true;
         let slider: Slider | null = null;
+        let grainSizeVal: number = instrument.grainSize;
 
         const updateWithChange = (change: Change) => {
             // Special case, treat null change as Song volume.
@@ -1018,37 +1019,36 @@ export class PatternEditor {
                     instrument.granular = slider.getValueBeforeProspectiveChange();
                 }
             }
-            else if (change instanceof ChangeGrainAmounts) {
+            else if (change instanceof ChangeGrainFreq) {
                 var modulator = Config.modulators.dictionary["grain freq"];
                 applyToMods.push(modulator.index);
-                if (toApply) applyValues.push(instrument.grainAmounts - modulator.convertRealFactor);
+                if (toApply) applyValues.push(instrument.grainFreq - modulator.convertRealFactor);
                 // Move the actual value back, since we just want to update the modulated value and not the base slider.
                 slider = songEditor.getSliderForModSetting(modulator.index);
                 if (slider != null) {
-                    instrument.grainAmounts = slider.getValueBeforeProspectiveChange();
+                    instrument.grainFreq = slider.getValueBeforeProspectiveChange();
                 }
             }
             else if (change instanceof ChangeGrainSize) {
                 var modulator = Config.modulators.dictionary["grain size"];
+                if (instrument.grainSize == change.oldValue) return;
                 applyToMods.push(modulator.index);
                 if (toApply) applyValues.push(instrument.grainSize - modulator.convertRealFactor);
                 // Move the actual value back, since we just want to update the modulated value and not the base slider.
-                slider = songEditor.getSliderForModSetting(modulator.index);
-                if (slider != null) {
-                    instrument.grainSize = slider.getValueBeforeProspectiveChange();
-                    songEditor.grainSizeNum.innerHTML = "(" + (instrument.grainSize * Config.grainSizeStep) + ")";
-                }
+                grainSizeVal = instrument.grainSize;
+                instrument.grainSize = change.oldValue;
+                //don't update grain num display
+                songEditor.grainSizeNum.innerHTML = "(" + (instrument.grainSize * Config.grainSizeStep) + ")";
             }
             else if (change instanceof ChangeGrainRange) {
                 var modulator = Config.modulators.dictionary["grain range"];
+                if (instrument.grainRange == change.oldValue) return;
                 applyToMods.push(modulator.index);
-                if (toApply) applyValues.push(instrument.grainRange - modulator.convertRealFactor);
+                if (toApply) applyValues.push(Math.max(instrument.grainRange - modulator.convertRealFactor - grainSizeVal, grainSizeVal));
                 // Move the actual value back, since we just want to update the modulated value and not the base slider.
-                slider = songEditor.getSliderForModSetting(modulator.index);
-                if (slider != null) {
-                    instrument.grainRange = slider.getValueBeforeProspectiveChange();
-                    songEditor.grainRangeNum.innerHTML = "(" + (instrument.grainRange * Config.grainSizeStep) + ")";
-                }
+                instrument.grainRange = change.oldValue;
+                //don't update grain num display
+                songEditor.grainRangeNum.innerHTML = "(" + ((instrument.grainRange - instrument.grainSize) * Config.grainSizeStep) + ")";
             }
             else if (change instanceof ChangeOperatorAmplitude) {
                 var modulator = Config.modulators.dictionary["fm slider " + (change.operatorIndex + 1)];
