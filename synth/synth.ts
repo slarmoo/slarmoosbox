@@ -3270,7 +3270,7 @@ export class Song {
                 const ringModMod: Modulator = Config.modulators.dictionary["ring modulation"];
                 const ringModHertzMod: Modulator = Config.modulators.dictionary["ring mod hertz"];
                 const granularMod: Modulator = Config.modulators.dictionary["granular"];
-                const grainAmountMod: Modulator = Config.modulators.dictionary["grain freq"];
+                const grainFreqMod: Modulator = Config.modulators.dictionary["grain freq"];
                 const grainSizeMod: Modulator = Config.modulators.dictionary["grain size"];
                 const grainRangeMod: Modulator = Config.modulators.dictionary["grain range"];
                 const envSpeedMod: Modulator = Config.modulators.dictionary["envelope speed"];
@@ -3336,14 +3336,14 @@ export class Song {
                     case granularMod.index:
                         vol = tgtinstrument.granular - granularMod.convertRealFactor;
                         break;
-                    case grainAmountMod.index:
-                        vol = tgtinstrument.grainFreq - grainAmountMod.convertRealFactor;
+                    case grainFreqMod.index:
+                        vol = tgtinstrument.grainFreq - grainFreqMod.convertRealFactor;
                         break;
                     case grainSizeMod.index:
                         vol = tgtinstrument.grainSize - grainSizeMod.convertRealFactor;
                         break;
                     case grainRangeMod.index:
-                        vol = tgtinstrument.grainRange - grainRangeMod.convertRealFactor;
+                        vol = tgtinstrument.grainRange - grainRangeMod.convertRealFactor - tgtinstrument.grainSize;
                         break;
                     case envSpeedMod.index:
                         vol = tgtinstrument.envelopeSpeed - envSpeedMod.convertRealFactor;
