@@ -715,7 +715,7 @@ var beepbox = (function (exports) {
         { name: "bow", voices: 9, spread: 0.006, offset: 0, expression: 0.15, sign: 0.5 }
     ]);
     Config.effectNames = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "note filter", "echo", "pitch shift", "detune", "vibrato", "transition type", "chord type", "", "ring mod", "granular"];
-    Config.effectOrder = [2, 10, 11, 7, 8, 9, 5, 14, 3, 4, 1, 6, 0, 13];
+    Config.effectOrder = [2, 10, 11, 7, 8, 9, 5, 14, 3, 4, 13, 1, 6, 0];
     Config.noteSizeMax = 6;
     Config.volumeRange = 50;
     Config.volumeLogScale = 0.1428;
@@ -734,7 +734,7 @@ var beepbox = (function (exports) {
     Config.grainSizeMax = 2000;
     Config.grainSizeStep = 40;
     Config.grainRangeMax = 1600;
-    Config.grainAmountsMax = 10;
+    Config.grainFreqMax = 10;
     Config.granularEnvelopeType = 0;
     Config.chorusRange = 8;
     Config.chorusPeriodSeconds = 2.0;
@@ -1289,16 +1289,20 @@ var beepbox = (function (exports) {
             promptName: "Ring Modulation (Hertz)", promptDesc: ["This setting controls the Hertz (Hz) used in the Ring Modulation effect in your instrument.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "granular", pianoName: "Granular", maxRawVol: _a$1.granularRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 14, maxIndex: 0,
             promptName: "Granular", promptDesc: ["This setting controls the granular effect in your instrument.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "grain freq", pianoName: "Grain #", maxRawVol: _a$1.grainAmountsMax, newNoteVol: 8, forSong: false, convertRealFactor: 0, associatedEffect: 14, maxIndex: 0,
+        { name: "grain freq", pianoName: "Grain #", maxRawVol: _a$1.grainFreqMax, newNoteVol: 8, forSong: false, convertRealFactor: 0, associatedEffect: 14, maxIndex: 0,
             promptName: "Grain Count", promptDesc: ["This setting controls the density of grains for the granular effect on your instrument.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "grain size", pianoName: "Grain Size", maxRawVol: _a$1.grainSizeMax / _a$1.grainSizeStep, newNoteVol: _a$1.grainSizeMin / _a$1.grainSizeStep, forSong: false, convertRealFactor: 0, associatedEffect: 14, maxIndex: 0,
+        { name: "grain size", pianoName: "Grain Size", maxRawVol: (_a$1.grainRangeMax + _a$1.grainSizeMax) / _a$1.grainSizeStep, newNoteVol: _a$1.grainSizeMin / _a$1.grainSizeStep, forSong: false, convertRealFactor: 0, associatedEffect: 14, maxIndex: 0,
             promptName: "Grain Size", promptDesc: ["This setting controls the grain size of the granular effect in your instrument.", "The number shown in the mod channel is multiplied by " + _a$1.grainSizeStep + " to get the actual grain size.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "grain range", pianoName: "Grain Range", maxRawVol: _a$1.grainRangeMax / _a$1.grainSizeStep, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 14, maxIndex: 0,
+        { name: "grain range", pianoName: "Grain Range", maxRawVol: (_a$1.grainRangeMax + _a$1.grainSizeMax) / _a$1.grainSizeStep, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 14, maxIndex: 0,
             promptName: "Grain Range", promptDesc: ["This setting controls the range of values for your grain size of the granular effect in your instrument, from no variation to a lot", "The number shown in the mod channel is multiplied by " + _a$1.grainSizeStep + " to get the actual grain size.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "individual envelope lower bound", pianoName: "IndvEnvLow", maxRawVol: _a$1.perEnvelopeBoundMax * 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 15, maxIndex: _a$1.maxEnvelopeCount - 1,
-            promptName: "Individual Envelope Lower Bound", promptDesc: ["This setting controls the envelope lower bound", "At $LO, your the envelope will output an upper envelope bound to 0, and at $HI your envelope will output an upper envelope bound to 2.", "This settings will not work if your lower envelope bound is higher than your upper envelope bound",] },
+            promptName: "Individual Envelope Lower Bound", promptDesc: ["This setting controls the envelope lower bound", "At $LO, your envelope will output an upper envelope bound to 0, and at $HI your envelope will output an upper envelope bound to 2.", "This settings will not work if your lower envelope bound is higher than your upper envelope bound",] },
         { name: "individual envelope upper bound", pianoName: "IndvEnvUp", maxRawVol: _a$1.perEnvelopeBoundMax * 10, newNoteVol: 10, forSong: false, convertRealFactor: 0, associatedEffect: 15, maxIndex: _a$1.maxEnvelopeCount - 1,
-            promptName: "Individual Envelope Upper Bound", promptDesc: ["This setting controls the envelope upper bound", "At $LO, your the envelope will output a 0 to lower envelope bound, and at $HI your envelope will output a 2 to lower envelope bound.", "This settings will not work if your lower envelope bound is higher than your upper envelope bound",] },
+            promptName: "Individual Envelope Upper Bound", promptDesc: ["This setting controls the envelope upper bound", "At $LO, your envelope will output a 0 to lower envelope bound, and at $HI your envelope will output a 2 to lower envelope bound.", "This settings will not work if your lower envelope bound is higher than your upper envelope bound",] },
+        { name: "pitch envelope start", pianoName: "PitchStart", maxRawVol: _a$1.maxPitch, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 15, maxIndex: _a$1.maxEnvelopeCount - 1,
+            promptName: "Pitch Envelope Start Note", promptDesc: ["This setting controls the pitch envelope's start note", "At $LO, your pitch envelope will begin computing at the lowest pitch, and at $HI your pitch envelope will only begin computing at the highest pitch.", "This settings will not work properly if your start note is higher than your end note",] },
+        { name: "pitch envelope end", pianoName: "PitchEnd", maxRawVol: _a$1.maxPitch, newNoteVol: _a$1.maxPitch, forSong: false, convertRealFactor: 0, associatedEffect: 15, maxIndex: _a$1.maxEnvelopeCount - 1,
+            promptName: "Pitch Envelope End Note", promptDesc: ["This setting controls the pitch envelope's end note'", "At $HI, your pitch envelope will stop computing at the highest pitch, and at $LO your pitch envelope will stop computing at the lowest pitch.", "This settings will not work properly if your start note is higher than your end note",] },
     ]);
     function centerWave(wave) {
         let sum = 0.0;
@@ -8677,7 +8681,7 @@ var beepbox = (function (exports) {
             return (_a = EditorConfig.presetCategories[0].presets.dictionary) === null || _a === void 0 ? void 0 : _a[TypePresets === null || TypePresets === void 0 ? void 0 : TypePresets[instrument]];
         }
     }
-    EditorConfig.version = "1.4.14";
+    EditorConfig.version = "1.4.15";
     EditorConfig.versionDisplayName = "Slarmoo's Box " + EditorConfig.version;
     EditorConfig.releaseNotesURL = "./patch_notes.html";
     EditorConfig.isOnMac = /^Mac/i.test(navigator.platform) || /Mac OS X/i.test(navigator.userAgent) || /^(iPhone|iPad|iPod)/i.test(navigator.platform) || /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
@@ -10299,6 +10303,7 @@ var beepbox = (function (exports) {
         constructor() {
             this.wave = null;
             this._hash = -1;
+            this._generatedForType = null;
         }
         getCustomWave(settings, instrumentType) {
             if (this._hash == settings.hash && this._generatedForType == instrumentType)
@@ -10678,6 +10683,8 @@ var beepbox = (function (exports) {
             this.tempEnvelopeSpeed = null;
             this.tempEnvelopeLowerBound = null;
             this.tempEnvelopeUpperBound = null;
+            this.tempPitchStart = null;
+            this.tempPitchEnd = null;
             this.steps = 2;
             this.seed = 2;
             this.waveform = 0;
@@ -10922,8 +10929,8 @@ var beepbox = (function (exports) {
             this.ringModHzOffset = 200;
             this.granular = 4;
             this.grainSize = (Config.grainSizeMax - Config.grainSizeMin) / Config.grainSizeStep;
-            this.grainAmounts = Config.grainAmountsMax;
-            this.grainRange = 40;
+            this.grainFreq = Config.grainFreqMax;
+            this.grainRange = this.grainSize + (Config.grainRangeMax / Config.grainSizeStep);
             this.chorus = 0;
             this.reverb = 0;
             this.echoSustain = 0;
@@ -11014,8 +11021,8 @@ var beepbox = (function (exports) {
             this.ringModHzOffset = 200;
             this.granular = 4;
             this.grainSize = (Config.grainSizeMax - Config.grainSizeMin) / Config.grainSizeStep;
-            this.grainAmounts = Config.grainAmountsMax;
-            this.grainRange = 40;
+            this.grainFreq = Config.grainFreqMax;
+            this.grainRange = this.grainSize + (Config.grainRangeMax / Config.grainSizeStep);
             this.pan = Config.panCenter;
             this.panDelay = 0;
             this.pitchShift = Config.pitchShiftCenter;
@@ -11315,8 +11322,8 @@ var beepbox = (function (exports) {
             if (effectsIncludeGranular(this.effects)) {
                 instrumentObject["granular"] = this.granular;
                 instrumentObject["grainSize"] = this.grainSize;
-                instrumentObject["grainAmounts"] = this.grainAmounts;
-                instrumentObject["grainRange"] = this.grainRange;
+                instrumentObject["grainFreq"] = this.grainFreq;
+                instrumentObject["grainRange"] = this.grainRange - this.grainSize;
             }
             if (effectsIncludeRingModulation(this.effects)) {
                 instrumentObject["ringMod"] = Math.round(100 * this.ringModulation / (Config.ringModRange - 1));
@@ -11515,12 +11522,21 @@ var beepbox = (function (exports) {
                 this.volume = 0;
             }
             this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
+            let useInvertWave = false;
             if (Array.isArray(instrumentObject["effects"])) {
                 let effects = 0;
                 for (let i = 0; i < instrumentObject["effects"].length; i++) {
                     effects = effects | (1 << Config.effectNames.indexOf(instrumentObject["effects"][i]));
                 }
                 this.effects = (effects & ((1 << 15) - 1));
+                if (format == "abyssbox") {
+                    if (instrumentObject["effects"].indexOf("ring modulation") >= 0) {
+                        this.effects = this.effects | (1 << 13);
+                    }
+                    if (instrumentObject["effects"].indexOf("invert wave") >= 0) {
+                        useInvertWave = true;
+                    }
+                }
             }
             else {
                 const legacyEffectsNames = ["none", "reverb", "chorus", "chorus & reverb"];
@@ -11604,6 +11620,10 @@ var beepbox = (function (exports) {
             this.unisonOffset = (instrumentObject["unisonOffset"] == undefined) ? Config.unisons[this.unison].offset : instrumentObject["unisonOffset"];
             this.unisonExpression = (instrumentObject["unisonExpression"] == undefined) ? Config.unisons[this.unison].expression : instrumentObject["unisonExpression"];
             this.unisonSign = (instrumentObject["unisonSign"] == undefined) ? Config.unisons[this.unison].sign : instrumentObject["unisonSign"];
+            if (useInvertWave) {
+                this.unisonExpression = -this.unisonExpression;
+                this.unison = Config.unisons.dictionary["custom"].index;
+            }
             if (instrumentObject["chorus"] == "custom harmony") {
                 this.unison = Config.unisons.dictionary["hum"].index;
                 this.chord = Config.chords.dictionary["custom interval"].index;
@@ -11690,12 +11710,20 @@ var beepbox = (function (exports) {
             }
             if (instrumentObject["ringModHz"] != undefined) {
                 this.ringModulationHz = clamp(0, Config.ringModHzRange, Math.round((Config.ringModHzRange - 1) * (instrumentObject["ringModHz"] | 0) / 100));
+                if (format == "abyssbox" && this.ringModulationHz == 0)
+                    this.ringModulationHz = 1;
             }
             if (instrumentObject["ringModWaveformIndex"] != undefined) {
                 this.ringModWaveformIndex = clamp(0, Config.operatorWaves.length, instrumentObject["ringModWaveformIndex"]);
             }
+            else if (instrumentObject["rmWaveformIndex"] != undefined) {
+                this.ringModWaveformIndex = clamp(0, Config.operatorWaves.length, instrumentObject["rmWaveformIndex"]);
+            }
             if (instrumentObject["ringModPulseWidth"] != undefined) {
                 this.ringModPulseWidth = clamp(0, Config.pulseWidthRange, Math.round((Config.pulseWidthRange - 1) * (instrumentObject["ringModPulseWidth"] | 0) / 100));
+            }
+            else if (instrumentObject["rmPulseWidth"] != undefined) {
+                this.ringModPulseWidth = clamp(0, Config.pulseWidthRange, Math.round((Config.pulseWidthRange - 1) * (instrumentObject["rmPulseWidth"] | 0) / 100));
             }
             if (instrumentObject["ringModHzOffset"] != undefined) {
                 this.ringModHzOffset = clamp(0, Config.rmHzOffsetMax, Math.round((Config.rmHzOffsetMax - 1) * (instrumentObject["ringModHzOffset"] | 0) / 100));
@@ -11707,10 +11735,14 @@ var beepbox = (function (exports) {
                 this.grainSize = instrumentObject["grainSize"];
             }
             if (instrumentObject["grainAmounts"] != undefined) {
-                this.grainAmounts = instrumentObject["grainAmounts"];
+                this.grainFreq = instrumentObject["grainAmounts"];
+            }
+            else if (instrumentObject["grainFreq"] != undefined) {
+                this.grainFreq = instrumentObject["grainFreq"];
             }
             if (instrumentObject["grainRange"] != undefined) {
                 this.grainRange = clamp(0, Config.grainRangeMax / Config.grainSizeStep + 1, instrumentObject["grainRange"]);
+                this.grainRange += this.grainSize;
             }
             if (instrumentObject["distortion"] != undefined) {
                 this.distortion = clamp(0, Config.distortionRange, Math.round((Config.distortionRange - 1) * (instrumentObject["distortion"] | 0) / 100));
@@ -12349,107 +12381,115 @@ var beepbox = (function (exports) {
                     if (currentIndex == tempoIndex)
                         vol = this.tempo - Config.modulators[tempoIndex].convertRealFactor;
                     if (!Config.modulators[currentIndex].forSong && instrument.modInstruments[modCount] < this.channels[instrument.modChannels[modCount]].instruments.length) {
-                        let chorusIndex = Config.modulators.dictionary["chorus"].index;
-                        let reverbIndex = Config.modulators.dictionary["reverb"].index;
-                        let panningIndex = Config.modulators.dictionary["pan"].index;
-                        let panDelayIndex = Config.modulators.dictionary["pan delay"].index;
-                        let distortionIndex = Config.modulators.dictionary["distortion"].index;
-                        let detuneIndex = Config.modulators.dictionary["detune"].index;
-                        let vibratoDepthIndex = Config.modulators.dictionary["vibrato depth"].index;
-                        let vibratoSpeedIndex = Config.modulators.dictionary["vibrato speed"].index;
-                        let vibratoDelayIndex = Config.modulators.dictionary["vibrato delay"].index;
-                        let arpSpeedIndex = Config.modulators.dictionary["arp speed"].index;
-                        let bitCrushIndex = Config.modulators.dictionary["bit crush"].index;
-                        let freqCrushIndex = Config.modulators.dictionary["freq crush"].index;
-                        let echoIndex = Config.modulators.dictionary["echo"].index;
-                        let echoDelayIndex = Config.modulators.dictionary["echo delay"].index;
-                        let pitchShiftIndex = Config.modulators.dictionary["pitch shift"].index;
-                        let ringModIndex = Config.modulators.dictionary["ring modulation"].index;
-                        let ringModHertzIndex = Config.modulators.dictionary["ring mod hertz"].index;
-                        let granularIndex = Config.modulators.dictionary["granular"].index;
-                        let grainAmountIndex = Config.modulators.dictionary["grain freq"].index;
-                        let grainSizeIndex = Config.modulators.dictionary["grain size"].index;
-                        let grainRangeIndex = Config.modulators.dictionary["grain range"].index;
-                        let envSpeedIndex = Config.modulators.dictionary["envelope speed"].index;
-                        let perEnvSpeedIndex = Config.modulators.dictionary["individual envelope speed"].index;
-                        let perEnvLowerIndex = Config.modulators.dictionary["individual envelope lower bound"].index;
-                        let perEnvUpperIndex = Config.modulators.dictionary["individual envelope upper bound"].index;
-                        let instrumentIndex = instrument.modInstruments[modCount];
+                        const chorusMod = Config.modulators.dictionary["chorus"];
+                        const reverbMod = Config.modulators.dictionary["reverb"];
+                        const panningMod = Config.modulators.dictionary["pan"];
+                        const panDelayMod = Config.modulators.dictionary["pan delay"];
+                        const distortionMod = Config.modulators.dictionary["distortion"];
+                        const detuneMod = Config.modulators.dictionary["detune"];
+                        const vibratoDepthMod = Config.modulators.dictionary["vibrato depth"];
+                        const vibratoSpeedMod = Config.modulators.dictionary["vibrato speed"];
+                        const vibratoDelayMod = Config.modulators.dictionary["vibrato delay"];
+                        const arpSpeedMod = Config.modulators.dictionary["arp speed"];
+                        const bitCrushMod = Config.modulators.dictionary["bit crush"];
+                        const freqCrushMod = Config.modulators.dictionary["freq crush"];
+                        const echoMod = Config.modulators.dictionary["echo"];
+                        const echoDelayMod = Config.modulators.dictionary["echo delay"];
+                        const pitchShiftMod = Config.modulators.dictionary["pitch shift"];
+                        const ringModMod = Config.modulators.dictionary["ring modulation"];
+                        const ringModHertzMod = Config.modulators.dictionary["ring mod hertz"];
+                        const granularMod = Config.modulators.dictionary["granular"];
+                        const grainFreqMod = Config.modulators.dictionary["grain freq"];
+                        const grainSizeMod = Config.modulators.dictionary["grain size"];
+                        const grainRangeMod = Config.modulators.dictionary["grain range"];
+                        const envSpeedMod = Config.modulators.dictionary["envelope speed"];
+                        const perEnvSpeedMod = Config.modulators.dictionary["individual envelope speed"];
+                        const perEnvLowerMod = Config.modulators.dictionary["individual envelope lower bound"];
+                        const perEnvUpperMod = Config.modulators.dictionary["individual envelope upper bound"];
+                        const pitchEnvStartMod = Config.modulators.dictionary["pitch envelope start"];
+                        const pitchEnvEndMod = Config.modulators.dictionary["pitch envelope end"];
+                        const tgtinstrument = this.channels[instrument.modChannels[modCount]].instruments[instrument.modInstruments[modCount]];
                         switch (currentIndex) {
-                            case chorusIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].chorus - Config.modulators[chorusIndex].convertRealFactor;
+                            case chorusMod.index:
+                                vol = tgtinstrument.chorus - chorusMod.convertRealFactor;
                                 break;
-                            case reverbIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].reverb - Config.modulators[reverbIndex].convertRealFactor;
+                            case reverbMod.index:
+                                vol = tgtinstrument.reverb - reverbMod.convertRealFactor;
                                 break;
-                            case panningIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].pan - Config.modulators[panningIndex].convertRealFactor;
+                            case panningMod.index:
+                                vol = tgtinstrument.pan - panningMod.convertRealFactor;
                                 break;
-                            case panDelayIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].panDelay - Config.modulators[panDelayIndex].convertRealFactor;
+                            case panDelayMod.index:
+                                vol = tgtinstrument.panDelay - panDelayMod.convertRealFactor;
                                 break;
-                            case distortionIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].distortion - Config.modulators[distortionIndex].convertRealFactor;
+                            case distortionMod.index:
+                                vol = tgtinstrument.distortion - distortionMod.convertRealFactor;
                                 break;
-                            case detuneIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].detune;
+                            case detuneMod.index:
+                                vol = tgtinstrument.detune;
                                 break;
-                            case vibratoDepthIndex:
-                                vol = Math.round(this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].vibratoDepth * 25 - Config.modulators[vibratoDepthIndex].convertRealFactor);
+                            case vibratoDepthMod.index:
+                                vol = Math.round(tgtinstrument.vibratoDepth * 25 - vibratoDepthMod.convertRealFactor);
                                 break;
-                            case vibratoSpeedIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].vibratoSpeed - Config.modulators[vibratoSpeedIndex].convertRealFactor;
+                            case vibratoSpeedMod.index:
+                                vol = tgtinstrument.vibratoSpeed - vibratoSpeedMod.convertRealFactor;
                                 break;
-                            case vibratoDelayIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].vibratoDelay - Config.modulators[vibratoDelayIndex].convertRealFactor;
+                            case vibratoDelayMod.index:
+                                vol = tgtinstrument.vibratoDelay - vibratoDelayMod.convertRealFactor;
                                 break;
-                            case arpSpeedIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].arpeggioSpeed - Config.modulators[arpSpeedIndex].convertRealFactor;
+                            case arpSpeedMod.index:
+                                vol = tgtinstrument.arpeggioSpeed - arpSpeedMod.convertRealFactor;
                                 break;
-                            case bitCrushIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].bitcrusherQuantization - Config.modulators[bitCrushIndex].convertRealFactor;
+                            case bitCrushMod.index:
+                                vol = tgtinstrument.bitcrusherQuantization - bitCrushMod.convertRealFactor;
                                 break;
-                            case freqCrushIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].bitcrusherFreq - Config.modulators[freqCrushIndex].convertRealFactor;
+                            case freqCrushMod.index:
+                                vol = tgtinstrument.bitcrusherFreq - freqCrushMod.convertRealFactor;
                                 break;
-                            case echoIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].echoSustain - Config.modulators[echoIndex].convertRealFactor;
+                            case echoMod.index:
+                                vol = tgtinstrument.echoSustain - echoMod.convertRealFactor;
                                 break;
-                            case echoDelayIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].echoDelay - Config.modulators[echoDelayIndex].convertRealFactor;
+                            case echoDelayMod.index:
+                                vol = tgtinstrument.echoDelay - echoDelayMod.convertRealFactor;
                                 break;
-                            case pitchShiftIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].pitchShift;
+                            case pitchShiftMod.index:
+                                vol = tgtinstrument.pitchShift;
                                 break;
-                            case ringModIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].ringModulation - Config.modulators[ringModIndex].convertRealFactor;
+                            case ringModMod.index:
+                                vol = tgtinstrument.ringModulation - ringModMod.convertRealFactor;
                                 break;
-                            case ringModHertzIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].ringModulationHz - Config.modulators[ringModHertzIndex].convertRealFactor;
+                            case ringModHertzMod.index:
+                                vol = tgtinstrument.ringModulationHz - ringModHertzMod.convertRealFactor;
                                 break;
-                            case granularIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].granular - Config.modulators[granularIndex].convertRealFactor;
+                            case granularMod.index:
+                                vol = tgtinstrument.granular - granularMod.convertRealFactor;
                                 break;
-                            case grainAmountIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].grainAmounts - Config.modulators[grainAmountIndex].convertRealFactor;
+                            case grainFreqMod.index:
+                                vol = tgtinstrument.grainFreq - grainFreqMod.convertRealFactor;
                                 break;
-                            case grainSizeIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].grainSize - Config.modulators[grainSizeIndex].convertRealFactor;
+                            case grainSizeMod.index:
+                                vol = tgtinstrument.grainSize - grainSizeMod.convertRealFactor;
                                 break;
-                            case grainRangeIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].grainRange - Config.modulators[grainRangeIndex].convertRealFactor;
+                            case grainRangeMod.index:
+                                vol = tgtinstrument.grainRange - grainRangeMod.convertRealFactor - tgtinstrument.grainSize;
                                 break;
-                            case envSpeedIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopeSpeed - Config.modulators[envSpeedIndex].convertRealFactor;
+                            case envSpeedMod.index:
+                                vol = tgtinstrument.envelopeSpeed - envSpeedMod.convertRealFactor;
                                 break;
-                            case perEnvSpeedIndex:
-                                vol = Config.perEnvelopeSpeedToIndices[this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeSpeed] - Config.modulators[perEnvSpeedIndex].convertRealFactor;
+                            case perEnvSpeedMod.index:
+                                vol = Config.perEnvelopeSpeedToIndices[tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeSpeed] - perEnvSpeedMod.convertRealFactor;
                                 break;
-                            case perEnvLowerIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeLowerBound * 10 - Config.modulators[perEnvLowerIndex].convertRealFactor;
+                            case perEnvLowerMod.index:
+                                vol = tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeLowerBound * 10 - perEnvLowerMod.convertRealFactor;
                                 break;
-                            case perEnvUpperIndex:
-                                vol = this.channels[instrument.modChannels[modCount]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeUpperBound * 10 - Config.modulators[perEnvUpperIndex].convertRealFactor;
+                            case perEnvUpperMod.index:
+                                vol = tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeUpperBound * 10 - perEnvUpperMod.convertRealFactor;
+                                break;
+                            case pitchEnvStartMod.index:
+                                tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].pitchEnvelopeStart - pitchEnvStartMod.convertRealFactor;
+                                break;
+                            case pitchEnvEndMod.index:
+                                tgtinstrument.envelopes[instrument.modEnvelopeNumbers[modCount]].pitchEnvelopeEnd - pitchEnvEndMod.convertRealFactor;
                                 break;
                         }
                     }
@@ -12475,6 +12515,11 @@ var beepbox = (function (exports) {
                             }
                             else if (instrument.modFilterTypes[modCount] > 0) {
                                 cap = Config.filterGainRange;
+                            }
+                        }
+                        else if (modulator.name == "pitch envelope start" || modulator.name == "pitch envelope end") {
+                            if (this.getChannelIsNoise(instrument.modChannels[modCount])) {
+                                cap = Config.drumCount - 1;
                             }
                         }
                         return cap;
@@ -12807,9 +12852,14 @@ var beepbox = (function (exports) {
                     }
                     if (effectsIncludeGranular(instrument.effects)) {
                         buffer.push(base64IntToCharCode[instrument.granular]);
-                        buffer.push(base64IntToCharCode[instrument.grainSize]);
-                        buffer.push(base64IntToCharCode[instrument.grainAmounts]);
-                        buffer.push(base64IntToCharCode[instrument.grainRange]);
+                        buffer.push(base64IntToCharCode[Math.min(instrument.grainSize, 63)]);
+                        if (instrument.grainSize >= 63)
+                            buffer.push(base64IntToCharCode[instrument.grainSize - 63]);
+                        buffer.push(base64IntToCharCode[instrument.grainFreq]);
+                        const grainRange = instrument.grainRange - instrument.grainSize;
+                        buffer.push(base64IntToCharCode[Math.min(grainRange, 63)]);
+                        if (grainRange >= 63)
+                            buffer.push(base64IntToCharCode[grainRange - 63]);
                     }
                     if (effectsIncludeRingModulation(instrument.effects)) {
                         buffer.push(base64IntToCharCode[instrument.ringModulation]);
@@ -14470,8 +14520,13 @@ var beepbox = (function (exports) {
                                 if (effectsIncludeGranular(instrument.effects)) {
                                     instrument.granular = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     instrument.grainSize = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                    instrument.grainAmounts = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                    if (instrument.grainSize >= 63)
+                                        instrument.grainSize += base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                    instrument.grainFreq = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     instrument.grainRange = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                    if (instrument.grainRange >= 63)
+                                        instrument.grainRange += base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                    instrument.grainRange += instrument.grainSize;
                                 }
                                 if (effectsIncludeRingModulation(instrument.effects)) {
                                     instrument.ringModulation = clamp(0, Config.ringModRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
@@ -16687,6 +16742,8 @@ var beepbox = (function (exports) {
                 let automationTarget;
                 let targetIndex;
                 let envelope;
+                let startNote = 0;
+                let endNote = instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch;
                 let inverse = false;
                 let isDiscrete = false;
                 let perEnvelopeSpeed = 1;
@@ -16718,6 +16775,20 @@ var beepbox = (function (exports) {
                     inverse = instrument.envelopes[envelopeIndex].inverse;
                     isDiscrete = instrument.envelopes[envelopeIndex].discrete;
                     perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
+                    startNote = instrument.envelopes[envelopeIndex].pitchEnvelopeStart;
+                    endNote = instrument.envelopes[envelopeIndex].pitchEnvelopeEnd;
+                    if (synth.isModActive(Config.modulators.dictionary["pitch envelope start"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempPitchStart != null) {
+                        startNote = instrument.envelopes[envelopeIndex].tempPitchStart;
+                    }
+                    else {
+                        instrument.envelopes[envelopeIndex].tempPitchStart = null;
+                    }
+                    if (synth.isModActive(Config.modulators.dictionary["pitch envelope end"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempPitchEnd != null) {
+                        endNote = instrument.envelopes[envelopeIndex].tempPitchEnd;
+                    }
+                    else {
+                        instrument.envelopes[envelopeIndex].tempPitchEnd = null;
+                    }
                     if (synth.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                         perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed;
                     }
@@ -16732,8 +16803,14 @@ var beepbox = (function (exports) {
                     if (synth.isModActive(Config.modulators.dictionary["individual envelope lower bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound != null) {
                         perEnvelopeLowerBound = instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound;
                     }
+                    else {
+                        instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound = null;
+                    }
                     if (synth.isModActive(Config.modulators.dictionary["individual envelope upper bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound != null) {
                         perEnvelopeUpperBound = instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound;
+                    }
+                    else {
+                        instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound = null;
                     }
                     if (!(perEnvelopeLowerBound <= perEnvelopeUpperBound)) {
                         perEnvelopeLowerBound = 0;
@@ -16761,7 +16838,7 @@ var beepbox = (function (exports) {
                     if (envelope.type == 1)
                         usedNoteSize = true;
                 }
-                const pitch = (envelope.type == 2) ? this.computePitchEnvelope(instrument, envelopeIndex, (this.startPinTickPitch || this.getPitchValue(instrument, tone, instrumentState, true))) : 0;
+                const pitch = (envelope.type == 2) ? this.computePitchEnvelope(startNote, endNote, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, (this.startPinTickPitch || this.getPitchValue(instrument, tone, instrumentState, true))) : 0;
                 if (automationTarget.computeIndex != null && automationTarget.perNote == perNote) {
                     const computeIndex = automationTarget.computeIndex + targetIndex;
                     let envelopeStart = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, noteSecondsStartUnscaled, this.noteSecondsStart[envelopeIndex], beatTimeStart, timeSinceStart, noteSizeStart, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
@@ -17047,25 +17124,9 @@ var beepbox = (function (exports) {
             }
             return 0;
         }
-        computePitchEnvelope(instrument, index, pitch = 0) {
-            let startNote = 0;
-            let endNote = Config.maxPitch;
-            let inverse = false;
-            let envelopeLowerBound = 0;
-            let envelopeUpperBound = 1;
-            if (instrument.isNoiseInstrument) {
-                endNote = Config.drumCount - 1;
-            }
-            if (index < instrument.envelopeCount && index !== -2) {
-                startNote = instrument.envelopes[index].pitchEnvelopeStart;
-                endNote = instrument.envelopes[index].pitchEnvelopeEnd;
-                inverse = instrument.envelopes[index].inverse;
-                envelopeLowerBound = instrument.envelopes[index].perEnvelopeLowerBound;
-                envelopeUpperBound = instrument.envelopes[index].perEnvelopeUpperBound;
-            }
+        computePitchEnvelope(startNote, endNote, inverse, envelopeLowerBound, envelopeUpperBound, pitch = 0) {
             if (startNote > endNote) {
-                startNote = 0;
-                endNote = instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch;
+                [startNote, endNote] = [endNote, startNote];
             }
             const range = endNote - startNote + 1;
             if (!inverse) {
@@ -17569,8 +17630,8 @@ var beepbox = (function (exports) {
             const usesReverb = effectsIncludeReverb(this.effects);
             let granularChance = 0;
             if (usesGranular) {
-                granularChance = (instrument.grainAmounts + 1);
-                this.granularMaximumGrains = instrument.grainAmounts;
+                granularChance = (instrument.grainFreq + 1);
+                this.granularMaximumGrains = instrument.grainFreq;
                 if (synth.isModActive(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex)) {
                     this.granularMaximumGrains = synth.getModValue(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, false);
                     granularChance = (synth.getModValue(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, false) + 1);
@@ -17597,7 +17658,7 @@ var beepbox = (function (exports) {
                             granularMinGrainSizeInMilliseconds = synth.getModValue(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex, false);
                         }
                         granularMinGrainSizeInMilliseconds *= envelopeStarts[53];
-                        let grainRange = instrument.grainRange;
+                        let grainRange = instrument.grainRange - instrument.grainSize;
                         if (synth.isModActive(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex)) {
                             grainRange = synth.getModValue(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex, false);
                         }
@@ -18094,6 +18155,13 @@ var beepbox = (function (exports) {
                         instrument.tmpEqFilterEnd = null;
                         instrument.tmpNoteFilterStart = instrument.noteFilter;
                         instrument.tmpNoteFilterEnd = null;
+                        instrument.envelopes.forEach((envelope) => {
+                            envelope.tempEnvelopeSpeed = null;
+                            envelope.tempEnvelopeLowerBound = null;
+                            envelope.tempEnvelopeUpperBound = null;
+                            envelope.tempPitchStart = null;
+                            envelope.tempPitchEnd = null;
+                        });
                     }
                 }
             }
@@ -18237,8 +18305,26 @@ var beepbox = (function (exports) {
                                                 }
                                                 if (latestModInsTimes[instrument.modChannels[mod]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
                                                     || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod]][usedInstruments[instrumentIndex]][modulatorAdjust]) {
+                                                    const tgtInstrument = this.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
+                                                    const envIndex = instrument.modEnvelopeNumbers[mod];
+                                                    switch (instrument.modulators[mod]) {
+                                                        case Config.modulators.dictionary["individual envelope speed"].index:
+                                                            tgtInstrument.envelopes[envIndex].tempEnvelopeSpeed = latestPinValues[mod];
+                                                            break;
+                                                        case Config.modulators.dictionary["individual envelope lower bound"].index:
+                                                            tgtInstrument.envelopes[envIndex].tempEnvelopeLowerBound = latestPinValues[mod] / 10;
+                                                            break;
+                                                        case Config.modulators.dictionary["individual envelope upper bound"].index:
+                                                            tgtInstrument.envelopes[envIndex].tempEnvelopeUpperBound = latestPinValues[mod] / 10;
+                                                            break;
+                                                        case Config.modulators.dictionary["pitch envelope start"].index:
+                                                            tgtInstrument.envelopes[envIndex].tempPitchStart = latestPinValues[mod];
+                                                            break;
+                                                        case Config.modulators.dictionary["pitch envelope end"].index:
+                                                            tgtInstrument.envelopes[envIndex].tempPitchEnd = latestPinValues[mod];
+                                                            break;
+                                                    }
                                                     if (eqFilterParam) {
-                                                        let tgtInstrument = this.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
                                                         if (instrument.modFilterTypes[mod] == 0) {
                                                             tgtInstrument.tmpEqFilterStart = tgtInstrument.eqSubFilters[latestPinValues[mod]];
                                                         }
@@ -18260,7 +18346,6 @@ var beepbox = (function (exports) {
                                                         tgtInstrument.tmpEqFilterEnd = tgtInstrument.tmpEqFilterStart;
                                                     }
                                                     else if (noteFilterParam) {
-                                                        let tgtInstrument = this.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
                                                         if (instrument.modFilterTypes[mod] == 0) {
                                                             tgtInstrument.tmpNoteFilterStart = tgtInstrument.noteSubFilters[latestPinValues[mod]];
                                                         }
@@ -23242,9 +23327,9 @@ var beepbox = (function (exports) {
                         }
                     }
                 }
-                else if (setting == Config.modulators.dictionary["individual envelope speed"].index) {
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
-                    let envelopeTarget = instrument.modEnvelopeNumbers[mod];
+                const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
+                let envelopeTarget = instrument.modEnvelopeNumbers[mod];
+                if (setting == Config.modulators.dictionary["individual envelope speed"].index) {
                     let speed = tone.expression + tone.expressionDelta;
                     if (tgtInstrument.envelopeCount > envelopeTarget) {
                         if (Number.isInteger(speed)) {
@@ -23257,19 +23342,27 @@ var beepbox = (function (exports) {
                     }
                 }
                 else if (setting == Config.modulators.dictionary["individual envelope lower bound"].index) {
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
-                    let envelopeTarget = instrument.modEnvelopeNumbers[mod];
                     let bound = tone.expression + tone.expressionDelta;
                     if (tgtInstrument.envelopeCount > envelopeTarget) {
                         tgtInstrument.envelopes[envelopeTarget].tempEnvelopeLowerBound = bound / 10;
                     }
                 }
                 else if (setting == Config.modulators.dictionary["individual envelope upper bound"].index) {
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
-                    let envelopeTarget = instrument.modEnvelopeNumbers[mod];
                     let bound = tone.expression + tone.expressionDelta;
                     if (tgtInstrument.envelopeCount > envelopeTarget) {
                         tgtInstrument.envelopes[envelopeTarget].tempEnvelopeUpperBound = bound / 10;
+                    }
+                }
+                else if (setting == Config.modulators.dictionary["pitch envelope start"].index) {
+                    let start = tone.expression + tone.expressionDelta;
+                    if (tgtInstrument.envelopeCount > envelopeTarget) {
+                        tgtInstrument.envelopes[envelopeTarget].tempPitchStart = start;
+                    }
+                }
+                else if (setting == Config.modulators.dictionary["pitch envelope end"].index) {
+                    let end = tone.expression + tone.expressionDelta;
+                    if (tgtInstrument.envelopeCount > envelopeTarget) {
+                        tgtInstrument.envelopes[envelopeTarget].tempPitchEnd = end;
                     }
                 }
             }
@@ -24179,11 +24272,35 @@ var beepbox = (function (exports) {
     }
     function shortenUrl() {
         hashUpdatedExternally();
-        let shortenerStrategy = "https://tinyurl.com/api-create.php?url=";
         const localShortenerStrategy = window.localStorage.getItem("shortenerStrategySelect");
-        if (localShortenerStrategy == "isgd")
-            shortenerStrategy = "https://is.gd/create.php?format=simple&url=";
-        window.open(shortenerStrategy + encodeURIComponent(new URL("#" + synth.song.toBase64String(), location.href).href));
+        const shorteners = {
+            "tinyurl": {
+                maxLength: 12233,
+                altName: "tinyurl.com",
+                encode: encodeURIComponent,
+                shortenerStrategy: "https://tinyurl.com/api-create.php?url="
+            },
+            "wackybox": {
+                maxLength: 128000,
+                altName: "wackybox.org",
+                encode: encodeURIComponent,
+                shortenerStrategy: "https://wackybox.org/api-create.php?url="
+            },
+            "html": {
+                maxLength: Infinity,
+                altName: location.host + location.pathname + "shortener",
+                encode: (url) => "#title=" + synth.song.title + "&song=" + url,
+                shortenerStrategy: "./shortener.html"
+            },
+        };
+        const shortener = shorteners[localShortenerStrategy || "wackybox"];
+        const uri = shortener.encode(new URL("#" + synth.song.toBase64String(), OFFLINE ? "https://box.slarmoo.com/website/" : location.href).href);
+        const uriLength = uri.length;
+        if (uriLength > shortener.maxLength) {
+            window.alert(`Unable to shorten url; Link is too large for ${shortener.altName}\n Max size: ${shortener.maxLength}. Your song: ${uriLength}`);
+            return;
+        }
+        window.open(shortener.shortenerStrategy + uri);
     }
     function onCopyClicked() {
         let nav;
