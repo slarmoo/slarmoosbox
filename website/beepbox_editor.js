@@ -80575,7 +80575,7 @@ You should be redirected to the song at:<br /><br />
                 const chipWaveLoopMode = entry.chipWaveLoopMode;
                 const chipWavePlayBackwards = entry.chipWavePlayBackwards;
                 const urlInLowerCase = url.toLowerCase();
-                const isBundledSamplePack = Object.keys(bundledSamplePacks).includes(urlInLowerCase);
+                const isBundledSamplePack = Object.values(bundledSamplePacks).includes(urlInLowerCase);
                 const options = [];
                 if (sampleRate !== 44100)
                     options.push("s" + sampleRate);
