@@ -16291,42 +16291,44 @@ var beepbox = (function (exports) {
                         }
                     }
                 }
-                const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
-                let envelopeTarget = instrument.modEnvelopeNumbers[mod];
-                if (setting == Config.modulators.dictionary["individual envelope speed"].index) {
-                    let speed = tone.expression + tone.expressionDelta;
-                    if (tgtInstrument.envelopeCount > envelopeTarget) {
-                        if (Number.isInteger(speed)) {
-                            tgtInstrument.envelopes[envelopeTarget].tempEnvelopeSpeed = Config.perEnvelopeSpeedIndices[speed];
+                if (!Config.modulators[setting].forSong) {
+                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
+                    let envelopeTarget = instrument.modEnvelopeNumbers[mod];
+                    if (setting == Config.modulators.dictionary["individual envelope speed"].index) {
+                        let speed = tone.expression + tone.expressionDelta;
+                        if (tgtInstrument.envelopeCount > envelopeTarget) {
+                            if (Number.isInteger(speed)) {
+                                tgtInstrument.envelopes[envelopeTarget].tempEnvelopeSpeed = Config.perEnvelopeSpeedIndices[speed];
+                            }
+                            else {
+                                speed = (1 - (speed % 1)) * Config.perEnvelopeSpeedIndices[Math.floor(speed)] + (speed % 1) * Config.perEnvelopeSpeedIndices[Math.ceil(speed)];
+                                tgtInstrument.envelopes[envelopeTarget].tempEnvelopeSpeed = speed;
+                            }
                         }
-                        else {
-                            speed = (1 - (speed % 1)) * Config.perEnvelopeSpeedIndices[Math.floor(speed)] + (speed % 1) * Config.perEnvelopeSpeedIndices[Math.ceil(speed)];
-                            tgtInstrument.envelopes[envelopeTarget].tempEnvelopeSpeed = speed;
+                    }
+                    else if (setting == Config.modulators.dictionary["individual envelope lower bound"].index) {
+                        let bound = tone.expression + tone.expressionDelta;
+                        if (tgtInstrument.envelopeCount > envelopeTarget) {
+                            tgtInstrument.envelopes[envelopeTarget].tempEnvelopeLowerBound = bound / 10;
                         }
                     }
-                }
-                else if (setting == Config.modulators.dictionary["individual envelope lower bound"].index) {
-                    let bound = tone.expression + tone.expressionDelta;
-                    if (tgtInstrument.envelopeCount > envelopeTarget) {
-                        tgtInstrument.envelopes[envelopeTarget].tempEnvelopeLowerBound = bound / 10;
+                    else if (setting == Config.modulators.dictionary["individual envelope upper bound"].index) {
+                        let bound = tone.expression + tone.expressionDelta;
+                        if (tgtInstrument.envelopeCount > envelopeTarget) {
+                            tgtInstrument.envelopes[envelopeTarget].tempEnvelopeUpperBound = bound / 10;
+                        }
                     }
-                }
-                else if (setting == Config.modulators.dictionary["individual envelope upper bound"].index) {
-                    let bound = tone.expression + tone.expressionDelta;
-                    if (tgtInstrument.envelopeCount > envelopeTarget) {
-                        tgtInstrument.envelopes[envelopeTarget].tempEnvelopeUpperBound = bound / 10;
+                    else if (setting == Config.modulators.dictionary["pitch envelope start"].index) {
+                        let start = tone.expression + tone.expressionDelta;
+                        if (tgtInstrument.envelopeCount > envelopeTarget) {
+                            tgtInstrument.envelopes[envelopeTarget].tempPitchStart = start;
+                        }
                     }
-                }
-                else if (setting == Config.modulators.dictionary["pitch envelope start"].index) {
-                    let start = tone.expression + tone.expressionDelta;
-                    if (tgtInstrument.envelopeCount > envelopeTarget) {
-                        tgtInstrument.envelopes[envelopeTarget].tempPitchStart = start;
-                    }
-                }
-                else if (setting == Config.modulators.dictionary["pitch envelope end"].index) {
-                    let end = tone.expression + tone.expressionDelta;
-                    if (tgtInstrument.envelopeCount > envelopeTarget) {
-                        tgtInstrument.envelopes[envelopeTarget].tempPitchEnd = end;
+                    else if (setting == Config.modulators.dictionary["pitch envelope end"].index) {
+                        let end = tone.expression + tone.expressionDelta;
+                        if (tgtInstrument.envelopeCount > envelopeTarget) {
+                            tgtInstrument.envelopes[envelopeTarget].tempPitchEnd = end;
+                        }
                     }
                 }
             }
