@@ -655,6 +655,7 @@ export class PatternEditor {
 
         } else {
             if (this._doc.prefs.alwaysShowPlayhead && this._doc.synth.playing) {
+                this._svgPlayhead.setAttribute("visibility", "visible");
                 this._svgPlayhead.style.opacity = '0.3';
             } else {
                 this._svgPlayhead.setAttribute("visibility", "hidden");

@@ -75098,6 +75098,7 @@ You should be redirected to the song at:<br /><br />
                 }
                 else {
                     if (this._doc.prefs.alwaysShowPlayhead && this._doc.synth.playing) {
+                        this._svgPlayhead.setAttribute("visibility", "visible");
                         this._svgPlayhead.style.opacity = '0.3';
                     }
                     else {
