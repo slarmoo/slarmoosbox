@@ -1602,6 +1602,10 @@ li.select2-results__option[role=group] > strong:hover {
   background-color: #516fbb;
 }
 
+.beepboxEditor .miniBox:not(:hover) {
+	appearance: textfield;
+}
+
 #popup {
 	position: fixed;
 	bottom: 20px;

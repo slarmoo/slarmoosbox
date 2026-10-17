@@ -9685,12 +9685,14 @@ export class Synth {
                                             
                                                 const tgtInstrument: Instrument = this.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
                                                 const envIndex = instrument.modEnvelopeNumbers[mod];
-                                                switch (instrument.modulators[mod]) {
-                                                    case Config.modulators.dictionary["individual envelope speed"].index: tgtInstrument.envelopes[envIndex].tempEnvelopeSpeed = latestPinValues[mod]; break;
-                                                    case Config.modulators.dictionary["individual envelope lower bound"].index: tgtInstrument.envelopes[envIndex].tempEnvelopeLowerBound = latestPinValues[mod] / 10; break;
-                                                    case Config.modulators.dictionary["individual envelope upper bound"].index: tgtInstrument.envelopes[envIndex].tempEnvelopeUpperBound = latestPinValues[mod] / 10; break;
-                                                    case Config.modulators.dictionary["pitch envelope start"].index: tgtInstrument.envelopes[envIndex].tempPitchStart = latestPinValues[mod]; break;
-                                                    case Config.modulators.dictionary["pitch envelope end"].index: tgtInstrument.envelopes[envIndex].tempPitchEnd = latestPinValues[mod]; break;
+                                                if (tgtInstrument.envelopeCount > envIndex) {
+                                                    switch (instrument.modulators[mod]) {
+                                                        case Config.modulators.dictionary["individual envelope speed"].index: tgtInstrument.envelopes[envIndex].tempEnvelopeSpeed = latestPinValues[mod]; break;
+                                                        case Config.modulators.dictionary["individual envelope lower bound"].index: tgtInstrument.envelopes[envIndex].tempEnvelopeLowerBound = latestPinValues[mod] / 10; break;
+                                                        case Config.modulators.dictionary["individual envelope upper bound"].index: tgtInstrument.envelopes[envIndex].tempEnvelopeUpperBound = latestPinValues[mod] / 10; break;
+                                                        case Config.modulators.dictionary["pitch envelope start"].index: tgtInstrument.envelopes[envIndex].tempPitchStart = latestPinValues[mod]; break;
+                                                        case Config.modulators.dictionary["pitch envelope end"].index: tgtInstrument.envelopes[envIndex].tempPitchEnd = latestPinValues[mod]; break;
+                                                    }
                                                 }
                                                 
                                                 if (eqFilterParam) {

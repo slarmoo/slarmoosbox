@@ -10657,6 +10657,10 @@ li.select2-results__option[role=group] > strong:hover {
   background-color: #516fbb;
 }
 
+.beepboxEditor .miniBox:not(:hover) {
+	appearance: textfield;
+}
+
 #popup {
 	position: fixed;
 	bottom: 20px;
@@ -20243,22 +20247,24 @@ li.select2-results__option[role=group] > strong:hover {
                                                     || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod]][usedInstruments[instrumentIndex]][modulatorAdjust]) {
                                                     const tgtInstrument = this.song.channels[instrument.modChannels[mod]].instruments[usedInstruments[instrumentIndex]];
                                                     const envIndex = instrument.modEnvelopeNumbers[mod];
-                                                    switch (instrument.modulators[mod]) {
-                                                        case Config.modulators.dictionary["individual envelope speed"].index:
-                                                            tgtInstrument.envelopes[envIndex].tempEnvelopeSpeed = latestPinValues[mod];
-                                                            break;
-                                                        case Config.modulators.dictionary["individual envelope lower bound"].index:
-                                                            tgtInstrument.envelopes[envIndex].tempEnvelopeLowerBound = latestPinValues[mod] / 10;
-                                                            break;
-                                                        case Config.modulators.dictionary["individual envelope upper bound"].index:
-                                                            tgtInstrument.envelopes[envIndex].tempEnvelopeUpperBound = latestPinValues[mod] / 10;
-                                                            break;
-                                                        case Config.modulators.dictionary["pitch envelope start"].index:
-                                                            tgtInstrument.envelopes[envIndex].tempPitchStart = latestPinValues[mod];
-                                                            break;
-                                                        case Config.modulators.dictionary["pitch envelope end"].index:
-                                                            tgtInstrument.envelopes[envIndex].tempPitchEnd = latestPinValues[mod];
-                                                            break;
+                                                    if (tgtInstrument.envelopeCount > envIndex) {
+                                                        switch (instrument.modulators[mod]) {
+                                                            case Config.modulators.dictionary["individual envelope speed"].index:
+                                                                tgtInstrument.envelopes[envIndex].tempEnvelopeSpeed = latestPinValues[mod];
+                                                                break;
+                                                            case Config.modulators.dictionary["individual envelope lower bound"].index:
+                                                                tgtInstrument.envelopes[envIndex].tempEnvelopeLowerBound = latestPinValues[mod] / 10;
+                                                                break;
+                                                            case Config.modulators.dictionary["individual envelope upper bound"].index:
+                                                                tgtInstrument.envelopes[envIndex].tempEnvelopeUpperBound = latestPinValues[mod] / 10;
+                                                                break;
+                                                            case Config.modulators.dictionary["pitch envelope start"].index:
+                                                                tgtInstrument.envelopes[envIndex].tempPitchStart = latestPinValues[mod];
+                                                                break;
+                                                            case Config.modulators.dictionary["pitch envelope end"].index:
+                                                                tgtInstrument.envelopes[envIndex].tempPitchEnd = latestPinValues[mod];
+                                                                break;
+                                                        }
                                                     }
                                                     if (eqFilterParam) {
                                                         if (instrument.modFilterTypes[mod] == 0) {
@@ -73004,8 +73010,8 @@ You should be redirected to the song at:<br /><br />
                     const instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
                     return (_b = (_a = instrument.envelopes[envelopeIndex]) === null || _a === void 0 ? void 0 : _a.tempPitchEnd) !== null && _b !== void 0 ? _b : null;
                 }, (_a = instrument.envelopes[envelopeIndex].pitchEnvelopeStart) !== null && _a !== void 0 ? _a : 0, (_b = instrument.envelopes[envelopeIndex].pitchEnvelopeEnd) !== null && _b !== void 0 ? _b : 0, 0, instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch, 0);
-                const pitchStartNoteBox = HTML.input({ value: instrument.envelopes[envelopeIndex].pitchEnvelopeStart ? instrument.envelopes[envelopeIndex].pitchEnvelopeStart : 0, style: "width: 3em; font-size: 80%; ", id: "startNoteBox", type: "number", step: "1", min: "0", max: instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch });
-                const pitchEndNoteBox = HTML.input({ value: instrument.envelopes[envelopeIndex].pitchEnvelopeEnd ? instrument.envelopes[envelopeIndex].pitchEnvelopeEnd : instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch, style: "width: 3em; font-size: 80%; ", id: "endNoteBox", type: "number", step: "1", min: "0", max: instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch });
+                const pitchStartNoteBox = HTML.input({ value: instrument.envelopes[envelopeIndex].pitchEnvelopeStart ? instrument.envelopes[envelopeIndex].pitchEnvelopeStart : 0, style: "width: 3em; font-size: 80%;", id: "startNoteBox", class: "miniBox", type: "number", step: "1", min: "0", max: instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch });
+                const pitchEndNoteBox = HTML.input({ value: instrument.envelopes[envelopeIndex].pitchEnvelopeEnd ? instrument.envelopes[envelopeIndex].pitchEnvelopeEnd : instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch, style: "width: 3em; font-size: 80%;", id: "endNoteBox", class: "miniBox", type: "number", step: "1", min: "0", max: instrument.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch });
                 const pitchStartNoteDisplay = HTML.span({ class: "tip", style: `flex:1; height:1em; font-size: smaller;`, onclick: () => this._openPrompt("pitchRange") }, "" + this._pitchToNote(parseInt(pitchStartNoteBox.value), instrument.isNoiseInstrument) + "");
                 const pitchEndNoteDisplay = HTML.span({ class: "tip", style: `flex:1; height:1em; font-size: smaller;`, onclick: () => this._openPrompt("pitchRange") }, "" + this._pitchToNote(parseInt(pitchEndNoteBox.value), instrument.isNoiseInstrument) + "");
                 const pitchStartBoxWrapper = HTML.div({ style: "flex: 1; display: flex; flex-direction: column; align-items: center;" }, pitchStartNoteDisplay, pitchStartNoteBox);
@@ -73045,8 +73051,8 @@ You should be redirected to the song at:<br /><br />
                 const perEnvelopeSpeedDisplay = HTML.span({ class: "tip", style: `width:58px; flex:1; height:1em; font-size: smaller; margin-left: 10px;`, onclick: () => this._openPrompt("perEnvelopeSpeed") }, "Spd: x" + prettyNumber(EnvelopeEditor.convertIndexSpeed(perEnvelopeSpeedSlider.getValueBeforeProspectiveChange(), "speed")));
                 const perEnvelopeSpeedWrapper = HTML.div({ style: "margin-top: 3px; flex:1; display:flex; flex-direction: row; align-items:center; justify-content:right;" }, perEnvelopeSpeedDisplay, perEnvelopeSpeedSlider.container);
                 const perEnvelopeSpeedGroup = HTML.div({ class: "editor-controls", style: "flex-direction:column; align-items:center;" }, perEnvelopeSpeedWrapper);
-                const lowerBoundBox = HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeLowerBound, type: "number", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 3em; font-size: 80%; " });
-                const upperBoundBox = HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeUpperBound, type: "number", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 3em; font-size: 80%; " });
+                const lowerBoundBox = HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeLowerBound, type: "number", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 3em; font-size: 80%;", class: "miniBox" });
+                const upperBoundBox = HTML.input({ value: instrument.envelopes[envelopeIndex].perEnvelopeUpperBound, type: "number", min: Config.perEnvelopeBoundMin, max: Config.perEnvelopeBoundMax, step: 0.1, style: "width: 3em; font-size: 80%;", class: "miniBox" });
                 const lowerBoundSlider = new DoubleSlider(this._doc, (oldBound, newBound) => new ChangeEnvelopeLowerBound(this._doc, oldBound / 10, newBound / 10, envelopeIndex), (oldBound, newBound) => new ChangeEnvelopeUpperBound(this._doc, oldBound / 10, newBound / 10, envelopeIndex), () => {
                     const instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
                     if (!instrument.envelopes[envelopeIndex] || instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound == null || instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound == undefined)
