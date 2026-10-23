@@ -1533,6 +1533,11 @@ export class EnvelopeSettings {
             this.perEnvelopeUpperBound = 1;
         }
 
+        if (this.perEnvelopeLowerBound > this.perEnvelopeUpperBound) {
+            [this.perEnvelopeLowerBound, this.perEnvelopeUpperBound] = [this.perEnvelopeUpperBound, this.perEnvelopeLowerBound];
+            this.inverse = !this.inverse;
+        }
+
         //convert tremolo2 settings into lfo
         if (isTremolo2) {
             if (this.inverse) {
@@ -5934,6 +5939,10 @@ export class Song {
                                 }
                             }
                         }
+                        if (perEnvelopeLowerBound > perEnvelopeUpperBound) {
+                            [perEnvelopeLowerBound, perEnvelopeUpperBound] = [perEnvelopeUpperBound, perEnvelopeLowerBound];
+                            envelopeInverse = !envelopeInverse;
+                        }
 
                         instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete);
                         if (fromSlarmoosBox && beforeThree && !beforeTwo) {
@@ -8878,8 +8887,8 @@ class InstrumentState {
                 this.granularMaximumGrains = synth.getModValue(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, false);
                 granularChance = (synth.getModValue(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, false) + 1);
             }
-            this.granularMaximumGrains = Math.floor(Math.pow(2, this.granularMaximumGrains * envelopeStarts[EnvelopeComputeIndex.grainAmount]));
-            granularChance = granularChance * envelopeStarts[EnvelopeComputeIndex.grainAmount];
+            this.granularMaximumGrains = Math.floor(Math.pow(2, this.granularMaximumGrains * envelopeStarts[EnvelopeComputeIndex.grainFreq]));
+            granularChance = granularChance * envelopeStarts[EnvelopeComputeIndex.grainFreq];
         }
 
         this.allocateNecessaryBuffers(synth, instrument, samplesPerTick);

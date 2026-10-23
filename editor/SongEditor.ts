@@ -830,6 +830,7 @@ export class SongEditor {
         option({ value: "showOscilloscope" }, "Show Oscilloscope"),
         option({ value: "showSampleLoadingStatus" }, "Show Sample Loading Status"),
         option({ value: "alwaysShowPlayhead"}, "Always Show Playhead"),
+        option({ value: "centerDoubleSliders"}, "Center Double Sliders"),
         option({ value: "showDescription" }, "Show Description"),
         option({ value: "layout" }, "Set Layout..."),
         option({ value: "colorTheme" }, "Set Theme..."),
@@ -892,19 +893,27 @@ export class SongEditor {
     )
     public readonly grainSizeNum: HTMLParagraphElement = div({ style: "font-size: 80%; ", id: "grainSizeNum" });
     public readonly grainRangeNum: HTMLParagraphElement = div({ style: "font-size: 80%; ", id: "grainRangeNum" });
-    private readonly _grainSizeSliderRow: HTMLDivElement = div({ class: "selectRow", style: "width:100%; display: flex; flex-direction: row; " },
-        div({ style: "flex: 1; display:flex; flex-direction:column; align-items:center;" },
-            span({ class: "tip", style: "font-size: smaller;", onclick: () => this._openPrompt("grainSize") }, "Grain: "),
-            div({ style: `color: ${ColorConfig.secondaryText}; ` }, this.grainSizeNum),
-        ),
-        this._grainSizeDoubleSlider.container,
-        div({ style: "flex: 1; display:flex; flex-direction:column; align-items:center;" },
-            span({ class: "tip", style: "font-size: smaller;", onclick: () => this._openPrompt("grainRange") }, "Range: "),
-            div({ style: `color: ${ColorConfig.secondaryText}; ` }, this.grainRangeNum),
-        ),
+    private readonly _grainSizeNumWrapper: HTMLDivElement = div({ style: "flex: 1; display:flex; flex-direction:column; align-items:center;" },
+        span({ class: "tip", style: "font-size: smaller;", onclick: () => this._openPrompt("grainSize") }, "Grain: "),
+        div({ style: `color: ${ColorConfig.secondaryText}; ` }, this.grainSizeNum),
     );
+    private readonly _grainRangeNumWrapper: HTMLDivElement = div({ style: "flex: 1; display:flex; flex-direction:column; align-items:center;" },
+        span({ class: "tip", style: "font-size: smaller;", onclick: () => this._openPrompt("grainSize") }, "Range: "),
+        div({ style: `color: ${ColorConfig.secondaryText}; ` }, this.grainRangeNum),
+    );
+    private _generateGrainSizeSliderRow(): HTMLElement[] {
+        return [this._grainSizeNumWrapper,
+            ...(this.doc.prefs.centerDoubleSliders ? [
+                this._grainSizeDoubleSlider.container,
+                this._grainRangeNumWrapper
+            ] : [
+                this._grainRangeNumWrapper,
+                this._grainSizeDoubleSlider.container
+            ])] 
+    }
+    private readonly _grainSizeSliderRow: HTMLDivElement = div({ class: "selectRow", style: "width:100%; display: flex; flex-direction: row; " }, ...this._generateGrainSizeSliderRow());
     private readonly _grainFreqSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.grainFreqMax, value: 8, step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeGrainFreq(this.doc, oldValue, newValue), false);
-    private readonly _grainFreqRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("grainAmount") }, "Grain Freq:"), this._grainFreqSlider.container);
+    private readonly _grainFreqRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("grainfreq") }, "Grain Freq:"), this._grainFreqSlider.container);
     private readonly _granularContainerRow: HTMLDivElement = div({ class: "", style: "display:flex; flex-direction:column;" },
         this._granularRow,
         this._grainFreqRow,
@@ -2443,6 +2452,7 @@ export class SongEditor {
             (prefs.showOscilloscope ? textOnIcon : textOffIcon) + "Show Oscilloscope",
             (prefs.showSampleLoadingStatus ? textOnIcon : textOffIcon) + "Show Sample Loading Status",
             (prefs.alwaysShowPlayhead ? textOnIcon : textOffIcon) + "Always Show Playhead",
+            (prefs.centerDoubleSliders ? textOnIcon : textOffIcon) + "Center Double Sliders",
             (prefs.showDescription ? textOnIcon : textOffIcon) + "Show Description",
             textSpacingIcon + "Set Layout...",
             textSpacingIcon + "Set Theme...",
@@ -2958,6 +2968,8 @@ export class SongEditor {
                 this._granularSlider.updateValue(instrument.granular);
                 this._grainFreqSlider.updateValue(instrument.grainFreq);
                 this._grainSizeDoubleSlider.updateValues(instrument.grainSize, instrument.grainRange);
+                this._grainSizeSliderRow.innerHTML = "";
+                for (const child of this._generateGrainSizeSliderRow()) this._grainSizeSliderRow.appendChild(child);
             } else {
                 this._granularContainerRow.style.display = "none";
             }
@@ -5627,6 +5639,9 @@ export class SongEditor {
                 break;
             case "alwaysShowPlayhead":
                 this.doc.prefs.alwaysShowPlayhead = !this.doc.prefs.alwaysShowPlayhead;
+                break;
+            case "centerDoubleSliders":
+                this.doc.prefs.centerDoubleSliders = !this.doc.prefs.centerDoubleSliders;
                 break;
         }
         this._optionsMenu.selectedIndex = 0;

@@ -82,7 +82,8 @@ export class Preferences {
 	public showInstrumentScrollbars: boolean;
 	public closePromptByClickoff: boolean;
 	public frostedGlassBackground: boolean;
-	public alwaysShowPlayhead: boolean;
+	public alwaysShowPlayhead: boolean; //41Box ported behavior
+	public centerDoubleSliders: boolean;
 	public selectiveRandom: SelectiveInstrumentSettings = new SelectiveInstrumentSettings();
 	public selectivePaste: SelectiveInstrumentSettings = new SelectiveInstrumentSettings();
 	
@@ -132,6 +133,7 @@ export class Preferences {
 		this.selectiveRandom.fromJsonObject(JSON.parse(window.localStorage.getItem("selectiveRandom") || "{}"));
 		this.selectivePaste.fromJsonObject(JSON.parse(window.localStorage.getItem("selectivePaste") || "{}"));
 		this.alwaysShowPlayhead = window.localStorage.getItem("alwaysShowPlayhead") == "true";
+		this.centerDoubleSliders = window.localStorage.getItem("centerDoubleSliders") == "true";
 		
 		const defaultScale: Scale | undefined = Config.scales.dictionary[window.localStorage.getItem("defaultScale")!];
 		this.defaultScale = (defaultScale != undefined) ? defaultScale.index : 0;
@@ -189,6 +191,7 @@ export class Preferences {
 		window.localStorage.setItem("selectiveRandom", this.selectiveRandom.toJsonObject());
 		window.localStorage.setItem("selectivePaste", this.selectivePaste.toJsonObject());
 		window.localStorage.setItem("alwaysShowPlayhead", this.alwaysShowPlayhead ? "true" : "false");
+		window.localStorage.setItem("centerDoubleSliders", this.centerDoubleSliders ? "true" : "false");
 
 	}
 }

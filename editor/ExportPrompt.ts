@@ -11,6 +11,7 @@ import { ArrayBufferWriter } from "./ArrayBufferWriter";
 import { MidiChunkType, MidiFileFormat, MidiControlEventMessage, MidiEventType, MidiMetaEventMessage, MidiRegisteredParameterNumberMSB, MidiRegisteredParameterNumberLSB, volumeMultToMidiVolume, volumeMultToMidiExpression, defaultMidiPitchBend, defaultMidiExpression } from "./Midi";
 // https://github.com/mmig/libflac.js
 import * as Flac from 'libflacjs/dist/libflac';
+import { createOggEncoder, WasmMediaEncoder } from "wasm-media-encoders";
 
 const { button, div, h2, input, select, option } = HTML;
 
@@ -259,6 +260,10 @@ export class ExportPrompt implements Prompt {
                 this.outputStarted = true;
                 this._exportTo("ogg");
                 break;
+            // case "oga":
+            //     this.outputStarted = true;
+            //     this._exportTo("oga");
+            //     break;
             case "flac":
                 this.outputStarted = true;
                 this._exportTo("flac");
@@ -307,8 +312,10 @@ export class ExportPrompt implements Prompt {
                 this._exportToMp3Finish();
             } else if (this.thenExportTo == "flac") {
                 this._exportToFlacFinish(false);
-            } else if (this.thenExportTo == "ogg") {
+            } else if (this.thenExportTo == "oga") {
                 this._exportToFlacFinish(true);
+            } else if (this.thenExportTo == "ogg") {
+                this._exportToOggFinish();
             } else {
                 throw new Error("Unrecognized file export type chosen!");
             }
@@ -325,7 +332,7 @@ export class ExportPrompt implements Prompt {
         this.thenExportTo = type;
         this.currentChunk = 0;
         this.synth = new Synth(this._doc.song);
-        if (type == "wav" || type == "flac" || type == "ogg") {
+        if (type == "wav" || type == "flac" || type == "ogg" || type == "oga") {
             this.synth.samplesPerSecond = 48000; // Use professional video editing standard sample rate for .wav file export.
         } else if (type == "mp3") {
             this.synth.samplesPerSecond = 44100; // Use consumer CD standard sample rate for .mp3 export.
@@ -461,7 +468,34 @@ export class ExportPrompt implements Prompt {
         }
     }
 
-    private _exportToFlacFinish(isOgg: boolean): void {
+    private _exportToOggFinish(): void {
+        const channelCount: 1 | 2 = 2;
+        const quality: number = 10;
+        const sampleBlockSize: number = 4096;
+        createOggEncoder().then((oggEncoder: WasmMediaEncoder<'audio/ogg'>) => {
+            oggEncoder.configure({
+                channels: channelCount,
+                sampleRate: this.synth.samplesPerSecond,
+                vbrQuality: quality,
+            });
+            const left: Float32Array = this.recordedSamplesL;
+            const right: Float32Array = this.recordedSamplesR;
+            const parts = [];
+            let sampleIndex: number = 0;
+            for (; sampleIndex < left.length; sampleIndex += sampleBlockSize) {
+                const leftChunk: Float32Array = left.subarray(sampleIndex, sampleIndex + sampleBlockSize);
+                const rightChunk: Float32Array = right.subarray(sampleIndex, sampleIndex + sampleBlockSize);
+                const frame: Float32Array[] = channelCount === 2 ? ([leftChunk, rightChunk]) : ([leftChunk]);
+                parts.push(oggEncoder.encode(frame).slice());
+            }
+            parts.push(oggEncoder.finalize().slice());
+            const blob: Blob = new Blob(parts, { type: "audio/ogg" });
+            save(blob, this._fileName.value.trim() + ".ogg");
+            this._close();
+        });
+    }
+
+    private _exportToFlacFinish(isOga: boolean): void {
         let flac_ok = 1;
         
         //init encoder
@@ -506,7 +540,7 @@ export class ExportPrompt implements Prompt {
         // [2] (c) initialize to either write to native-FALC or to OGG container
 
         var status_encoder;
-        if (!isOgg) {
+        if (!isOga) {
             // encode to native FLAC container
             status_encoder = Flac.init_encoder_stream(flac_encoder,
                 write_callback_fn,    //required callback(s)
@@ -552,7 +586,7 @@ export class ExportPrompt implements Prompt {
         // [4] FINISH ENCODING
 
         flac_ok &= +Boolean(Flac.FLAC__stream_encoder_finish(flac_encoder));
-        console.log((isOgg ? "ogg" : "flac") + " finish: " + (flac_ok ? "true" : "false"));
+        console.log((isOga ? "ogg" : "flac") + " finish: " + (flac_ok ? "true" : "false"));
 
 
         ////////
@@ -569,7 +603,7 @@ export class ExportPrompt implements Prompt {
         for (var i = encBuffer.length - 1; i >= 0; --i) recLength += encBuffer[i].byteLength;
 
         if (metaData) {
-            this.addFLACMetaData(encBuffer, metaData, isOgg);
+            this.addFLACMetaData(encBuffer, metaData, isOga);
         }
         //convert buffers into one single buffer
         let result = new Uint8Array(recLength);
@@ -582,8 +616,8 @@ export class ExportPrompt implements Prompt {
         }
         const samples = result;
 
-        const blob = new Blob([samples], { type: isOgg ? 'audio/ogg' : 'audio/flac' });
-        save(blob, this._fileName.value.trim() + (isOgg ? ".ogg" : ".flac"));
+        const blob = new Blob([samples], { type: isOga ? 'audio/ogg' : 'audio/flac' });
+        save(blob, this._fileName.value.trim() + (isOga ? ".oga" : ".flac"));
 
         this._close();
 

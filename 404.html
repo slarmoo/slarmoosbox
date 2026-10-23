@@ -84,7 +84,7 @@ const colorConfig = {
         eyeWhite: "#ffffff",
         eyeBlack: "#000000",
         scalesLight: "green",
-        ScalesDark: "#005500",
+        scalesDark: "#005500",
     },
     board: {
         lightEven: "#ddddff",
@@ -120,7 +120,7 @@ const colorConfig = {
         gameState = "menu";
 
         constructor() {
-            document.addEventListener('keydown', (event) => { this.keyPressed(event.key) });
+            document.addEventListener('keyup', (event) => { this.keyPressed(event.key) });
             this.gameState = "menu";
             this.render();
         }
@@ -135,11 +135,11 @@ const colorConfig = {
                     emptyTypes.push(this.getPosition(i, j));
                 }
             }
-            const randomPosition = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
             if (emptyPositions.length == 0) {
                 this.gameOver("You won!");
             }
-            this.setPosition(randomPosition[0], randomPosition[1], "apple");
+            const randomPosition = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
+            this.setPosition(...randomPosition, "apple");
         }
 
         getPosition(X, Y) {
@@ -219,7 +219,7 @@ const colorConfig = {
                             case "apple": ctx.fillStyle = isPaused ? colorConfig.apple.dark : colorConfig.apple.light;
                                 ctx.fillRect(boxWidth * i, boxWidth * j, boxWidth, boxWidth);
                                 break;
-                            case "snake": ctx.fillStyle = isPaused ? colorConfig.snake.ScalesDark : colorConfig.snake.scalesLight;
+                            case "snake": ctx.fillStyle = isPaused ? colorConfig.snake.scalesDark : colorConfig.snake.scalesLight;
                                 ctx.fillRect(boxWidth * i, boxWidth * j, boxWidth, boxWidth);
                                 if (this.snake.posX == i && this.snake.posY == j) {
                                     switch (this.snake.directionInputed) {

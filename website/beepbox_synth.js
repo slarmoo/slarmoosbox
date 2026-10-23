@@ -1645,7 +1645,7 @@ var beepbox = (function (exports) {
             return (_a = EditorConfig.presetCategories[0].presets.dictionary) === null || _a === void 0 ? void 0 : _a[TypePresets === null || TypePresets === void 0 ? void 0 : TypePresets[instrument]];
         }
     }
-    EditorConfig.version = "1.4.15";
+    EditorConfig.version = "1.4.16";
     EditorConfig.versionDisplayName = "Slarmoo's Box " + EditorConfig.version;
     EditorConfig.releaseNotesURL = "./patch_notes.html";
     EditorConfig.isOnMac = /^Mac/i.test(navigator.platform) || /Mac OS X/i.test(navigator.userAgent) || /^(iPhone|iPad|iPod)/i.test(navigator.platform) || /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
@@ -3786,6 +3786,10 @@ var beepbox = (function (exports) {
             }
             else {
                 this.perEnvelopeUpperBound = 1;
+            }
+            if (this.perEnvelopeLowerBound > this.perEnvelopeUpperBound) {
+                [this.perEnvelopeLowerBound, this.perEnvelopeUpperBound] = [this.perEnvelopeUpperBound, this.perEnvelopeLowerBound];
+                this.inverse = !this.inverse;
             }
             if (isTremolo2) {
                 if (this.inverse) {
@@ -7878,6 +7882,10 @@ var beepbox = (function (exports) {
                                                 perEnvelopeLowerBound = 0.5;
                                             }
                                         }
+                                    }
+                                    if (perEnvelopeLowerBound > perEnvelopeUpperBound) {
+                                        [perEnvelopeLowerBound, perEnvelopeUpperBound] = [perEnvelopeUpperBound, perEnvelopeLowerBound];
+                                        envelopeInverse = !envelopeInverse;
                                     }
                                     instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete);
                                     if (fromSlarmoosBox && beforeThree && !beforeTwo) {

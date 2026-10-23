@@ -414,9 +414,9 @@
 		// "🍋",
         // Slarmoo's Box plants
         "✨","🌈","🌧️","🪨","🐍","🌲","🌳","𓆏","🦀","🍄‍🟫","🌵","and Bobby","🥚",
-        "🌾","🎍","🐳","🪸","🐚","🍂🍁","🪸🪸🫧🐙🐡🐠🐠🫧🐟",
+        "🌾","🎍","🐳","🪸","🐚","🍂🍁","🪸🪸🫧🐙🐡🐠🐠🫧🐟", "🐡",
         //Current version
-        "1.4.15",
+        "1.4.16",
         ];
         const date = new Date();
         if (Math.floor(Math.random() * 3) == 0) { //more than doubled chance for a plant to show up
@@ -428,7 +428,7 @@
             }
             //Slarmoo's Box Halloween plants
             const spookyPlants = ["🎃", "🍬", "👻", "🐍", "🧪"];
-            if ((date.getDate() == 31) && date.getMonth() == 9) {
+            if ((date.getDate() + date.getMonth() * 31  > 9 * 31 + 29) && (date.getDate() + date.getMonth() < 10 * 31 + 2)) {
                 document.getElementById("plant").innerHTML = "  " + spookyPlants[(Math.floor(Math.random() * spookyPlants.length))];
             }
             //Slarmoo's Box valentines plants

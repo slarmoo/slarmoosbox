@@ -568,7 +568,6 @@ export class TipPrompt implements Prompt {
 				message = div(
 					h2("Pitch Envelope Start and End"),
 					p("These two settings will adjust where the start and end of the pitch envelope affects. Everything below start envelope will be the value of the lower bound, everything above end envelope will be upper bound, and everything inbetween will scale linearly based on pitch (the opposite is true if inverted)."),
-					p("This will NOT work properly if pitch start is greater than pitch end."),
 					p("These values are different than the MIDI numbers. These correspond to how many paino keys from the bottom of the song player a specific pitch is"),
 				);
 			} break;
@@ -582,14 +581,13 @@ export class TipPrompt implements Prompt {
 			case "envelopeInvert": {
 				message = div(
 					h2("Envelope Inversion"),
-					p("This setting will invert the envelope curve. So instead of, for example, lower pitches leading to a smaller output, lower pitches can lead to a greater output."),
+					p("This setting will invert the envelope curve. So instead of, for example, lower pitches leading to a smaller output with a pitch envelope, lower pitches can lead to a greater output."),
 				);
 			} break;
 			case "envelopeRange": {
 				message = div(
 					h2("Envelope Bounds"),
 					p("These two settings stretch or shrink the envelope vertically, allowing for different ranges of affect."),
-					p("This will NOT work properly if lower bound is greater than upper bound."),
 				)
 			} break;
 			case "modEnvelope": {
@@ -642,7 +640,6 @@ export class TipPrompt implements Prompt {
 				message = div(
 					h2("Ring Modulation (Hertz)"),
 					p(`This setting changes the Hertz of the multiplied frequency.`),
-					// p(`The offset allows you to increment the Hertz by 1.`),
 				);
 			} break;
 			case "ringModChipWave": {
@@ -662,18 +659,13 @@ export class TipPrompt implements Prompt {
 				message = div(
 					h2("Grain Size"),
 					p(`This setting controls the size of the grain.`),
+					p(`The left slider determines the minimum grain size and the right one determines the maximum grain size, with the difference between being "grain range".`)
 				);
 			} break;
-			case "grainAmount": {
+			case "grainfreq": {
 				message = div(
 					h2("Grain Freq"),
 					p(`This setting controls about how often a grain (a group of audio samples) is added to the output, from rarely to multiple at once.`),
-				);
-			} break;
-			case "grainRange": {
-				message = div(
-					h2("Grain Range"),
-					p(`This setting controls the range of randomization for grain sizes. `),
 				);
 			} break;
 			
