@@ -428,7 +428,7 @@
             }
             //Slarmoo's Box Halloween plants
             const spookyPlants = ["🎃", "🍬", "👻", "🐍", "🧪"];
-            if ((date.getDate() + date.getMonth() * 31  > 9 * 31 + 29) && (date.getDate() + date.getMonth() < 10 * 31 + 2)) {
+            if ((date.getDate() + date.getMonth() * 31  > 9 * 31 + 29) && (date.getDate() + date.getMonth() * 31 < 10 * 31 + 2)) {
                 document.getElementById("plant").innerHTML = "  " + spookyPlants[(Math.floor(Math.random() * spookyPlants.length))];
             }
             //Slarmoo's Box valentines plants
