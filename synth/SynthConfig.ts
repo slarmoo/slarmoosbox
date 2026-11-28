@@ -67,6 +67,7 @@ export const enum EnvelopeType {
     rise,
     blip,
     fall, //slarmoo's box 1.2
+    sequence, //slarmoo's box 1.4.17
     //add new envelope types here
 }
 
@@ -1424,6 +1425,7 @@ export class Config {
         { name: "rise", type: EnvelopeType.rise, speed: 32.0 },
         { name: "blip", type: EnvelopeType.blip, speed: 6.0 },
         { name: "fall", type: EnvelopeType.fall, speed: 6.0 },
+        { name: "sequence", type: EnvelopeType.sequence, speed: 1.0 } //Slarmoo's Box 1.4.17
     ]);
 
 
@@ -1684,6 +1686,10 @@ export class Config {
     public static readonly perEnvelopeBoundMax: number = 2; //max of 6.3 unless you update url
     public static readonly randomEnvelopeSeedMax: number = 63; //if you increase this you'll need to update the url to support it
     public static readonly randomEnvelopeStepsMax: number = 32; 
+
+    public static readonly maxEnvelopeSequenceCount: number = 16;
+    public static readonly envelopeSequenceHeightMax: number = 16;
+    public static readonly envelopeSequenceLengthMax: number = 16;
 
     // Picked strings have an all-pass filter with a corner frequency based on the tone fundamental frequency, in order to add a slight inharmonicity. (Which is important for distortion.)
     public static readonly pickedStringDispersionCenterFreq: number = 6000.0; // The tone fundamental freq is pulled toward this freq for computing the all-pass corner freq.

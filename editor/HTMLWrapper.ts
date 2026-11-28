@@ -105,7 +105,7 @@ export class DoubleSlider {
         public min: number,
         public max: number,
         /**0 == none, 1 == single, 2 == octaves */
-        midTick: 0 | 1 | 2 
+        midTick: 0 | 1 | 2 = 0
     ) {
         this._valueLeft = leftInitial;
         this._valueRight = rightInitial;
@@ -136,7 +136,7 @@ export class DoubleSlider {
 
         this.render();
         // A container is created around the input to allow for spec-compliant pseudo css classes (e.g ::before and ::after, which must be added to containers, not the input itself)
-        this.container = span((false) ? { class: "midTick", style: "position: sticky; width: 61.5%;" } : { style: "position: sticky; flex: 3" }, this._svg);
+        this.container = span((false) ? { class: "midTick", style: "position: sticky; width: 61.5%; cursor: pointer" } : { style: "position: sticky; flex: 3; cursor: pointer" }, this._svg);
         
         this.container.addEventListener("pointerdown", this._mouseDown);
         this.container.addEventListener("pointermove", this._mouseMove);
@@ -169,7 +169,7 @@ export class DoubleSlider {
         const boundingRect: ClientRect = this._svg.getBoundingClientRect();
         let mouseX: number = (eventX - boundingRect.left - 5) / (boundingRect.right - boundingRect.left - 10);
         if (isNaN(mouseX)) return this.min;
-        return Math.round(mouseX * (this.max - this.min)) + this.min;
+        return Math.min(this.max, Math.max(this.min, Math.round(mouseX * (this.max - this.min)) + this.min));
     }
 
     private _mouseDown = (event: PointerEvent) => {
@@ -218,24 +218,28 @@ export class DoubleSlider {
 
     private _mouseMove = (event: PointerEvent): void => {
         if (this.mouseDown == DoubleSliderInputElements.none) return;
+        document.body.style.cursor = "pointer";
         this.isModRecording = (event.shiftKey || event.ctrlKey) && this._doc.synth.playing;
         this._handleChangeEvent(this.getValueFromMouse(event.clientX || event.pageX));
     };
 
     private _handleChangeEvent(position: number) {
         if (this.mouseDown == DoubleSliderInputElements.leftThumb && this._getChangeLeft != null) {
-            if ((this.isModRecording || position <= this._valueRight) && position >= this.min) this._valueLeft = position;
+            if (this.isModRecording && position >= this.min) this._valueLeft = position;
+            else if (position >= this.min) this._valueLeft = Math.min(position, this._valueRight);
             this._change = this._getChangeLeft(this._oldValueLeft, this._valueLeft);
             if (this._change.isNoop()) this._doc.renderChanges();
             this._doc.setProspectiveChange(this._change);
         } else if (this.mouseDown == DoubleSliderInputElements.rightThumb && this._getChangeRight != null) {
-            if ((this.isModRecording || position >= this._valueLeft) && position <= this.max) this._valueRight = position;
+            if (this.isModRecording && position <= this.max) this._valueRight = position;
+            else if (position <= this.max) this._valueRight = Math.max(position, this._valueLeft);
             this._change = this._getChangeRight(this._oldValueRight, this._valueRight);
             if (this._change.isNoop()) this._doc.renderChanges();
             this._doc.setProspectiveChange(this._change);
         } else if (this.mouseDown == DoubleSliderInputElements.bar && this._getChangeLeft != null && this._getChangeRight != null) {
             //move both, keeping the distance between
             const delta: number = position - this._initialPosition;
+            if (position < this.min || position > this.max) return;
             const useModValues: boolean = this._getModValueLeft() !== null && this._getModValueRight() !== null && this.isModRecording;
             const renderedLeft: number = useModValues ? this._getModValueLeft()! :  this._valueLeft;
             const renderedRight: number = useModValues ? this._getModValueRight()! : this._valueRight;
@@ -259,6 +263,7 @@ export class DoubleSlider {
 
     private _mouseUp = (event: PointerEvent): void => {
         this.mouseDown = DoubleSliderInputElements.none;
+        document.body.style.cursor = "default";
         this.container.releasePointerCapture(event.pointerId);
         if (this.isModRecording) {
             this._valueLeft = this._futureValueLeft;

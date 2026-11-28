@@ -13,6 +13,11 @@ import { Change } from "./Change";
 import { ChangeNotifier } from "./ChangeNotifier";
 import { ChangeSong, setDefaultInstruments, discardInvalidPatternInstruments, ChangeHoldingModRecording } from "./changes";
 
+interface promptSettings {
+    prompt: string,
+    extraSettings?: any
+}
+
 interface HistoryState {
     canUndo: boolean;
     sequenceNumber: number;
@@ -20,7 +25,7 @@ interface HistoryState {
     channel: number;
     instrument: number;
     recoveryUid: string;
-    prompt: string | null;
+    prompt: promptSettings | null;
     selection: { x0: number, x1: number, y0: number, y1: number, start: number, end: number };
 }
 
@@ -45,7 +50,7 @@ export class SongDocument {
     public trackVisibleChannels: number = 4;
     public barScrollPos: number = 0;
     public channelScrollPos: number = 0;
-    public prompt: string | null = null;
+    public prompt: promptSettings | null = null;
 
     public addedEffect: boolean = false;
     public addedEnvelope: boolean = false;
@@ -394,8 +399,9 @@ export class SongDocument {
         this._recoveryUid = generateUid();
     }
 
-    public openPrompt(prompt: string): void {
-        this.prompt = prompt;
+    public openPrompt(prompt: string, extraSettings?: any): void {
+        this.prompt = { prompt: prompt };
+        if (extraSettings != undefined) this.prompt.extraSettings = extraSettings;
         const hash: string = this.song.toBase64String();
         this._sequenceNumber++;
         const state = { canUndo: true, sequenceNumber: this._sequenceNumber, bar: this.bar, channel: this.channel, instrument: this.viewedInstrument[this.channel], recoveryUid: this._recoveryUid, prompt: this.prompt, selection: this.selection.toJSON() };

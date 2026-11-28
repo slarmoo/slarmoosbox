@@ -38,6 +38,7 @@ import { PatternEditor } from "./PatternEditor";
 import { Piano } from "./Piano";
 import { Prompt } from "./Prompt";
 import { SelectiveRandomPastePrompt } from "./SelectiveRandomPastePrompt";
+import { SequenceEditorPrompt } from "./SequenceEditorPrompt";
 import { SongDocument } from "./SongDocument";
 import { SongDurationPrompt } from "./SongDurationPrompt";
 import { SustainPrompt } from "./SustainPrompt";
@@ -888,8 +889,7 @@ export class SongEditor {
         (Config.grainSizeMax - Config.grainSizeMin) / Config.grainSizeStep,
         (Config.grainSizeMax - Config.grainSizeMin + Config.grainRangeMax) / Config.grainSizeStep,
         Config.grainSizeMin / Config.grainSizeStep,
-        (Config.grainSizeMax + Config.grainRangeMax) / Config.grainSizeStep,
-        0
+        (Config.grainSizeMax + Config.grainRangeMax) / Config.grainSizeStep
     )
     public readonly grainSizeNum: HTMLParagraphElement = div({ style: "font-size: 80%; ", id: "grainSizeNum" });
     public readonly grainRangeNum: HTMLParagraphElement = div({ style: "font-size: 80%; ", id: "grainRangeNum" });
@@ -1114,7 +1114,7 @@ export class SongEditor {
     private readonly _harmonicsRow: HTMLElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("harmonics"), style: "font-size: smaller"}, "Harmonics:"), this._harmonicsZoom, this._harmonicsEditor.container);
 
     //SongEditor.ts
-    readonly envelopeEditor: EnvelopeEditor = new EnvelopeEditor(this.doc, (id: number, submenu: number, subtype: string) => this._toggleDropdownMenu(id, submenu), (name: string) => this._openPrompt(name));
+    readonly envelopeEditor: EnvelopeEditor = new EnvelopeEditor(this.doc, (id: number, submenu: number) => this._toggleDropdownMenu(id, submenu), (name: string, extraSettings: any) => this._openPrompt(name, extraSettings));
     private readonly _envelopeSpeedDisplay: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: smaller; text-overflow: clip;` }, "x1");
     private readonly _envelopeSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.modulators.dictionary["envelope speed"].maxRawVol, value: "0", step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeEnvelopeSpeed(this.doc, oldValue, newValue), false);
     private readonly _envelopeSpeedRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("envelopeSpeed") }, "‣ Spd:"), this._envelopeSpeedDisplay, this._envelopeSpeedSlider.container);
@@ -1530,8 +1530,6 @@ export class SongEditor {
         ));
 
         this._vibratoSelect.appendChild(option({ hidden: true, value: 5 }, "custom"));
-
-        //this._unisonSelect.appendChild(option({ hidden: true, value: 28 }, "custom"));
 
         this._unisonSelect.appendChild(option({ hidden: true, value: Config.unisons.length }, "custom"));
 
@@ -2176,12 +2174,12 @@ export class SongEditor {
 
     }
 
-    private _openPrompt(promptName: string): void {
-        this.doc.openPrompt(promptName);
-        this._setPrompt(promptName);
+    private _openPrompt(promptName: string, extraSettings: any = {}): void {
+        this.doc.openPrompt(promptName, extraSettings);
+        this._setPrompt(promptName, extraSettings);
     }
 
-    private _setPrompt(promptName: string | null): void {
+    private _setPrompt(promptName: string | null, extraSettings: any = {}): void {
         if (this._currentPromptName == promptName) return;
         this._currentPromptName = promptName;
 
@@ -2284,6 +2282,9 @@ export class SongEditor {
                 case "drumsetSettings":
                     this.prompt = new SpectrumEditorPrompt(this.doc, this, true);
                     break;
+                case "sequenceSettings":
+                    this.prompt = new SequenceEditorPrompt(this.doc, this, extraSettings["sequenceIndex"], extraSettings["envelopeIndex"]);//, extraSettings["isDrum"] || false);
+                    break;
                 case "selectiveRandom":
                     this.prompt = new SelectiveRandomPastePrompt(this.doc, true);
                     break;
@@ -2296,7 +2297,7 @@ export class SongEditor {
             }
 
             if (this.prompt) {
-                if (!(this.prompt instanceof TipPrompt || this.prompt instanceof LimiterPrompt || this.prompt instanceof CustomChipPrompt || this.prompt instanceof CustomFilterPrompt || this.prompt instanceof VisualLoopControlsPrompt || this.prompt instanceof SustainPrompt || this.prompt instanceof HarmonicsEditorPrompt || this.prompt instanceof SpectrumEditorPrompt)) {
+                if (!(this.prompt instanceof TipPrompt || this.prompt instanceof LimiterPrompt || this.prompt instanceof CustomChipPrompt || this.prompt instanceof CustomFilterPrompt || this.prompt instanceof VisualLoopControlsPrompt || this.prompt instanceof SustainPrompt || this.prompt instanceof HarmonicsEditorPrompt || this.prompt instanceof SpectrumEditorPrompt || this.prompt instanceof SequenceEditorPrompt)) {
                     this._wasPlaying = this.doc.synth.playing;
                     this.doc.performance.pause();
                 }
@@ -3761,7 +3762,7 @@ export class SongEditor {
             this.refocusStage();
         }
 
-        this._setPrompt(this.doc.prompt);
+        this._setPrompt(this.doc.prompt && this.doc.prompt.prompt, this.doc.prompt?.extraSettings);
 
         if (prefs.autoFollow && !this.doc.synth.playing) {
             this.doc.synth.goToBar(this.doc.bar);
@@ -4651,7 +4652,7 @@ export class SongEditor {
                 if (needControlForShortcuts == (event.ctrlKey || event.metaKey) && event.shiftKey) {
                     // Copy the current instrument as a preset to the clipboard.
                     const instrument: Instrument = this.doc.song.channels[this.doc.channel].instruments[this.doc.getCurrentInstrument()];
-                    const instrumentObject: any = instrument.toJsonObject();
+                    const instrumentObject: any = instrument.toJsonObject(this.doc.song.sequences);
                     delete instrumentObject["preset"];
                     // Volume and the panning effect are not included in presets.
                     delete instrumentObject["volume"];
@@ -5006,7 +5007,7 @@ export class SongEditor {
         const instrumentCopies: any[] = [];
         for (let i: number = 0; i < channel.instruments.length; i++) {
             const instrument: Instrument = channel.instruments[i];
-            const instrumentCopy: any = instrument.toJsonObject();
+            const instrumentCopy: any = instrument.toJsonObject(this.doc.song.sequences);
             instrumentCopy["isDrum"] = this.doc.song.getChannelIsNoise(this.doc.channel);
             instrumentCopy["isMod"] = this.doc.song.getChannelIsMod(this.doc.channel);
             if (this.doc.getCurrentInstrument() == i) window.localStorage.setItem("instrumentCopy", JSON.stringify(instrumentCopy));

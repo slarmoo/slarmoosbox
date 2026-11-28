@@ -10,7 +10,6 @@ import { SongDocument } from "./SongDocument";
 import { ExportPrompt } from "./ExportPrompt";
 import { ChangePreset } from "./changes";
 
-
 //namespace beepbox {
 const editor: SongEditor = new SongEditor();//same as above
 

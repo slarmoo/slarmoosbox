@@ -159,7 +159,6 @@ html {
 	grid-row-gap: 6px;
 	position: relative;
 	touch-action: manipulation;
-	cursor: default;
 	font-size: 13px;
 	overflow: hidden;
 	color: ${ColorConfig.primaryText};
