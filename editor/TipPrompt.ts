@@ -668,7 +668,13 @@ export class TipPrompt implements Prompt {
 					p(`This setting controls about how often a grain (a group of audio samples) is added to the output, from rarely to multiple at once.`),
 				);
 			} break;
-			
+			case "sequenceEnvelope": {
+				message = div(
+					h2("Sequence Envelope"),
+					p(`This chooses the editable sequence for your envelope. Similar to the LFO envelope type, this envelope will run through a waveform repeatably. However, this waveform is customizeable`)
+				)
+			} break;
+
 
 			default:
 				// Check for modSetinfo#

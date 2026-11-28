@@ -77,7 +77,7 @@ export class CustomScalePrompt implements Prompt {
             this._keys.push(key);
 
             //don't let users toggle the base key, since that apparently causes issues
-            if(i > 0) wrappedKey.addEventListener("click", () => { this._flags[i] = !this._flags[i]; this._render(); });
+            if (i > 0) wrappedKey.addEventListener("click", () => { this._flags[i] = !this._flags[i]; this._render(); });
         }
         for (const blackKey of blackKeys) {
             sortedKeys.push(blackKey);

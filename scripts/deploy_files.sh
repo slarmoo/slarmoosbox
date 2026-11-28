@@ -29,6 +29,7 @@ cp website/favicon.ico to_deploy/
 cp website/icon_maskable_192.png to_deploy/
 cp 404.html to_deploy/
 cp 404.html to_deploy/player/
+cp website/silence.mp3 to_deploy/
 cp website/credits.html to_deploy/
 cp website/patch_notes.html to_deploy/
 cp website/faq.html to_deploy/
